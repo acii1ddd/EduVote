@@ -17,6 +17,11 @@
         <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.80.0-pre1" />
         <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="10.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.10.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,10 @@
 <Solution>
-  <Project Path="EduVote.API/EduVote.API.csproj" />
-  <Project Path="EduVote.DAL.Postgresql/EduVote.DAL.Postgresql.csproj" />
+  <Folder Name="/AspireHost/">
+    <Project Path="EduVote.AppHost/EduVote.AppHost.csproj" />
+    <Project Path="EduVote.ServiceDefaults/EduVote.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/VotingAPI/">
+    <Project Path="EduVote.API/EduVote.API.csproj" />
+    <Project Path="EduVote.DAL.Postgresql/EduVote.DAL.Postgresql.csproj" />
+  </Folder>
 </Solution>

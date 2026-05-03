@@ -1,4 +1,7 @@
 using EduVote.API.Services;
+using EduVote.DAL.Postgresql.Context;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,12 +22,24 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddDbContext<EduVoteDbContext>(options =>
+{
+    var connString = builder.Configuration.GetConnectionString("eduvote-db");
+    
+    options.UseNpgsql(connString);
+});
+
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenLocalhost(5151, o =>
+    // options.ListenLocalhost(5858, o =>
+    // {
+    //     o.UseHttps();
+    //     o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+    // });
+    
+    options.ConfigureEndpointDefaults(opt =>
     {
-        o.UseHttps();
-        o.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+        opt.Protocols = HttpProtocols.Http1AndHttp2;
     });
 });
 
@@ -38,7 +53,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
     });
 
-    Console.WriteLine("Swagger with gRPC transcoding is available on: https://localhost:5151/swagger/index.html");
+    Console.WriteLine("Swagger with gRPC transcoding is available on: https://localhost:5858/swagger/index.html");
     
     app.MapGrpcReflectionService()
         .AllowAnonymous();
