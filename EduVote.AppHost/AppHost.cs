@@ -1,8 +1,14 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Postgres
+var pgUser = builder
+    .AddParameter("pguser", "user");
+
+var pgPassword = builder
+    .AddParameter("pgpassword",  "123", secret: true);
+
 var postgres = builder
-    .AddPostgres("postgres")
+    .AddPostgres("postgres", pgUser, pgPassword)
     .WithImage("postgres:17.6")
     .WithContainerName("voting-db")
     .WithDataVolume("voting-db");
@@ -16,22 +22,12 @@ var votingApi = builder
     .WithHttpsEndpoint(port: 5959)
     .WithReference(db);
 
-// var pgUser = builder.AddParameter("pguser", defaultValue: "postgres");
-// var pgPassword = builder.AddParameter("pgpassword", defaultValue: "p@ssword123", secret: true);
-
-// var postgres = builder
-//     // 2. Передаем параметры в метод
-//     .AddPostgres("postgres", pgUser, pgPassword)
-//     .WithDataVolume("voting-db")
-//     .WithContainerName("voting-postgres-container")
-//     // 3. Рекомендуется зафиксировать порт, чтобы не вводить случайный порт в DBeaver
-//     .WithHostPort(5432);
-//
-// var db = postgres.AddDatabase("voting-db");
-
-// var pgAdmin = builder.AddContainer("pgadmin", "dpage/pgadmin4")
-//     .WithEnvironment("PGADMIN_DEFAULT_EMAIL", "admin@admin.com")
-//     .WithEnvironment("PGADMIN_DEFAULT_PASSWORD", "admin")
-//     .WithHttpEndpoint(80, 5050);
+var pgAdmin = builder
+    .AddContainer("pgadmin", "dpage/pgadmin4")
+    .WithEnvironment("PGADMIN_DEFAULT_EMAIL", "admin@admin.com")
+    .WithEnvironment("PGADMIN_DEFAULT_PASSWORD", "admin")
+    .WithContainerName("pgadmin")
+    .WithHttpEndpoint(5050, 80)
+    .WithReference(postgres);
     
 builder.Build().Run();

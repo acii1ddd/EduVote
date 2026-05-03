@@ -1,5 +1,8 @@
 using EduVote.API.Services;
+using EduVote.API.WebAppExtensions;
+using EduVote.DAL.Postgresql;
 using EduVote.DAL.Postgresql.Context;
+using EduVote.DAL.Postgresql.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -29,6 +32,10 @@ builder.Services.AddDbContext<EduVoteDbContext>(options =>
     options.UseNpgsql(connString);
 });
 
+builder.Services
+    .AddDbInitializer()
+    .AddRepositories();
+
 builder.WebHost.ConfigureKestrel(options =>
 {
     // options.ListenLocalhost(5858, o =>
@@ -57,10 +64,13 @@ if (app.Environment.IsDevelopment())
     
     app.MapGrpcReflectionService()
         .AllowAnonymous();
+    
+    await app.ApplyMigrationsAsync();
 }
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<GreeterService>();
+app.MapGrpcService<VotingService>();
 app.MapGet("/",
     () =>
         "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");

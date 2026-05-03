@@ -2,7 +2,7 @@ using Grpc.Core;
 
 namespace EduVote.API.Services;
 
-public class GreeterService(ILogger<GreeterService> logger) : Greeter.GreeterBase   
+public class GreeterService(ILogger<GreeterService> logger) : Greeter.GreeterBase
 {
     public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
     {
