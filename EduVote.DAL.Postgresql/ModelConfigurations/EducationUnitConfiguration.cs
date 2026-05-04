@@ -29,5 +29,10 @@ public class EducationUnitConfiguration : IEntityTypeConfiguration<EducationUnit
         builder.HasMany(x => x.VotingTargets)
             .WithOne(x => x.EducationUnit)
             .HasForeignKey(x => x.EducationUnitId);
+        
+        // UserEducationUnit
+        builder.HasMany(x => x.UserEducationUnits)
+            .WithOne(x => x.EducationUnit)
+            .HasForeignKey(x => x.EducationUnitId);
     }
 }

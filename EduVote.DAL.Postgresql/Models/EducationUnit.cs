@@ -33,4 +33,9 @@ public class EducationUnit : IBaseEntity
     /// All restrictions for votings on which this education unit participate
     /// </summary>
     public ICollection<VotingTarget> VotingTargets { get; set; } = [];
+    
+    /// <summary>
+    /// Users who belong to this education unit 
+    /// </summary>
+    public ICollection<UserEducationUnit> UserEducationUnits { get; set; } = [];
 }

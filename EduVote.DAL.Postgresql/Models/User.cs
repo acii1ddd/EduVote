@@ -17,5 +17,10 @@ public class User : IBaseEntity, ICreatedAt
     /// </summary>
     public ICollection<Vote> Votes { get; set; } = [];
     
+    /// <summary>
+    /// In which education units this user consists of
+    /// </summary>
+    public ICollection<UserEducationUnit> UserEducationUnits { get; set; } = [];
+    
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
 }
