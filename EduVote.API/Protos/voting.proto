@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
-package voting;
+package edu_vote.v1.voting;
 
 service Votings {
   rpc CreateVoting (CreateVotingRequest) returns (VotingResponse) {

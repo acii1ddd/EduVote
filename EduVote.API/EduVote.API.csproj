@@ -8,6 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Protobuf Include="Protos\candidate.proto">
+          <GrpcServices>Server</GrpcServices>
+          <Access>Public</Access>
+          <ProtoCompile>True</ProtoCompile>
+          <CompileOutputs>True</CompileOutputs>
+          <OutputDir>obj\Debug/net10.0/</OutputDir>
+          <Generator>MSBuild:Compile</Generator>
+        </Protobuf>
         <Protobuf Include="Protos\voting.proto" GrpcServices="Server"/>
     </ItemGroup>
 

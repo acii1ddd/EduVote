@@ -15,7 +15,11 @@ public class EduVoteDbContext(DbContextOptions<EduVoteDbContext> options)
     public DbSet<User> Users { get; set; }
     
     public DbSet<Role> Roles { get; set; }
+    
+    public DbSet<VotingTarget> VotingTargets { get; set; }
 
+    public DbSet<EducationUnit> EducationUnits { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EduVoteDbContext).Assembly);

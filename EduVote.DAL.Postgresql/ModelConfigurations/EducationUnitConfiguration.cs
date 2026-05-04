@@ -2,7 +2,7 @@ using EduVote.DAL.Postgresql.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EduVote.DAL.Postgresql.Configurations;
+namespace EduVote.DAL.Postgresql.ModelConfigurations;
 
 public class EducationUnitConfiguration : IEntityTypeConfiguration<EducationUnit>
 {
@@ -25,5 +25,9 @@ public class EducationUnitConfiguration : IEntityTypeConfiguration<EducationUnit
         
         builder.HasIndex(x => new {x.Name, x.ParentId})
             .IsUnique();
+
+        builder.HasMany(x => x.VotingTargets)
+            .WithOne(x => x.EducationUnit)
+            .HasForeignKey(x => x.EducationUnitId);
     }
 }

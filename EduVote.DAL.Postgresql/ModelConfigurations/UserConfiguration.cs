@@ -2,7 +2,7 @@ using EduVote.DAL.Postgresql.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EduVote.DAL.Postgresql.Configurations;
+namespace EduVote.DAL.Postgresql.ModelConfigurations;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
@@ -25,5 +25,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasOne(x => x.UserRole)
             .WithMany(x => x.Users)
             .HasForeignKey(x => x.RoleId);
+        
+        builder.HasMany(x => x.Votes)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.UserId);
     }
 }

@@ -3,6 +3,7 @@ using System;
 using EduVote.DAL.Postgresql.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EduVote.DAL.Postgresql.Migrations
 {
     [DbContext(typeof(EduVoteDbContext))]
-    partial class EduVoteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504203208_AddVotingTarget")]
+    partial class AddVotingTarget
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,17 +33,14 @@ namespace EduVote.DAL.Postgresql.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PhotoUrl")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("VotingId")
                         .HasColumnType("uuid");
@@ -49,7 +49,7 @@ namespace EduVote.DAL.Postgresql.Migrations
 
                     b.HasIndex("VotingId");
 
-                    b.ToTable("Candidates", (string)null);
+                    b.ToTable("Candidates");
                 });
 
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.EducationUnit", b =>
@@ -128,16 +128,12 @@ namespace EduVote.DAL.Postgresql.Migrations
                     b.Property<Guid>("CandidateId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("VoteHash")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("VotingId")
                         .HasColumnType("uuid");
@@ -146,12 +142,11 @@ namespace EduVote.DAL.Postgresql.Migrations
 
                     b.HasIndex("CandidateId");
 
+                    b.HasIndex("UserId");
+
                     b.HasIndex("VotingId");
 
-                    b.HasIndex("UserId", "VotingId", "CandidateId")
-                        .IsUnique();
-
-                    b.ToTable("Votes", (string)null);
+                    b.ToTable("Votes");
                 });
 
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.Voting", b =>
@@ -163,13 +158,9 @@ namespace EduVote.DAL.Postgresql.Migrations
                     b.Property<bool>("AllowVoteChange")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
@@ -182,8 +173,7 @@ namespace EduVote.DAL.Postgresql.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -193,22 +183,28 @@ namespace EduVote.DAL.Postgresql.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Votings", (string)null);
+                    b.ToTable("Votings");
                 });
 
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.VotingTarget", b =>
                 {
-                    b.Property<Guid>("VotingId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("EducationUnitId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("VotingId", "EducationUnitId");
+                    b.Property<Guid>("VotingId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("EducationUnitId");
 
-                    b.ToTable("VotingTargets", (string)null);
+                    b.HasIndex("VotingId");
+
+                    b.ToTable("VotingTargets");
                 });
 
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.Candidate", b =>
@@ -246,13 +242,13 @@ namespace EduVote.DAL.Postgresql.Migrations
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.Vote", b =>
                 {
                     b.HasOne("EduVote.DAL.Postgresql.Models.Candidate", "Candidate")
-                        .WithMany("Votes")
+                        .WithMany()
                         .HasForeignKey("CandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("EduVote.DAL.Postgresql.Models.User", "User")
-                        .WithMany("Votes")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -273,13 +269,13 @@ namespace EduVote.DAL.Postgresql.Migrations
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.VotingTarget", b =>
                 {
                     b.HasOne("EduVote.DAL.Postgresql.Models.EducationUnit", "EducationUnit")
-                        .WithMany("VotingTargets")
+                        .WithMany()
                         .HasForeignKey("EducationUnitId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("EduVote.DAL.Postgresql.Models.Voting", "Voting")
-                        .WithMany("VotingTargets")
+                        .WithMany()
                         .HasForeignKey("VotingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -289,16 +285,9 @@ namespace EduVote.DAL.Postgresql.Migrations
                     b.Navigation("Voting");
                 });
 
-            modelBuilder.Entity("EduVote.DAL.Postgresql.Models.Candidate", b =>
-                {
-                    b.Navigation("Votes");
-                });
-
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.EducationUnit", b =>
                 {
                     b.Navigation("Children");
-
-                    b.Navigation("VotingTargets");
                 });
 
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.Role", b =>
@@ -306,18 +295,11 @@ namespace EduVote.DAL.Postgresql.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("EduVote.DAL.Postgresql.Models.User", b =>
-                {
-                    b.Navigation("Votes");
-                });
-
             modelBuilder.Entity("EduVote.DAL.Postgresql.Models.Voting", b =>
                 {
                     b.Navigation("Candidates");
 
                     b.Navigation("Votes");
-
-                    b.Navigation("VotingTargets");
                 });
 #pragma warning restore 612, 618
         }

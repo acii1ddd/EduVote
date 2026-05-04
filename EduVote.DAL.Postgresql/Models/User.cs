@@ -12,5 +12,10 @@ public class User : IBaseEntity, ICreatedAt
 
     public Role UserRole { get; set; } = null!;
     
+    /// <summary>
+    /// Votes that already cast by this user
+    /// </summary>
+    public ICollection<Vote> Votes { get; set; } = [];
+    
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
 }

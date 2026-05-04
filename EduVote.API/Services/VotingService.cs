@@ -21,7 +21,7 @@ public class VotingService(IVotingRepository votingRepository)
 
     public override async Task<VotingResponse> UpdateVoting(UpdateVotingRequest request, ServerCallContext context)
     {
-        var votingId = ParseVotingId(request.Id);
+        var votingId = IdParser.ParseId(request.Id, "Voting");
         ValidateDateRange(request.StartTime, request.EndTime);
         
         var existingVoting = await votingRepository
@@ -29,7 +29,7 @@ public class VotingService(IVotingRepository votingRepository)
         
         if (existingVoting is null)
         {
-            throw CreateNotFoundException(votingId);
+            throw IdParser.CreateNotFoundException("Voting", request.Id);
         }
 
         var updatedVoting = request.MapToEntity();
@@ -50,13 +50,13 @@ public class VotingService(IVotingRepository votingRepository)
 
     public override async Task<Empty> DeleteVoting(DeleteVotingRequest request, ServerCallContext context)
     {
-        var votingId = ParseVotingId(request.Id);
+        var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var existingVoting = await votingRepository.GetByIdAsync(votingId);
+        var existingVoting = await votingRepository.GetByIdAsync(votingId, context.CancellationToken);
         
         if (existingVoting is null)
         {
-            throw CreateNotFoundException(votingId);
+            throw IdParser.CreateNotFoundException("Voting", request.Id);
         }
         
         await votingRepository
@@ -67,7 +67,7 @@ public class VotingService(IVotingRepository votingRepository)
 
     public override async Task<VotingResponse> StartVoting(VotingActionRequest request, ServerCallContext context)
     {
-        var votingId = ParseVotingId(request.Id);
+        var votingId = IdParser.ParseId(request.Id, "Voting");
 
         return await ChangeStatus(
             votingId,
@@ -79,7 +79,7 @@ public class VotingService(IVotingRepository votingRepository)
 
     public override async Task<VotingResponse> PauseVoting(VotingActionRequest request, ServerCallContext context)
     {
-        var votingId = ParseVotingId(request.Id);
+        var votingId = IdParser.ParseId(request.Id, "Voting");
 
         return await ChangeStatus(
             votingId,
@@ -90,7 +90,7 @@ public class VotingService(IVotingRepository votingRepository)
 
     public override async Task<VotingResponse> FinishVoting(VotingActionRequest request, ServerCallContext context)
     {
-        var votingId = ParseVotingId(request.Id);
+        var votingId = IdParser.ParseId(request.Id, "Voting");
 
         return await ChangeStatus(
             votingId,
@@ -102,14 +102,14 @@ public class VotingService(IVotingRepository votingRepository)
 
     public override async Task<VotingResponse> GetVoting(GetVotingRequest request, ServerCallContext context)
     {
-        var votingId = ParseVotingId(request.Id);
+        var votingId = IdParser.ParseId(request.Id, "Voting");
 
         var existingVoting = await votingRepository
             .GetByIdAsync(votingId, context.CancellationToken);
         
         if (existingVoting is null)
         {
-            throw CreateNotFoundException(votingId);
+            throw IdParser.CreateNotFoundException("Voting", request.Id);
         }
         
         return existingVoting.MapToResponse();
@@ -138,7 +138,7 @@ public class VotingService(IVotingRepository votingRepository)
         
         if (existingVoting is null)
         {
-            throw CreateNotFoundException(votingId);
+            throw new RpcException(new Status(StatusCode.NotFound, $"Voting with id {votingId} was not found."));
         }
 
         if (!allowedCurrentStatuses.Contains(existingVoting.VotingStatus))
@@ -154,21 +154,6 @@ public class VotingService(IVotingRepository votingRepository)
             .SaveChangesAsync(cancellationToken);
 
         return existingVoting.MapToResponse();
-    }
-
-    private static RpcException CreateNotFoundException(Guid votingId)
-    {
-        return new RpcException(new Status(StatusCode.NotFound, $"Voting with id {votingId} was not found."));
-    }
-
-    private static Guid ParseVotingId(string id)
-    {
-        if (!Guid.TryParse(id, out var votingId))
-        {
-            throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting id must be a valid GUID."));
-        }
-
-        return votingId;
     }
     
     // todo вынести в домен

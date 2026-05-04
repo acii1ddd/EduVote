@@ -6,53 +6,44 @@ using Microsoft.Extensions.Logging;
 
 namespace EduVote.DAL.Postgresql;
 
-public class DatabaseInitializer
+public class DatabaseInitializer(
+    EduVoteDbContext context,
+    ILogger<DatabaseInitializer> logger)
 {
-    private readonly ILogger<DatabaseInitializer> _logger;
-    private readonly EduVoteDbContext _context;
-
     //private static readonly string _passwordHash = "$2a$11$0p4EJ6BqWtZUkaZCBr.f8eyKFMGmfw/GeaI7h5uW3TOUyQoQBVR6y";
-    
-    public DatabaseInitializer(
-        EduVoteDbContext context, 
-        ILogger<DatabaseInitializer> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
-    
+
     public async Task InitializeAsync()
     {
         try
         {
-            _logger.LogInformation("Initializing database...");
+            logger.LogInformation("Initializing database...");
             
-            var migrations = await _context.Database.GetPendingMigrationsAsync();
+            var migrations = await context.Database.GetPendingMigrationsAsync();
             if (migrations.Any())
             {
-                _logger.LogInformation("Migration...");
-                await _context.Database.MigrateAsync();
+                logger.LogInformation("Migration...");
+                await context.Database.MigrateAsync();
             }
             else
             {
-                _logger.LogInformation("All migrations are applied.");
+                logger.LogInformation("All migrations are applied.");
             }
             
-            _logger.LogInformation("Seeding voting data...");
+            logger.LogInformation("Seeding voting data...");
             await SeedDataAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error with applying migrations.");
+            logger.LogError(ex, "Error with applying migrations.");
             throw;
         }
     }
 
     private async Task SeedDataAsync()
     {
-        if (await _context.Votings.AnyAsync())
+        if (await context.Votings.AnyAsync())
         {
-            _logger.LogInformation("Voting seed data already exists. Skipping.");
+            logger.LogInformation("Voting seed data already exists. Skipping.");
             return;
         }
 
@@ -395,8 +386,8 @@ public class DatabaseInitializer
             }
         };
 
-        await _context.Votings.AddRangeAsync(votings);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Voting seed data created successfully.");
+        await context.Votings.AddRangeAsync(votings);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Voting seed data created successfully.");
     }
 }

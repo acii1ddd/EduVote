@@ -2,7 +2,7 @@ using EduVote.DAL.Postgresql.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EduVote.DAL.Postgresql.Configurations;
+namespace EduVote.DAL.Postgresql.ModelConfigurations;
 
 public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {

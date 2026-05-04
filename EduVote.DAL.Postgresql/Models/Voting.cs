@@ -54,5 +54,10 @@ public class Voting : IBaseEntity, ICreatedAt
     /// </summary>
     public ICollection<Candidate> Candidates { get; set; } = [];
     
+    /// <summary>
+    /// All restrictions on users who can vote in this voting
+    /// </summary>
+    public ICollection<VotingTarget> VotingTargets { get; set; } = [];
+    
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
 }

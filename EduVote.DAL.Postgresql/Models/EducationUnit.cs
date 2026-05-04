@@ -28,4 +28,9 @@ public class EducationUnit : IBaseEntity
     public EducationUnit? Parent { get; set; }
     
     public ICollection<EducationUnit> Children { get; set; } = [];
+    
+    /// <summary>
+    /// All restrictions for votings on which this education unit participate
+    /// </summary>
+    public ICollection<VotingTarget> VotingTargets { get; set; } = [];
 }

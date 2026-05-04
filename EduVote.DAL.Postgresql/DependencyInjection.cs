@@ -17,6 +17,7 @@ public static class DependencyInjection
         public IServiceCollection AddRepositories()
         {
             services.AddScoped<IVotingRepository, VotingRepository>();
+            services.AddScoped<ICandidateRepository, CandidateRepository>();
         
             return services;
         }

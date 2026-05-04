@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+option csharp_namespace = "EduVote.API";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+package edu_vote.v1.candidates;
+
+service Candidates {
+  rpc CreateCandidate (AddCandidateRequest) returns (CandidateResponse) {
+    option (google.api.http) = {
+      post: "/api/votings/{voting_id}/candidates"
+      body: "*"
+    };
+  }
+  
+  rpc DeleteCandidate (DeleteCandidateRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/votings/{voting_id}/candidates/{candidate_id}"
+    };
+  }
+
+  rpc UploadCandidatePhoto (UploadCandidatePhotoRequest) returns (UploadCandidatePhotoResponse) {
+    option (google.api.http) = {
+      post: "/api/candidates/{candidate_id}/photo"
+      body: "*"
+    };
+  }
+
+  rpc GetCandidates(GetCandidatesRequest) returns (GetCandidatesResponse) {
+    option (google.api.http) = {
+      get: "/api/votings/{voting_id}/candidates"
+    };
+  }
+}
+
+message AddCandidateRequest {
+  string voting_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message DeleteCandidateRequest {
+  string voting_id = 1;
+  string candidate_id = 2;
+}
+
+message UploadCandidatePhotoRequest {
+  string candidate_id = 1;
+  string image_base64 = 2;
+  string content_type = 3;
+}
+
+message GetCandidatesRequest {
+  string voting_id = 1;
+}
+ 
+message GetCandidatesResponse {
+  repeated CandidateResponse candidates = 1;
+}
+
+message UploadCandidatePhotoResponse {
+  string photo_url = 1;
+}
+
+message CandidateResponse {
+  string id = 1;
+  string voting_id = 2;
+  string name = 3;
+  string description = 4;
+  string photo_url = 5;
+}

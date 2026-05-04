@@ -1,14 +1,11 @@
-using EduVote.DAL.Postgresql.Models.Abstractions;
-
 namespace EduVote.DAL.Postgresql.Models;
 
 /// <summary>
 /// Table to indicate the target audience of a particular voting
+/// (Voting 1 - N VotingTarget N - 1 EducationUnit)
 /// </summary>
-public class VotingTarget : IBaseEntity
+public class VotingTarget
 {
-    public Guid Id { get; set; }
-    
     /// <summary>
     /// Voting for which the target audience will be determined
     /// </summary>

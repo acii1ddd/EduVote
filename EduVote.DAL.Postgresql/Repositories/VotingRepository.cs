@@ -29,9 +29,9 @@ public class VotingRepository(EduVoteDbContext dbContext)
         return votingModel;
     }
     
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Voting voting, CancellationToken cancellationToken = default)

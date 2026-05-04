@@ -16,4 +16,9 @@ public class Candidate
     public string Description { get; set; } = string.Empty;
     
     public string? PhotoUrl { get; set; }
+    
+    /// <summary>
+    /// Votes that already cast for this candidate
+    /// </summary>
+    public ICollection<Vote> Votes { get; set; } = [];
 }
