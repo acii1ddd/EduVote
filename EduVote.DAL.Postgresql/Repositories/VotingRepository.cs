@@ -7,12 +7,12 @@ namespace EduVote.DAL.Postgresql.Services;
 
 public class VotingRepository(EduVoteDbContext dbContext) : IVotingRepository
 {
-    public async Task<Voting> CreateAsync(Voting voting, CancellationToken cancellationToken = default)
+    public async Task<Voting> CreateAsync(Voting votingModel, CancellationToken cancellationToken = default)
     {
-        dbContext.Votings.Add(voting);
+        dbContext.Votings.Add(votingModel);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return voting;
+        return votingModel;
     }
 
     public async Task<Voting?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -20,21 +20,21 @@ public class VotingRepository(EduVoteDbContext dbContext) : IVotingRepository
         return await dbContext.Votings.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<Voting?> UpdateAsync(Voting voting, CancellationToken cancellationToken = default)
+    public async Task<Voting?> UpdateAsync(Voting votingModel, CancellationToken cancellationToken = default)
     {
-        var existingVoting = await dbContext.Votings.FirstOrDefaultAsync(x => x.Id == voting.Id, cancellationToken);
+        var existingVoting = await dbContext.Votings.FirstOrDefaultAsync(x => x.Id == votingModel.Id, cancellationToken);
         if (existingVoting is null)
         {
             return null;
         }
 
-        existingVoting.Title = voting.Title;
-        existingVoting.Description = voting.Description;
-        existingVoting.Type = voting.Type;
-        existingVoting.IsAnonymous = voting.IsAnonymous;
-        existingVoting.AllowVoteChange = voting.AllowVoteChange;
-        existingVoting.StartTime = voting.StartTime;
-        existingVoting.EndTime = voting.EndTime;
+        existingVoting.Title = votingModel.Title;
+        existingVoting.Description = votingModel.Description;
+        existingVoting.Type = votingModel.Type;
+        existingVoting.IsAnonymous = votingModel.IsAnonymous;
+        existingVoting.AllowVoteChange = votingModel.AllowVoteChange;
+        existingVoting.StartTime = votingModel.StartTime;
+        existingVoting.EndTime = votingModel.EndTime;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
