@@ -1,19 +1,17 @@
-using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
-using Mapster;
-using DataVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
-using DataVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
+using DbVotingStatus  = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
+using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
+using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 
 namespace EduVote.API.Mappers;
 
 public static class VotingMapper
 {
-    private static readonly TypeAdapterConfig Config = new TypeAdapterConfig();
+    private static readonly TypeAdapterConfig Config = new();
 
     static VotingMapper()
     {
         // Сопоставление между DAL Voting и gRPC VotingResponse
-        Config.NewConfig<DAL.Postgresql.Models.Voting, VotingResponse>()
+        Config.NewConfig<DbVoting, VotingResponse>()
             .Map(dest => dest.Id, src => src.Id.ToString())
             .Map(dest => dest.Title, src => src.Title)
             .Map(dest => dest.Description, src => src.Description)
@@ -26,22 +24,22 @@ public static class VotingMapper
             .Map(dest => dest.CreatedAt, src => Timestamp.FromDateTime(src.CreatedAt.ToUniversalTime()));
 
         // Обратное сопоставление (если понадобится)
-        Config.NewConfig<CreateVotingRequest, DAL.Postgresql.Models.Voting>()
-            .Map(dest => dest.Id, src => Guid.NewGuid()) // Генерация Id на стороне API
+        Config.NewConfig<CreateVotingRequest, DbVoting>()
+            .Map(dest => dest.Id, src => Guid.NewGuid())
             .Map(dest => dest.Title, src => src.Title)
             .Map(dest => dest.Description, src => src.Description)
-            .Map(dest => dest.Type, src => MapToDalType(src.Type))
+            .Map(dest => dest.Type, src => MapToDbType(src.Type))
             .Map(dest => dest.IsAnonymous, src => src.IsAnonymous)
             .Map(dest => dest.AllowVoteChange, src => src.AllowVoteChange)
             .Map(dest => dest.StartTime, src => src.StartTime.ToDateTime().ToUniversalTime())
             .Map(dest => dest.EndTime, src => src.EndTime.ToDateTime().ToUniversalTime())
             .Map(dest => dest.VotingStatus, _ => VotingStatus.Draft); // Создается как Draft
 
-        Config.NewConfig<UpdateVotingRequest, DAL.Postgresql.Models.Voting>()
+        Config.NewConfig<UpdateVotingRequest, DbVoting>()
             .Map(dest => dest.Id, src => Guid.Parse(src.Id))
             .Map(dest => dest.Title, src => src.Title)
             .Map(dest => dest.Description, src => src.Description)
-            .Map(dest => dest.Type, src => MapToDalType(src.Type))
+            .Map(dest => dest.Type, src => MapToDbType(src.Type))
             .Map(dest => dest.IsAnonymous, src => src.IsAnonymous)
             .Map(dest => dest.AllowVoteChange, src => src.AllowVoteChange)
             .Map(dest => dest.StartTime, src => src.StartTime.ToDateTime().ToUniversalTime())
@@ -49,66 +47,80 @@ public static class VotingMapper
         // VotingStatus не меняется при update, не маппим
     }
 
-    public static VotingResponse MapToResponse(this DAL.Postgresql.Models.Voting source)
+    public static VotingResponse MapToResponse(this DbVoting source)
     {
         return source.Adapt<VotingResponse>(Config);
     }
 
-    public static DAL.Postgresql.Models.Voting MapToEntity(this CreateVotingRequest request)
+    public static DbVoting MapToEntity(this CreateVotingRequest request)
     {
-        return request.Adapt<DAL.Postgresql.Models.Voting>(Config);
+        return request.Adapt<DbVoting>(Config);
     }
 
-    public static DAL.Postgresql.Models.Voting MapToEntity(this UpdateVotingRequest request)
+    public static DbVoting MapToEntity(this UpdateVotingRequest request)
     {
-        return request.Adapt<DAL.Postgresql.Models.Voting>(Config);
+        return request.Adapt<DbVoting>(Config);
     }
 
-    private static DataVotingType MapToDalType(VotingType type)
+    private static DbVotingType MapToDbType(VotingType type)
     {
         return type switch
         {
-            VotingType.SingleChoice => DataVotingType.SingleChoice,
-            VotingType.MultipleChoice => DataVotingType.MultipleChoice,
-            VotingType.Rating => DataVotingType.Rating,
-            VotingType.OpenAnswer => DataVotingType.OpenAnswer,
+            VotingType.SingleChoice => DbVotingType.SingleChoice,
+            VotingType.MultipleChoice => DbVotingType.MultipleChoice,
+            VotingType.Rating => DbVotingType.Rating,
+            VotingType.OpenAnswer => DbVotingType.OpenAnswer,
+            VotingType.Unspecified => throw new RpcException(
+                new Status(StatusCode.InvalidArgument, "Voting type must be specified.")),
             _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting type is not valid."))
         };
     }
 
-    private static VotingType MapToGrpcType(DataVotingType type)
+    private static VotingType MapToGrpcType(DbVotingType type)
     {
         return type switch
         {
-            DataVotingType.SingleChoice => VotingType.SingleChoice,
-            DataVotingType.MultipleChoice => VotingType.MultipleChoice,
-            DataVotingType.Rating => VotingType.Rating,
-            DataVotingType.OpenAnswer => VotingType.OpenAnswer,
+            DbVotingType.SingleChoice => VotingType.SingleChoice,
+            DbVotingType.MultipleChoice => VotingType.MultipleChoice,
+            DbVotingType.Rating => VotingType.Rating,
+            DbVotingType.OpenAnswer => VotingType.OpenAnswer,
             _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting type is not valid."))
         };
     }
 
-    private static DataVotingStatus MapToDalStatus(VotingStatus status)
+    private static DbVotingStatus MapToDbStatus(VotingStatus status)
     {
         return status switch
         {
-            VotingStatus.Draft => DataVotingStatus.Draft,
-            VotingStatus.Active => DataVotingStatus.Active,
-            VotingStatus.Paused => DataVotingStatus.Paused,
-            VotingStatus.Finished => DataVotingStatus.Finished,
+            VotingStatus.Draft => DbVotingStatus.Draft,
+            VotingStatus.Active => DbVotingStatus.Active,
+            VotingStatus.Paused => DbVotingStatus.Paused,
+            VotingStatus.Finished => DbVotingStatus.Finished,
+            VotingStatus.Unspecified => throw new RpcException(
+                new Status(StatusCode.InvalidArgument, "Voting type must be specified.")),
             _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting status is not valid."))
         };
     }
 
-    private static VotingStatus MapToGrpcStatus(DataVotingStatus status)
+    private static VotingStatus MapToGrpcStatus(DbVotingStatus status)
     {
         return status switch
         {
-            DataVotingStatus.Draft => VotingStatus.Draft,
-            DataVotingStatus.Active => VotingStatus.Active,
-            DataVotingStatus.Paused => VotingStatus.Paused,
-            DataVotingStatus.Finished => VotingStatus.Finished,
+            DbVotingStatus .Draft => VotingStatus.Draft,
+            DbVotingStatus .Active => VotingStatus.Active,
+            DbVotingStatus .Paused => VotingStatus.Paused,
+            DbVotingStatus .Finished => VotingStatus.Finished,
             _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting status is not valid."))
         };
+    }
+    
+    public static IEnumerable<VotingResponse> MapToResponseList(this IEnumerable<DbVoting> request)
+    {
+        return request.Adapt<IEnumerable<VotingResponse>>(Config);
+    }
+    
+    public static IEnumerable<DbVoting> MapToEntityList(this IEnumerable<VotingResponse> request)
+    {
+        return request.Adapt<IEnumerable<DbVoting>>(Config);
     }
 }

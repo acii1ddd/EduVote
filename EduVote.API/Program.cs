@@ -3,7 +3,6 @@ using EduVote.API.WebAppExtensions;
 using EduVote.DAL.Postgresql;
 using EduVote.DAL.Postgresql.Context;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,7 +58,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
     });
 
-    Console.WriteLine("Swagger with gRPC transcoding is available on: https://localhost:5858/swagger/index.html");
+    Console.WriteLine("Swagger with gRPC transcoding is available on: https://localhost:5959/swagger/index.html");
     
     app.MapGrpcReflectionService()
         .AllowAnonymous();

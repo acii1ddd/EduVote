@@ -1,7 +1,7 @@
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Enums;
 
-namespace EduVote.DAL.Postgresql.Services;
+namespace EduVote.DAL.Postgresql.Repositories;
 
 public interface IVotingRepository
 {
@@ -10,8 +10,10 @@ public interface IVotingRepository
     Task<Voting?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     
     Task<Voting?> UpdateAsync(Voting voting, CancellationToken cancellationToken = default);
+
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(Voting voting, CancellationToken cancellationToken = default);
     
-    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
-    
-    Task<Voting?> UpdateStatusAsync(Guid id, VotingStatus status, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Voting>> GetAllAsync(CancellationToken cancellationToken = default);
 }

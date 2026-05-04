@@ -1,4 +1,4 @@
-using EduVote.DAL.Postgresql.Services;
+using EduVote.DAL.Postgresql.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EduVote.DAL.Postgresql;

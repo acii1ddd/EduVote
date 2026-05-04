@@ -46,6 +46,18 @@ service Votings {
       post: "/api/votings/{id}/finish"
     };
   }
+
+  rpc GetVoting (GetVotingRequest) returns (VotingResponse) {
+    option (google.api.http) = {
+      get: "/api/votings/{id}"
+    };
+  }
+
+  rpc GetVotings (google.protobuf.Empty) returns (GetVotingsResponse) {
+    option (google.api.http) = {
+      get: "/api/votings"
+    };
+  }
 }
 
 enum VotingType {
@@ -106,6 +118,10 @@ message VotingActionRequest {
   string id = 1;
 }
 
+message GetVotingRequest {
+  string id = 1;
+}
+
 message VotingResponse {
   string id = 1;
   string title = 2;
@@ -117,4 +133,8 @@ message VotingResponse {
   google.protobuf.Timestamp end_time = 8;
   VotingStatus status = 9;
   google.protobuf.Timestamp created_at = 10;
+}
+
+message GetVotingsResponse {
+  repeated VotingResponse votings = 1; // массив/список
 }

@@ -1,12 +1,10 @@
 using EduVote.API.Mappers;
-using EduVote.DAL.Postgresql.Services;
-using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
-using DataVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
+using EduVote.DAL.Postgresql.Repositories;
+using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 
 namespace EduVote.API.Services;
 
-public class VotingService(IVotingRepository votingRepository) 
+public class VotingService(IVotingRepository votingRepository)
     : Votings.VotingsBase
 {
     public override async Task<VotingResponse> CreateVoting(CreateVotingRequest request, ServerCallContext context)
@@ -25,29 +23,44 @@ public class VotingService(IVotingRepository votingRepository)
     {
         var votingId = ParseVotingId(request.Id);
         ValidateDateRange(request.StartTime, request.EndTime);
-
-        var updatedVoting = request.MapToEntity();
-
-        var updatedVotingResult = await votingRepository
-            .UpdateAsync(updatedVoting, context.CancellationToken);
         
-        if (updatedVotingResult is null)
+        var existingVoting = await votingRepository
+            .GetByIdAsync(votingId, context.CancellationToken);
+        
+        if (existingVoting is null)
         {
-            throw ThrowNotFoundException(votingId);
+            throw CreateNotFoundException(votingId);
         }
 
-        return updatedVotingResult.MapToResponse();
+        var updatedVoting = request.MapToEntity();
+        
+        existingVoting.Title = updatedVoting.Title;
+        existingVoting.Description = updatedVoting.Description;
+        existingVoting.Type = updatedVoting.Type;
+        existingVoting.IsAnonymous = updatedVoting.IsAnonymous;
+        existingVoting.AllowVoteChange = updatedVoting.AllowVoteChange;
+        existingVoting.StartTime = updatedVoting.StartTime;
+        existingVoting.EndTime = updatedVoting.EndTime;
+
+        await votingRepository
+            .SaveChangesAsync(context.CancellationToken);
+
+        return existingVoting.MapToResponse();
     }
 
     public override async Task<Empty> DeleteVoting(DeleteVotingRequest request, ServerCallContext context)
     {
         var votingId = ParseVotingId(request.Id);
-        var isDeleted = await votingRepository.DeleteAsync(votingId, context.CancellationToken);
 
-        if (!isDeleted)
+        var existingVoting = await votingRepository.GetByIdAsync(votingId);
+        
+        if (existingVoting is null)
         {
-            throw ThrowNotFoundException(votingId);
+            throw CreateNotFoundException(votingId);
         }
+        
+        await votingRepository
+            .DeleteAsync(existingVoting, context.CancellationToken);
 
         return new Empty();
     }
@@ -58,9 +71,10 @@ public class VotingService(IVotingRepository votingRepository)
 
         return await ChangeStatus(
             votingId,
-            DataVotingStatus.Active,
-            [DataVotingStatus.Draft, DataVotingStatus.Paused],
-            context.CancellationToken);
+            DbVotingStatus.Active,
+            [DbVotingStatus.Draft, DbVotingStatus.Paused],
+            context.CancellationToken
+        );
     }
 
     public override async Task<VotingResponse> PauseVoting(VotingActionRequest request, ServerCallContext context)
@@ -69,8 +83,8 @@ public class VotingService(IVotingRepository votingRepository)
 
         return await ChangeStatus(
             votingId,
-            DataVotingStatus.Paused,
-            [DataVotingStatus.Active],
+            DbVotingStatus.Paused,
+            [DbVotingStatus.Active],
             context.CancellationToken);
     }
 
@@ -80,15 +94,43 @@ public class VotingService(IVotingRepository votingRepository)
 
         return await ChangeStatus(
             votingId,
-            DataVotingStatus.Finished,
-            [DataVotingStatus.Active, DataVotingStatus.Paused],
+            DbVotingStatus.Finished,
+            [DbVotingStatus.Active, DbVotingStatus.Paused],
             context.CancellationToken);
+    }
+
+
+    public override async Task<VotingResponse> GetVoting(GetVotingRequest request, ServerCallContext context)
+    {
+        var votingId = ParseVotingId(request.Id);
+
+        var existingVoting = await votingRepository
+            .GetByIdAsync(votingId, context.CancellationToken);
+        
+        if (existingVoting is null)
+        {
+            throw CreateNotFoundException(votingId);
+        }
+        
+        return existingVoting.MapToResponse();
+    }
+
+    // todo пагинация
+    public override async Task<GetVotingsResponse> GetVotings(Empty request, ServerCallContext context)
+    {
+        var existingVotings = await votingRepository
+            .GetAllAsync(context.CancellationToken);
+        
+        var response = new GetVotingsResponse();
+        response.Votings.AddRange(existingVotings.MapToResponseList());
+        
+        return response;
     }
 
     private async Task<VotingResponse> ChangeStatus(
         Guid votingId,
-        DataVotingStatus newStatus,
-        IReadOnlyCollection<DataVotingStatus> allowedCurrentStatuses,
+        DbVotingStatus newStatus,
+        IReadOnlyCollection<DbVotingStatus> allowedCurrentStatuses,
         CancellationToken cancellationToken)
     {
         var existingVoting = await votingRepository
@@ -96,7 +138,7 @@ public class VotingService(IVotingRepository votingRepository)
         
         if (existingVoting is null)
         {
-            throw ThrowNotFoundException(votingId);
+            throw CreateNotFoundException(votingId);
         }
 
         if (!allowedCurrentStatuses.Contains(existingVoting.VotingStatus))
@@ -106,18 +148,15 @@ public class VotingService(IVotingRepository votingRepository)
                 $"Voting {votingId} cannot be moved from {existingVoting.VotingStatus} to {newStatus}."));
         }
 
-        var updatedVoting = await votingRepository
-            .UpdateStatusAsync(votingId, newStatus, cancellationToken);
+        existingVoting.VotingStatus = newStatus;
         
-        if (updatedVoting is null)
-        {
-            throw ThrowNotFoundException(votingId);
-        }
+        await votingRepository
+            .SaveChangesAsync(cancellationToken);
 
-        return updatedVoting.MapToResponse();
+        return existingVoting.MapToResponse();
     }
 
-    private static RpcException ThrowNotFoundException(Guid votingId)
+    private static RpcException CreateNotFoundException(Guid votingId)
     {
         return new RpcException(new Status(StatusCode.NotFound, $"Voting with id {votingId} was not found."));
     }
@@ -131,7 +170,8 @@ public class VotingService(IVotingRepository votingRepository)
 
         return votingId;
     }
-
+    
+    // todo вынести в домен
     private static void ValidateDateRange(Timestamp? startTime, Timestamp? endTime)
     {
         if (startTime is null || endTime is null)
@@ -142,15 +182,18 @@ public class VotingService(IVotingRepository votingRepository)
         var startDate = startTime.ToDateTime();
         var endDate = endTime.ToDateTime();
 
-        if (Math.Abs((startDate - endDate).TotalSeconds) < 1)
+        var diff = endDate - startDate;
+
+        if (diff < TimeSpan.FromHours(1))
+        {
+            throw new RpcException(new Status(
+                StatusCode.InvalidArgument,
+                "end_time must be at least 1 hour greater than start_time."));
+        }
+        
+        if (startDate > endDate)
         {
             throw new RpcException(new Status(StatusCode.InvalidArgument, "start_time must be less than end_time."));
         }
-    }
-
-    private static DateTime ToUtcDateTime(Timestamp? timestamp)
-    {
-        return timestamp?.ToDateTime().ToUniversalTime()
-               ?? throw new RpcException(new Status(StatusCode.InvalidArgument, "Timestamp value is required."));
     }
 }
