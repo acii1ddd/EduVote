@@ -1,4 +1,4 @@
-namespace EduVote.API.Services;
+namespace EduVote.API.Services.Tools;
 
 /// <summary>
 /// Utility class for parsing and validating GUIDs from string IDs.

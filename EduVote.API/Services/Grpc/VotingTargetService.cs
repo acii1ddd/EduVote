@@ -1,7 +1,8 @@
 using EduVote.API.Mappers;
+using EduVote.API.Services.Tools;
 using EduVote.DAL.Postgresql.Repositories;
 
-namespace EduVote.API.Services;
+namespace EduVote.API.Services.Grpc;
 
 public class VotingTargetService(
     IVotingRepository votingRepository,

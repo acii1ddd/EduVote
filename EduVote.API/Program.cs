@@ -1,4 +1,6 @@
+using EduVote.API;
 using EduVote.API.Services;
+using EduVote.API.Services.Grpc;
 using EduVote.API.WebAppExtensions;
 using EduVote.DAL.Postgresql;
 using EduVote.DAL.Postgresql.Context;
@@ -32,7 +34,8 @@ builder.Services.AddDbContext<EduVoteDbContext>(options =>
 
 builder.Services
     .AddDbInitializer()
-    .AddRepositories();
+    .AddRepositories()
+    .AddApiServices();
 
 builder.WebHost.ConfigureKestrel(options =>
 {

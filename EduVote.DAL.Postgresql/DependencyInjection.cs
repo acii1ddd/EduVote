@@ -5,20 +5,25 @@ namespace EduVote.DAL.Postgresql;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddDbInitializer(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddScoped<DatabaseInitializer>();
+        public IServiceCollection AddDbInitializer()
+        {
+            services.AddScoped<DatabaseInitializer>();
         
-        return services;
-    }
+            return services;
+        }
 
-    public static IServiceCollection AddRepositories(this IServiceCollection services)
-    {
-        services.AddScoped<IVotingRepository, VotingRepository>();
-        services.AddScoped<ICandidateRepository, CandidateRepository>();
-        services.AddScoped<IEducationUnitRepository, EducationUnitRepository>();
-        services.AddScoped<IVotingTargetRepository, VotingTargetRepository>();
+        public IServiceCollection AddRepositories()
+        {
+            services.AddScoped<IVotingRepository, VotingRepository>();
+            services.AddScoped<ICandidateRepository, CandidateRepository>();
+            services.AddScoped<IEducationUnitRepository, EducationUnitRepository>();
+            services.AddScoped<IVotingTargetRepository, VotingTargetRepository>();
+            services.AddScoped<IVoteRepository, VoteRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
         
-        return services;
+            return services;
+        }
     }
 }

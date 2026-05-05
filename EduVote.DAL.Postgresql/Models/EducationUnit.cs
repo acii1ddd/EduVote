@@ -27,6 +27,7 @@ public class EducationUnit : IBaseEntity
     
     public EducationUnit? Parent { get; set; }
     
+    // todo голосование для университета должно быть видно всем пользователям
     public ICollection<EducationUnit> Children { get; set; } = [];
     
     /// <summary>

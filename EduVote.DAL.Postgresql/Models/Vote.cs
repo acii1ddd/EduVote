@@ -1,3 +1,4 @@
+using System.Text.Json;
 using EduVote.DAL.Postgresql.Models.Abstractions;
 
 namespace EduVote.DAL.Postgresql.Models;
@@ -24,17 +25,61 @@ public class Vote : IBaseEntity, ICreatedAt
     public User User { get; set; } = null!;
     
     /// <summary>
-    /// The item of choice that was voted for
+    /// The item of choice that was voted for (Single Choice)
     /// </summary>
-    // todo multiple, rating and open votings
-    public Guid CandidateId { get; set; }
+    public Guid? CandidateId { get; set; }
 
-    public Candidate Candidate { get; set; } = null!;
+    public Candidate? Candidate { get; set; }
     
     /// <summary>
-    /// Hash of the vote
+    /// Selected candidate IDs for Multiple Choice voting (stored as JSON array of GUIDs)
+    /// </summary>
+    public string? SelectedCandidateIds { get; set; }
+
+    /// <summary>
+    /// Rating answers for Rating voting (stored as JSON object: {candidateId: rating})
+    /// Format: {"candidateId1": 5, "candidateId2": 3, ...}
+    /// </summary>
+    public string? RatingAnswers { get; set; }
+
+    /// <summary>
+    /// Text answer for Open Answer voting
+    /// </summary>
+    public string? TextAnswer { get; set; }
+    
+    /// <summary>
+    /// Hash of the vote for verification and blockchain integration
     /// </summary>
     public string VoteHash { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Helper method to deserialize SelectedCandidateIds
+    /// </summary>
+    public List<Guid> GetSelectedCandidateIds()
+    {
+        if (string.IsNullOrEmpty(SelectedCandidateIds))
+            return [];
+        
+        var ids = JsonSerializer
+            .Deserialize<List<string>>(SelectedCandidateIds) ?? [];
+        
+        return ids.Select(Guid.Parse).ToList();
+    }
+
+    /// <summary>
+    /// Helper method to deserialize RatingAnswers 
+    /// Key : value (candidate guid : rating int)
+    /// </summary>
+    public Dictionary<Guid, int> GetRatingAnswers()
+    {
+        if (string.IsNullOrEmpty(RatingAnswers))
+            return [];
+        
+        var jsonDict = JsonSerializer
+            .Deserialize<Dictionary<string, int>>(RatingAnswers) ?? [];
+
+        return jsonDict.ToDictionary(kvp => Guid.Parse(kvp.Key), kvp => kvp.Value);
+    }
 }

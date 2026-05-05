@@ -1,7 +1,8 @@
 using EduVote.API.Mappers;
+using EduVote.API.Services.Tools;
 using EduVote.DAL.Postgresql.Repositories;
 
-namespace EduVote.API.Services;
+namespace EduVote.API.Services.Grpc;
 
 public class CandidateService(
     IVotingRepository votingRepository,
@@ -74,13 +75,22 @@ public class CandidateService(
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
         
+        var voting = await votingRepository.GetByIdAsync(
+            votingId,
+            context.CancellationToken
+        );
+
+        if (voting is null)
+        {
+            throw IdParser.CreateNotFoundException("Voting", request.VotingId);
+        }
+        
         var candidates = await candidateRepository.GetByVotingIdAsync(
             votingId,
             context.CancellationToken
         );
 
         var response = new GetCandidatesResponse();
-        
         response.Candidates.AddRange(candidates.MapToResponseList());
         
         return response;

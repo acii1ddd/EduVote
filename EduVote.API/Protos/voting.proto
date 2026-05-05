@@ -58,6 +58,13 @@ service Votings {
       get: "/api/votings"
     };
   }
+
+  rpc CastVote (CastVoteRequest) returns (CastVoteResponse) {
+    option (google.api.http) = {
+      post: "/api/votings/{voting_id}/vote"
+      body: "*"
+    };
+  }
 }
 
 enum VotingType {
@@ -136,5 +143,24 @@ message VotingResponse {
 }
 
 message GetVotingsResponse {
-  repeated VotingResponse votings = 1; // массив/список
+  repeated VotingResponse votings = 1;
+}
+
+message CastVoteRequest {
+  string voting_id = 1;
+  string user_id = 2;
+  // Single Choice - selected candidate ID
+  string selected_candidate_id = 3;
+  // Multiple Choice - selected candidate IDs
+  repeated string selected_candidate_ids = 4;
+  // Rating - map of candidate ID to rating value (1-5)
+  map<string, int32> rating_answers = 5;
+  // Open Answer - text response
+  string text_answer = 6;
+}
+
+message CastVoteResponse {
+  string vote_id = 1;
+  string vote_hash = 2;
+  google.protobuf.Timestamp created_at = 3;
 }
