@@ -17,15 +17,7 @@ public class VotingTargetRepository(EduVoteDbContext dbContext)
 
         return votingTarget;
     }
-
-    public async Task<VotingTarget?> GetByIdAsync(
-        Guid votingId,
-        CancellationToken cancellationToken = default)
-    {
-        return await dbContext.VotingTargets
-            .FirstOrDefaultAsync(x => x.VotingId == votingId, cancellationToken);
-    }
-
+    
     public async Task<VotingTarget?> GetByVotingAndEducationUnitAsync(
         Guid votingId,
         Guid educationUnitId,

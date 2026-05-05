@@ -6,8 +6,6 @@ public interface IVotingTargetRepository
 {
     Task<VotingTarget> CreateAsync(VotingTarget votingTarget, CancellationToken cancellationToken = default);
 
-    Task<VotingTarget?> GetByIdAsync(Guid votingId, CancellationToken cancellationToken = default);
-
     Task<VotingTarget?> GetByVotingAndEducationUnitAsync(
         Guid votingId,
         Guid educationUnitId,

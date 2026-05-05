@@ -1,4 +1,4 @@
-using EduVote.DAL.Postgresql.Models;
+using EduVote.API.Mappers;
 using EduVote.DAL.Postgresql.Repositories;
 
 namespace EduVote.API.Services;
@@ -9,32 +9,35 @@ public class VotingTargetService(
     IVotingTargetRepository votingTargetRepository)
     : VotingTargets.VotingTargetsBase
 {
-    public override async Task<VotingTargetResponse> AddTargetAsync(
+    public override async Task<VotingTargetResponse> AddTarget(
         AddVotingTargetRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
         var educationUnitId = IdParser.ParseId(request.EducationUnitId, "EducationUnit");
-
+    
         var voting = await votingRepository.GetByIdAsync(votingId, context.CancellationToken);
         if (voting is null)
         {
             throw IdParser.CreateNotFoundException("Voting", request.VotingId);
         }
-
+    
         var educationUnit = await educationUnitRepository.GetByIdAsync(
             educationUnitId,
-            context.CancellationToken);
+            context.CancellationToken
+        );
+        
         if (educationUnit is null)
         {
             throw IdParser.CreateNotFoundException("EducationUnit", request.EducationUnitId);
         }
-
+    
         var existingTarget = await votingTargetRepository.GetByVotingAndEducationUnitAsync(
             votingId,
             educationUnitId,
-            context.CancellationToken);
-
+            context.CancellationToken
+        );
+    
         if (existingTarget is not null)
         {
             throw new RpcException(new Status(
@@ -42,50 +45,63 @@ public class VotingTargetService(
                 $"Target for voting '{votingId}' and education unit '{educationUnitId}' already exists."));
         }
 
-        var target = new VotingTarget
-        {
-            VotingId = votingId,
-            EducationUnitId = educationUnitId
-        };
+        var createdTarget = await votingTargetRepository
+            .CreateAsync(request.MapToEntity(), context.CancellationToken);
 
-        await votingTargetRepository.CreateAsync(target, context.CancellationToken);
-
-        return new VotingTargetResponse
-        {
-            VotingId = votingId.ToString(),
-            EducationUnitId = educationUnitId.ToString()
-        };
+        return createdTarget.MapToResponse();
     }
-
-    public override async Task<Empty> DeleteTargetAsync(
+    
+    public override async Task<Empty> DeleteTarget(
         DeleteVotingTargetRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        var targetId = IdParser.ParseId(request.TargetId, "VotingTarget");
-
-        var voting = await votingRepository.GetByIdAsync(votingId, context.CancellationToken);
+        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "EducationUnit");
+    
+        var voting = await votingRepository
+            .GetByIdAsync(votingId, context.CancellationToken);
+        
         if (voting is null)
         {
             throw IdParser.CreateNotFoundException("Voting", request.VotingId);
         }
-        // todo переделать по составному ключу
-        var target = await votingTargetRepository.GetByIdAsync(targetId, context.CancellationToken);
+        
+        var target = await votingTargetRepository
+            .GetByVotingAndEducationUnitAsync(votingId, educationUnitId, context.CancellationToken);
+        
+        // noting to delete
         if (target is null)
         {
-            throw IdParser.CreateNotFoundException("VotingTarget", request.TargetId);
+            throw IdParser.CreateNotFoundException("VotingTarget", $"({votingId}, {educationUnitId})");
         }
-
-        if (target.VotingId != votingId)
-        {
-            throw new RpcException(new Status(
-                StatusCode.InvalidArgument,
-                $"Target '{targetId}' does not belong to voting '{votingId}'."));
-        }
-
-        await votingTargetRepository.DeleteAsync(target, context.CancellationToken);
+        
+        await votingTargetRepository
+            .DeleteAsync(target, context.CancellationToken);
+        
         return new Empty();
     }
-    
-    // todo операции чтения 
+
+    public override async Task<GetVotingTargetsResponse> GetTargets(
+        GetVotingTargetsRequest request, 
+        ServerCallContext context)
+    {
+        var votingId = IdParser.ParseId(request.VotingId, "Voting");
+        
+        var voting = await votingRepository
+            .GetByIdAsync(votingId, context.CancellationToken);
+        
+        if (voting is null)
+        {
+            throw IdParser.CreateNotFoundException("Voting", request.VotingId);
+        }
+        
+        var votingTargets = await votingTargetRepository.GetByVotingIdAsync(
+            votingId, context.CancellationToken
+        );
+
+        var response = new GetVotingTargetsResponse();
+        response.Targets.AddRange(votingTargets.MapToResponseList());
+
+        return response;
+    }
 }

@@ -114,13 +114,13 @@ public static class VotingMapper
         };
     }
     
-    public static IEnumerable<VotingResponse> MapToResponseList(this IEnumerable<DbVoting> request)
+    public static IEnumerable<VotingResponse> MapToResponseList(this IEnumerable<DbVoting> source)
     {
-        return request.Adapt<IEnumerable<VotingResponse>>(Config);
+        return source.Adapt<IEnumerable<VotingResponse>>(Config);
     }
     
-    public static IEnumerable<DbVoting> MapToEntityList(this IEnumerable<VotingResponse> request)
+    public static IEnumerable<DbVoting> MapToEntityList(this IEnumerable<VotingResponse> source)
     {
-        return request.Adapt<IEnumerable<DbVoting>>(Config);
+        return source.Adapt<IEnumerable<DbVoting>>(Config);
     }
 }

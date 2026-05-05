@@ -17,7 +17,13 @@ service VotingTargets {
 
   rpc DeleteTarget (DeleteVotingTargetRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/api/votings/{voting_id}/targets/{target_id}"
+      delete: "/api/votings/{voting_id}/targets/{education_unit_id}"
+    };
+  }
+
+  rpc GetTargets (GetVotingTargetsRequest) returns (GetVotingTargetsResponse) {
+    option (google.api.http) = {
+      get: "/api/votings/{voting_id}/targets"
     };
   }
 }
@@ -29,7 +35,15 @@ message AddVotingTargetRequest {
 
 message DeleteVotingTargetRequest {
   string voting_id = 1;
-  string target_id = 2;
+  string education_unit_id = 2;
+}
+
+message GetVotingTargetsRequest {
+  string voting_id = 1;
+}
+
+message GetVotingTargetsResponse {
+  repeated VotingTargetResponse targets = 1; // массив/список
 }
 
 message VotingTargetResponse {
