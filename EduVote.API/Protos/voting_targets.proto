@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option csharp_namespace = "EduVote.API";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+package edu_vote.v1.voting_targets;
+
+service VotingTargets {
+  rpc AddTarget (AddVotingTargetRequest) returns (VotingTargetResponse) {
+    option (google.api.http) = {
+      post: "/api/votings/{voting_id}/targets"
+      body: "*"
+    };
+  }
+
+  rpc DeleteTarget (DeleteVotingTargetRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/votings/{voting_id}/targets/{target_id}"
+    };
+  }
+}
+
+message AddVotingTargetRequest {
+  string voting_id = 1;
+  string education_unit_id = 2;
+}
+
+message DeleteVotingTargetRequest {
+  string voting_id = 1;
+  string target_id = 2;
+}
+
+message VotingTargetResponse {
+  string voting_id = 1;
+  string education_unit_id = 2;
+}

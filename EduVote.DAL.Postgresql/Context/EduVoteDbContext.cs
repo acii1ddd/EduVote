@@ -20,6 +20,8 @@ public class EduVoteDbContext(DbContextOptions<EduVoteDbContext> options)
 
     public DbSet<EducationUnit> EducationUnits { get; set; }
     
+    public DbSet<UserEducationUnit> UserEducationUnits { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EduVoteDbContext).Assembly);

@@ -26,6 +26,7 @@ public class Vote : IBaseEntity, ICreatedAt
     /// <summary>
     /// The item of choice that was voted for
     /// </summary>
+    // todo multiple, rating and open votings
     public Guid CandidateId { get; set; }
 
     public Candidate Candidate { get; set; } = null!;

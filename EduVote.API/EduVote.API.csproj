@@ -17,6 +17,7 @@
           <Generator>MSBuild:Compile</Generator>
         </Protobuf>
         <Protobuf Include="Protos\voting.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\voting_targets.proto" GrpcServices="Server"/>
     </ItemGroup>
 
     <ItemGroup>
