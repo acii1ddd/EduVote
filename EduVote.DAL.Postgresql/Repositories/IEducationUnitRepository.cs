@@ -12,6 +12,16 @@ public interface IEducationUnitRepository
 
     Task<IEnumerable<EducationUnit>> GetByParentIdAsync(Guid parentId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Get all parent nodes for given education units (traverses up the hierarchy tree).
+    /// For example: Group -> Course -> Speciality -> Faculty -> University
+    /// </summary>
+    /// <returns>Returns direct matching + all parents</returns>
+    Task<IEnumerable<Guid>> GetAllParentIdsAsync(
+        IEnumerable<Guid> educationUnitIds,
+        CancellationToken cancellationToken = default
+    );
+
     Task<EducationUnit?> UpdateAsync(EducationUnit educationUnit, CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

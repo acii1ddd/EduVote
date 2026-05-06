@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EduVote.DAL.Postgresql.Repositories;
 
-public class UserRepository(EduVoteDbContext dbContext) : IUserRepository
+public class UserRepository(EduVoteDbContext dbContext) 
+    : IUserRepository
 {
     public async Task<User?> GetByIdWithEducationUnitsAsync(Guid userId, 
         CancellationToken cancellationToken = default)
@@ -13,5 +14,13 @@ public class UserRepository(EduVoteDbContext dbContext) : IUserRepository
             .Include(u => u.UserEducationUnits)
                 .ThenInclude(ueu => ueu.EducationUnit)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+    }
+
+    public async Task<IEnumerable<User>> GetUsersWithRolesAsync(CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Users
+            .AsNoTracking()
+            .Include(x => x.UserRole)
+            .ToListAsync(cancellationToken);
     }
 }

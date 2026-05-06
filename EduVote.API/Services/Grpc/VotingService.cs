@@ -15,7 +15,8 @@ public class VotingService(
     IUserRepository userRepository,
     ICandidateRepository candidateRepository,
     IVotingTargetRepository votingTargetRepository,
-    IVoteHashService voteHashService)
+    IVoteHashService voteHashService,
+    IEducationUnitRepository educationUnitRepository)
     : Votings.VotingsBase
 {
     public override async Task<VotingResponse> CreateVoting(CreateVotingRequest request, ServerCallContext context)
@@ -188,34 +189,48 @@ public class VotingService(
             throw IdParser.CreateNotFoundException("User", request.UserId);
         }
 
-        // User's educationUnits
-        var userEducationUnitIds = user.UserEducationUnits
-            .Select(ueu => ueu.EducationUnitId)
-            .ToList();
-
+        // Get voting targets (education units where this voting is restricted to)
         var votingTargets = await votingTargetRepository
             .GetByVotingIdAsync(votingId, context.CancellationToken);
 
-        // Voting's educationUnits
         var targetEducationUnitIds = votingTargets
             .Select(vt => vt.EducationUnitId)
             .ToList();
 
-        // either voting has no targets -> all users access
-        // or users targets has at least one common with voting targets
+        // If voting has no targets -> it's public (all users can vote)
         var isPublicVoting = targetEducationUnitIds.Count == 0;
-        var hasMatchingUnit = userEducationUnitIds
-            .Any(unitId => targetEducationUnitIds.Contains(unitId));
-        
-        // access denied
-        if (!isPublicVoting && !hasMatchingUnit)
+
+        if (isPublicVoting)
         {
-            throw new RpcException(new Status(
-                StatusCode.PermissionDenied,
-                "User does not have access to vote in this voting."));
+            // Public voting - access allowed for all users
         }
-        
-        // todo голосование для университета должно быть видно всем пользователям
+        else
+        {
+            // Voting has restrictions - check if user has access
+            var userEducationUnitIds = user.UserEducationUnits
+                .Select(ueu => ueu.EducationUnitId)
+                .ToList();
+
+            // Get all parents for user's education units
+            // E.g., Group 1-SO-1 -> Course 2 -> Speciality IS -> Faculty IT -> University
+            var userAllUnitsWithAncestorIds = (
+                    await educationUnitRepository
+                        .GetAllParentIdsAsync(userEducationUnitIds, context.CancellationToken)
+            )
+            .ToList();
+            
+            // Check if user has access: 
+            // User must have at least one matching unit with voting target
+            var hasAccess = targetEducationUnitIds
+                .Any(targetId => userAllUnitsWithAncestorIds.Contains(targetId));
+
+            if (!hasAccess)
+            {
+                throw new RpcException(new Status(
+                    StatusCode.PermissionDenied,
+                    "User does not have access to vote in this voting."));
+            }
+        }
         
         var existingVote = await voteRepository
             .GetUserVoteAsync(votingId, userId, context.CancellationToken);
@@ -236,7 +251,7 @@ public class VotingService(
         var voteHash = voteHashService
             .GenerateHash(votingId, userId, voting.Type, request);
 
-        // update existing vote way
+        // Update existing vote way
         if (existingVote is not null)
         {
             UpdateExistingVote(existingVote, request, voteHash, voting.Type);
@@ -246,7 +261,7 @@ public class VotingService(
             return existingVote.MapToResponse();
         }
 
-        // create new vote way
+        // Create new vote way
         var newVote = CreateNewVote(votingId, userId, request, voteHash, voting.Type);
         
         var createdVote = await voteRepository

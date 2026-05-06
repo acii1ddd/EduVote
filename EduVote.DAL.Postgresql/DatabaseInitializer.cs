@@ -84,7 +84,7 @@ public class DatabaseInitializer(
         {
             Id = Guid.NewGuid(),
             Name = "Государственный университет",
-            Type = EducationUnitType.School,
+            Type = EducationUnitType.University,
             ParentId = null
         };
 

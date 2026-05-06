@@ -44,6 +44,43 @@ public class EducationUnitRepository(EduVoteDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<Guid>> GetAllParentIdsAsync(
+        IEnumerable<Guid> educationUnitIds,
+        CancellationToken cancellationToken = default)
+    {
+        var unitIds = educationUnitIds.ToList();
+        
+        if (unitIds.Count == 0)
+        {
+            return [];
+        }
+
+        var result = await dbContext.EducationUnits
+            .FromSqlInterpolated($"""
+
+                                          WITH RECURSIVE parent_hierarchy AS (
+                                              SELECT "Id", "ParentId"
+                                              FROM "EducationUnits"
+                                              WHERE "Id" IN (SELECT UNNEST({unitIds}))
+
+                                              UNION ALL
+
+                                              SELECT eu."Id", eu."ParentId"
+                                              FROM "EducationUnits" eu
+                                              JOIN parent_hierarchy ph 
+                                                  ON eu."Id" = ph."ParentId"
+                                          )
+                                          SELECT DISTINCT "Id"
+                                          FROM parent_hierarchy
+                                      
+                                  """)
+            .AsNoTracking()
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        return result;
+    }
+
     public async Task<EducationUnit?> UpdateAsync(
         EducationUnit educationUnit,
         CancellationToken cancellationToken = default)
