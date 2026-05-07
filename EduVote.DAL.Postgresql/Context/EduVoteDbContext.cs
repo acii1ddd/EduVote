@@ -22,6 +22,10 @@ public class EduVoteDbContext(DbContextOptions<EduVoteDbContext> options)
     
     public DbSet<UserEducationUnit> UserEducationUnits { get; set; }
     
+    public DbSet<VotingResult> VotingResults { get; set; }
+    
+    public DbSet<BlockchainRecord> BlockchainRecords { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EduVoteDbContext).Assembly);

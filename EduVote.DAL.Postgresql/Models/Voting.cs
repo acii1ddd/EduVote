@@ -42,7 +42,8 @@ public class Voting : IBaseEntity, ICreatedAt
     /// <summary>
     /// Voting status
     /// </summary>
-    public VotingStatus VotingStatus { get; set; }
+    // todo rename to Status instead of VotingStatus and make migration
+    public VotingStatus Status { get; set; }
     
     /// <summary>
     /// Votes that already cast in this voting
@@ -58,6 +59,11 @@ public class Voting : IBaseEntity, ICreatedAt
     /// All restrictions on users who can vote in this voting
     /// </summary>
     public ICollection<VotingTarget> VotingTargets { get; set; } = [];
+    
+    /// <summary>
+    /// Voting result (calculated after voting ends)
+    /// </summary>
+    public VotingResult? VotingResult { get; set; }
     
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
 }

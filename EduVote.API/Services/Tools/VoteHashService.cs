@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 
 namespace EduVote.API.Services.Tools;
@@ -15,7 +12,8 @@ public interface IVoteHashService
     );
 }
 
-public class VoteHashService : IVoteHashService
+public class VoteHashService 
+    : IVoteHashService
 {
     public string GenerateHash(
         Guid votingId,

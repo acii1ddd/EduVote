@@ -27,7 +27,7 @@ public class VotingConfiguration : IEntityTypeConfiguration<Voting>
         builder.Property(x => x.AllowVoteChange).IsRequired();
         builder.Property(x => x.StartTime).IsRequired();
         builder.Property(x => x.EndTime).IsRequired();
-        builder.Property(x => x.VotingStatus).IsRequired();
+        builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.CreatedAt).IsRequired();
         
         // Votes
@@ -44,5 +44,11 @@ public class VotingConfiguration : IEntityTypeConfiguration<Voting>
         builder.HasMany(x => x.VotingTargets)
             .WithOne(x => x.Voting)
             .HasForeignKey(x => x.VotingId);
+        
+        // VotingResult (one-to-one)
+        builder.HasOne(x => x.VotingResult)
+            .WithOne(x => x.Voting)
+            .HasForeignKey<VotingResult>(x => x.VotingId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
