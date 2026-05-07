@@ -18,7 +18,8 @@ public class VotingService(
     IVoteHashService voteHashService,
     IEducationUnitRepository educationUnitRepository,
     IVotingResultRepository votingResultRepository,
-    VotingLifecycleService votingLifecycleService)
+    VotingLifecycleService votingLifecycleService, 
+    ILogger<VotingService> logger)
     : Votings.VotingsBase
 {
     public override async Task<VotingResponse> CreateVoting(
@@ -322,6 +323,9 @@ public class VotingService(
                 "Results will be available in the next minute."));
         }
         
+        logger.LogInformation("Results for voting {VotingId} requested. " +
+            "Existing result is not null!:", votingId);
+        
         return MapVotingResultToResponse(existingResult);
     }
 
@@ -338,30 +342,26 @@ public class VotingService(
         // Deserialize result data
         if (string.IsNullOrEmpty(votingResult.ResultData)) return response;
         
+        logger.LogInformation("[MapVotingResultToResponse] ResultData " +
+            "for voting is {Result}. ", votingResult.ResultData);
+        
         try
         {
-            var resultDict = JsonSerializer
-                .Deserialize<Dictionary<string, string>>(votingResult.ResultData);
+            var jsonDoc = JsonDocument.Parse(votingResult.ResultData);
             
-            var structuredResult = new Struct();
-            
-            foreach (var kvp in resultDict!)
+            foreach (var property in jsonDoc.RootElement.EnumerateObject())
             {
-                structuredResult.Fields[kvp.Key] = Value.ForString(kvp.Value);
-            }
+                var structValue = Struct.Parser.ParseJson(property.Value.GetRawText());
             
-            // var jsonDoc = JsonDocument.Parse(votingResult.ResultData);
-            //
-            // foreach (var property in jsonDoc.RootElement.EnumerateObject())
-            // {
-            //     var structValue = Struct.Parser.ParseJson(property.Value.GetRawText());
-            //
-            //     response.Results.Add(property.Name, structValue);
-            // }
+                response.Results.Add(property.Name, structValue);
+            }
+
+            logger.LogInformation("[MapVotingResultToResponse] Results was mapped successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Deserialization fails, results will be empty");
+            logger.LogCritical("[MapVotingResultToResponse] Deserialization fails, " +
+                "results will be empty, error: {ErrorMessage}", ex.Message);
         }
 
         return response;

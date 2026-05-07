@@ -5,8 +5,7 @@ using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 namespace EduVote.API.Services.CronJobs;
 
 public class VotingExpirationBgService(
-    IVotingRepository votingRepository, 
-    VotingLifecycleService votingFinalizationService, 
+    IServiceScopeFactory scopeFactory, 
     ILogger<VotingExpirationBgService> logger)
     : BackgroundService
 {
@@ -14,26 +13,40 @@ public class VotingExpirationBgService(
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var now = DateTime.UtcNow;
-
-            // todo выбирать только active голосования
-            var votings = await votingRepository
-                .GetAllAsync(stoppingToken);
-
-            foreach (var voting in votings)
-            {
-                var isActiveVoting = voting.Status != DbVotingStatus.Finished;
-                var isExpiredVoting = now >= voting.EndTime; 
-                
-                if (isActiveVoting && isExpiredVoting)
-                {
-                    await votingFinalizationService.FinalizeVotingAsync(voting.Id, stoppingToken);
-                    
-                    logger.LogInformation("Voting with id {VotingId} was expired", voting.Id);
-                }
-            }
+            await ProcessExpiredVotingsAsync(stoppingToken);
 
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+        }
+    }
+
+    public async Task ProcessExpiredVotingsAsync(CancellationToken stoppingToken)
+    {
+        using var scope = scopeFactory.CreateScope();
+            
+        var votingRepository = scope.ServiceProvider
+            .GetRequiredService<IVotingRepository>();
+            
+        var votingLyfecycleService = scope.ServiceProvider
+            .GetRequiredService<VotingLifecycleService>();
+            
+        var now = DateTime.UtcNow;
+
+        // todo выбирать только active голосования
+        var votings = await votingRepository
+            .GetAllAsync(stoppingToken);
+
+        foreach (var voting in votings)
+        {
+            var isNotFinished = voting.Status != DbVotingStatus.Finished;
+            var isExpired = now >= voting.EndTime; 
+                
+            if (isNotFinished && isExpired)
+            {
+                await votingLyfecycleService.FinalizeVotingAsync(voting.Id, stoppingToken);
+                    
+                logger.LogInformation("Voting with id {VotingId} was expired " +
+                    "and result data was appeared at VotingResults table", voting.Id);
+            }
         }
     }
 }
