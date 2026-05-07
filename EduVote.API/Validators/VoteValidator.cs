@@ -15,11 +15,11 @@ public static class VoteValidator
         DbVoting voting,
         IReadOnlyList<Candidate> candidates)
     {
-        if (voting.VotingStatus != DbVotingStatus.Active)
+        if (voting.Status != DbVotingStatus.Active)
         {
             throw new RpcException(new Status(
                 StatusCode.FailedPrecondition,
-                $"Voting is not active. Current status: {voting.VotingStatus}"));
+                $"Voting is not active. Current status: {voting.Status}"));
         }
 
         var candidateIds = candidates

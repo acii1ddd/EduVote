@@ -288,7 +288,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = false,
                 StartTime = now.AddDays(-2),
                 EndTime = now.AddDays(5),
-                VotingStatus = VotingStatus.Active,
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
@@ -335,7 +335,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = false,
                 StartTime = now.AddDays(-10),
                 EndTime = now.AddDays(-1),
-                VotingStatus = VotingStatus.Finished,
+                Status = VotingStatus.Finished,
                 Candidates =
                 [
                     new Candidate
@@ -382,7 +382,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = true,
                 StartTime = now.AddDays(-1),
                 EndTime = now.AddDays(14),
-                VotingStatus = VotingStatus.Active,
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
@@ -437,7 +437,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = true,
                 StartTime = now.AddDays(3),
                 EndTime = now.AddDays(21),
-                VotingStatus = VotingStatus.Draft,
+                Status = VotingStatus.Draft,
                 Candidates =
                 [
                     new Candidate
@@ -492,7 +492,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = true,
                 StartTime = now.AddDays(-7),
                 EndTime = now.AddDays(7),
-                VotingStatus = VotingStatus.Active,
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
@@ -539,7 +539,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = true,
                 StartTime = now.AddDays(-20),
                 EndTime = now.AddDays(-2),
-                VotingStatus = VotingStatus.Finished,
+                Status = VotingStatus.Finished,
                 Candidates =
                 [
                     new Candidate
@@ -586,7 +586,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = true,
                 StartTime = now,
                 EndTime = now.AddDays(30),
-                VotingStatus = VotingStatus.Active,
+                Status = VotingStatus.Active,
                 Candidates = []
             },
             new()
@@ -599,7 +599,7 @@ public class DatabaseInitializer(
                 AllowVoteChange = true,
                 StartTime = now.AddDays(1),
                 EndTime = now.AddDays(40),
-                VotingStatus = VotingStatus.Draft,
+                Status = VotingStatus.Draft,
                 Candidates = []
             }
         };

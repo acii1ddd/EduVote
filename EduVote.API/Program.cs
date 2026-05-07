@@ -1,5 +1,4 @@
 using EduVote.API;
-using EduVote.API.Services;
 using EduVote.API.Services.Grpc;
 using EduVote.API.WebAppExtensions;
 using EduVote.DAL.Postgresql;

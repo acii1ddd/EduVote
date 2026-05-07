@@ -1,4 +1,3 @@
-using System.Text.Json;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
 using EduVote.API.Validators;
@@ -6,6 +5,7 @@ using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Repositories;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
+using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 
 namespace EduVote.API.Services.Grpc;
 
@@ -16,10 +16,13 @@ public class VotingService(
     ICandidateRepository candidateRepository,
     IVotingTargetRepository votingTargetRepository,
     IVoteHashService voteHashService,
-    IEducationUnitRepository educationUnitRepository)
+    IEducationUnitRepository educationUnitRepository,
+    IVotingResultRepository votingResultRepository,
+    VotingLifecycleService votingLifecycleService)
     : Votings.VotingsBase
 {
-    public override async Task<VotingResponse> CreateVoting(CreateVotingRequest request, ServerCallContext context)
+    public override async Task<VotingResponse> CreateVoting(
+        CreateVotingRequest request, ServerCallContext context)
     {
         VotingValidator.ValidateDateRange(request.StartTime, request.EndTime);
 
@@ -31,18 +34,13 @@ public class VotingService(
         return createdVoting.MapToResponse();
     }
 
-    public override async Task<VotingResponse> UpdateVoting(UpdateVotingRequest request, ServerCallContext context)
+    public override async Task<VotingResponse> UpdateVoting(
+        UpdateVotingRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
         VotingValidator.ValidateDateRange(request.StartTime, request.EndTime);
         
-        var existingVoting = await votingRepository
-            .GetByIdAsync(votingId, context.CancellationToken);
-        
-        if (existingVoting is null)
-        {
-            throw IdParser.CreateNotFoundException("Voting", request.Id);
-        }
+        var existingVoting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
         var updatedVoting = request.MapToEntity();
         
@@ -60,103 +58,73 @@ public class VotingService(
         return existingVoting.MapToResponse();
     }
 
-    public override async Task<Empty> DeleteVoting(DeleteVotingRequest request, ServerCallContext context)
+    public override async Task<Empty> DeleteVoting(
+        DeleteVotingRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var existingVoting = await votingRepository.GetByIdAsync(votingId, context.CancellationToken);
-        
-        if (existingVoting is null)
-        {
-            throw IdParser.CreateNotFoundException("Voting", request.Id);
-        }
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
         
         await votingRepository
-            .DeleteAsync(existingVoting, context.CancellationToken);
+            .DeleteAsync(voting, context.CancellationToken);
 
         return new Empty();
     }
 
-    public override async Task<VotingResponse> StartVoting(VotingActionRequest request, ServerCallContext context)
+    public override async Task<Empty> StartVoting(
+        VotingActionRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
-
-        return await ChangeStatus(
+        
+        await votingLifecycleService.ChangeStatusAsync(
             votingId,
             DbVotingStatus.Active,
             [DbVotingStatus.Draft, DbVotingStatus.Paused],
             context.CancellationToken
         );
+
+        return new Empty();
     }
 
-    public override async Task<VotingResponse> PauseVoting(VotingActionRequest request, ServerCallContext context)
+    public override async Task<Empty> PauseVoting(
+        VotingActionRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        return await ChangeStatus(
+        await votingLifecycleService.ChangeStatusAsync(
             votingId,
             DbVotingStatus.Paused,
             [DbVotingStatus.Active],
-            context.CancellationToken);
+            context.CancellationToken
+        );
+
+        return new Empty();
     }
 
-    public override async Task<VotingResponse> FinishVoting(VotingActionRequest request, ServerCallContext context)
+    public override async Task<Empty> FinishVoting(
+        VotingActionRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        return await ChangeStatus(
-            votingId,
-            DbVotingStatus.Finished,
-            [DbVotingStatus.Active, DbVotingStatus.Paused],
-            context.CancellationToken);
+        await votingLifecycleService
+            .FinalizeVotingAsync(votingId, context.CancellationToken);
+        
+        return new Empty();
     }
 
-    private async Task<VotingResponse> ChangeStatus(
-        Guid votingId,
-        DbVotingStatus newStatus,
-        IReadOnlyCollection<DbVotingStatus> allowedCurrentStatuses,
-        CancellationToken cancellationToken)
-    {
-        var existingVoting = await votingRepository
-            .GetByIdAsync(votingId, cancellationToken);
-        
-        if (existingVoting is null)
-        {
-            throw new RpcException(new Status(StatusCode.NotFound, $"Voting with id {votingId} was not found."));
-        }
-
-        if (!allowedCurrentStatuses.Contains(existingVoting.VotingStatus))
-        {
-            throw new RpcException(new Status(
-                StatusCode.FailedPrecondition,
-                $"Voting {votingId} cannot be moved from {existingVoting.VotingStatus} to {newStatus}."));
-        }
-
-        existingVoting.VotingStatus = newStatus;
-        
-        await votingRepository
-            .SaveChangesAsync(cancellationToken);
-
-        return existingVoting.MapToResponse();
-    }
-
-    public override async Task<VotingResponse> GetVoting(GetVotingRequest request, ServerCallContext context)
+    public override async Task<VotingResponse> GetVoting(
+        GetVotingRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var existingVoting = await votingRepository
-            .GetByIdAsync(votingId, context.CancellationToken);
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
         
-        if (existingVoting is null)
-        {
-            throw IdParser.CreateNotFoundException("Voting", request.Id);
-        }
-        
-        return existingVoting.MapToResponse();
+        return voting.MapToResponse();
     }
 
     // todo пагинация
-    public override async Task<GetVotingsResponse> GetVotings(Empty request, ServerCallContext context)
+    public override async Task<GetVotingsResponse> GetVotings(
+        Empty request, ServerCallContext context)
     {
         var existingVotings = await votingRepository
             .GetAllAsync(context.CancellationToken);
@@ -173,13 +141,7 @@ public class VotingService(
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
         var userId = IdParser.ParseId(request.UserId, "User");
 
-        var voting = await votingRepository
-            .GetByIdAsync(votingId, context.CancellationToken);
-        
-        if (voting is null)
-        {
-            throw IdParser.CreateNotFoundException("Voting", request.VotingId);
-        }
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
         var user = await userRepository
             .GetByIdWithEducationUnitsAsync(userId, context.CancellationToken);
@@ -301,7 +263,10 @@ public class VotingService(
     }
     
 
-    private static void PopulateVoteData(Vote vote, CastVoteRequest request, DbVotingType votingType)
+    private static void PopulateVoteData(
+        Vote vote, 
+        CastVoteRequest request, 
+        DbVotingType votingType)
     {
         vote.CandidateId = null;
         vote.SelectedCandidateIds = null;
@@ -330,4 +295,192 @@ public class VotingService(
                 throw new ArgumentOutOfRangeException(nameof(votingType), votingType, "Unknown vote type");
         }
     }
+
+    public override async Task<VotingResultsResponse> GetResults(
+        GetVotingRequest request, ServerCallContext context)
+    {
+        var votingId = IdParser.ParseId(request.Id, "Voting");
+        
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
+
+        // Check for voting is finished
+        if (voting.Status != DbVotingStatus.Finished)
+        {
+            throw new RpcException(new Status(
+                StatusCode.FailedPrecondition,
+                "Voting is not finished yet."));
+        }
+        
+        var existingResult = await votingResultRepository
+            .GetByVotingIdAsync(votingId, context.CancellationToken);
+        
+        // Bg job will calculate the results soon
+        if (existingResult is null)
+        {
+            throw new RpcException(new Status(
+                StatusCode.Unavailable,
+                "Results will be available in the next minute."));
+        }
+        
+        return MapVotingResultToResponse(existingResult);
+    }
+
+    private VotingResultsResponse MapVotingResultToResponse(VotingResult votingResult)
+    {
+        var response = new VotingResultsResponse
+        {
+            VotingId = votingResult.VotingId.ToString(),
+            ResultHash = votingResult.ResultHash,
+            CalculatedAt = votingResult.CalculatedAt.ToUniversalTime().ToTimestamp(),
+            TotalVotes = votingResult.TotalVotes
+        };
+
+        // Deserialize result data
+        if (string.IsNullOrEmpty(votingResult.ResultData)) return response;
+        
+        try
+        {
+            var resultDict = JsonSerializer
+                .Deserialize<Dictionary<string, string>>(votingResult.ResultData);
+            
+            var structuredResult = new Struct();
+            
+            foreach (var kvp in resultDict!)
+            {
+                structuredResult.Fields[kvp.Key] = Value.ForString(kvp.Value);
+            }
+            
+            // var jsonDoc = JsonDocument.Parse(votingResult.ResultData);
+            //
+            // foreach (var property in jsonDoc.RootElement.EnumerateObject())
+            // {
+            //     var structValue = Struct.Parser.ParseJson(property.Value.GetRawText());
+            //
+            //     response.Results.Add(property.Name, structValue);
+            // }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Deserialization fails, results will be empty");
+        }
+
+        return response;
+    }
+    
+    private async Task<DbVoting> GetVotingOrThrowAsync(
+        Guid votingId,
+        CancellationToken cancellationToken)
+    {
+        var existingVoting = await votingRepository
+            .GetByIdAsync(votingId, cancellationToken);
+
+        if (existingVoting is null)
+        {
+            throw IdParser.CreateNotFoundException("Voting", votingId.ToString());
+        }
+
+        return existingVoting;
+    }
+    
+    // public override async Task<VotingStatsResponse> GetStats(
+    //     GetVotingRequest request, ServerCallContext context)
+    // {
+    //     var votingId = IdParser.ParseId(request.Id, "Voting");
+    //
+    //     var voting = await votingRepository
+    //         .GetByIdAsync(votingId, context.CancellationToken);
+    //     
+    //     if (voting is null)
+    //     {
+    //         throw IdParser.CreateNotFoundException("Voting", request.Id);
+    //     }
+    //
+    //     var votes = await voteRepository
+    //         .GetByVotingIdAsync(votingId, context.CancellationToken);
+    //     
+    //     var candidates = await candidateRepository
+    //         .GetByVotingIdAsync(votingId, context.CancellationToken);
+    //
+    //     var candidatesList = candidates.ToList();
+    //
+    //     var totalVotes = votes.Count();
+    //     var participationPercentage = candidatesList.Count != 0
+    //         ? (totalVotes * 100) / Math.Max(1, candidatesList.Count) 
+    //         : 0;
+    //
+    //     var candidateStats = new List<CandidateStats>();
+    //     var voteDistribution = new Dictionary<string, int>();
+    //
+    //     foreach (var candidate in candidatesList)
+    //     {
+    //         var candidateVoteCount = votes.Count(v => v.CandidateId == candidate.Id);
+    //         var percentage = totalVotes > 0 ? (candidateVoteCount * 100.0) / totalVotes : 0;
+    //
+    //         candidateStats.Add(new CandidateStats
+    //         {
+    //             CandidateId = candidate.Id.ToString(),
+    //             CandidateTitle = candidate.Title,
+    //             VoteCount = candidateVoteCount,
+    //             Percentage = percentage
+    //         });
+    //
+    //         voteDistribution[candidate.Id.ToString()] = candidateVoteCount;
+    //     }
+    //
+    //     var response = new VotingStatsResponse
+    //     {
+    //         VotingId = votingId.ToString(),
+    //         TotalVotes = totalVotes,
+    //         ParticipationPercentage = participationPercentage
+    //     };
+    //
+    //     response.CandidateStats.AddRange(candidateStats);
+    //     response.VoteDistribution.Add(voteDistribution);
+    //
+    //     return response;
+    // }
+    //
+    // public override async Task<VotingVerificationResponse> GetVerification(
+    //     GetVotingRequest request, ServerCallContext context)
+    // {
+    //     var votingId = IdParser.ParseId(request.Id, "Voting");
+    //
+    //     var voting = await votingRepository
+    //         .GetByIdAsync(votingId, context.CancellationToken);
+    //     
+    //     if (voting is null)
+    //     {
+    //         throw IdParser.CreateNotFoundException("Voting", request.Id);
+    //     }
+    //
+    //     var votingResult = await votingResultRepository.GetByVotingIdAsync(votingId, context.CancellationToken);
+    //     if (votingResult is null)
+    //     {
+    //         throw new RpcException(new Status(StatusCode.NotFound, "Voting results not yet calculated"));
+    //     }
+    //
+    //     var response = new VotingVerificationResponse
+    //     {
+    //         VotingId = votingId.ToString(),
+    //         ResultHash = votingResult.ResultHash,
+    //         VerifiedAt = votingResult.CalculatedAt.ToUniversalTime().ToTimestamp()
+    //     };
+    //
+    //     // Get blockchain record if exists
+    //     var blockchainRecord = await blockchainRecordRepository.GetByVotingIdAsync(votingId, context.CancellationToken);
+    //     if (blockchainRecord is not null)
+    //     {
+    //         response.Blockchain = new BlockchainVerification
+    //         {
+    //             TransactionHash = blockchainRecord.TransactionHash ?? string.Empty,
+    //             VotesHash = blockchainRecord.VotesHash ?? string.Empty,
+    //             BlockNumber = blockchainRecord.BlockNumber ?? 0,
+    //             Network = blockchainRecord.Network,
+    //             Status = blockchainRecord.Status,
+    //             ErrorMessage = blockchainRecord.ErrorMessage ?? string.Empty
+    //         };
+    //     }
+    //
+    //     return response;
+    // }
 }

@@ -22,7 +22,9 @@ public static class DependencyInjection
             services.AddScoped<IVotingTargetRepository, VotingTargetRepository>();
             services.AddScoped<IVoteRepository, VoteRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-        
+            services.AddScoped<IVotingResultRepository, VotingResultRepository>();
+            services.AddScoped<IBlockchainRecordRepository, BlockchainRecordRepository>();
+            
             return services;
         }
     }

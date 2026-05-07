@@ -20,7 +20,7 @@ public static class VotingMapper
             .Map(dest => dest.AllowVoteChange, src => src.AllowVoteChange)
             .Map(dest => dest.StartTime, src => Timestamp.FromDateTime(src.StartTime.ToUniversalTime()))
             .Map(dest => dest.EndTime, src => Timestamp.FromDateTime(src.EndTime.ToUniversalTime()))
-            .Map(dest => dest.Status, src => MapToGrpcStatus(src.VotingStatus))
+            .Map(dest => dest.Status, src => MapToGrpcStatus(src.Status))
             .Map(dest => dest.CreatedAt, src => Timestamp.FromDateTime(src.CreatedAt.ToUniversalTime()));
 
         // Обратное сопоставление (если понадобится)
@@ -33,7 +33,7 @@ public static class VotingMapper
             .Map(dest => dest.AllowVoteChange, src => src.AllowVoteChange)
             .Map(dest => dest.StartTime, src => src.StartTime.ToDateTime().ToUniversalTime())
             .Map(dest => dest.EndTime, src => src.EndTime.ToDateTime().ToUniversalTime())
-            .Map(dest => dest.VotingStatus, _ => VotingStatus.Draft); // Создается как Draft
+            .Map(dest => dest.Status, _ => VotingStatus.Draft); // Создается как Draft
 
         Config.NewConfig<UpdateVotingRequest, DbVoting>()
             .Map(dest => dest.Id, src => Guid.Parse(src.Id))
