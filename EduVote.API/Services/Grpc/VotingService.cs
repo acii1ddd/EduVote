@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
 using EduVote.API.Validators;
@@ -144,6 +145,12 @@ public class VotingService(
     public override async Task<CastVoteResponse> CastVote(
         CastVoteRequest request, ServerCallContext context)
     {
+        // todo user id instead query parameter
+        var userIdClaim = context.GetHttpContext()
+            .User
+            .FindFirst(ClaimTypes.NameIdentifier)?
+            .Value;
+        
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
         var userId = IdParser.ParseId(request.UserId, "User");
 

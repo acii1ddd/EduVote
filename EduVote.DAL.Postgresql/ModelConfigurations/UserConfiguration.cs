@@ -20,6 +20,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         
         builder.Property(x => x.RoleId).IsRequired();
 
+        builder.Property(x => x.PasswordHash)
+            .HasMaxLength(MaxLength)
+            .IsRequired();
+
         builder.Property(x => x.CreatedAt).IsRequired();
         
         builder.HasOne(x => x.UserRole)

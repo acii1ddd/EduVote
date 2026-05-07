@@ -1,4 +1,5 @@
 using EduVote.DAL.Postgresql.Models.Abstractions;
+using EduVote.DAL.Postgresql.Models.Roles;
 
 namespace EduVote.DAL.Postgresql.Models;
 
@@ -11,6 +12,8 @@ public class User : IBaseEntity, ICreatedAt
     public Guid RoleId { get; set; }
 
     public Role UserRole { get; set; } = null!;
+    
+    public string PasswordHash { get; set; } = string.Empty;
     
     /// <summary>
     /// Votes that already cast by this user

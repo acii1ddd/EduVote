@@ -1,4 +1,5 @@
 using EduVote.DAL.Postgresql.Models;
+using EduVote.DAL.Postgresql.Models.Roles;
 using Microsoft.EntityFrameworkCore;
 
 namespace EduVote.DAL.Postgresql.Context;

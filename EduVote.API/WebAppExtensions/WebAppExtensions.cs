@@ -37,5 +37,6 @@ public static class WebAppExtensions
         app.MapGrpcService<CandidateService>();
         app.MapGrpcService<VotingTargetService>();
         app.MapGrpcService<UserService>();
+        app.MapGrpcService<AuthService>();
     }
 }

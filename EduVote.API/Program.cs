@@ -11,6 +11,8 @@ builder.Services
     .AddSwaggerConf()
     .AddDbContext(builder)
     .AddApiServices()
+    .AddJwtAuthentication(builder.Configuration)
+    .AddAuthorizationPolitics()
     .AddDbInitializer()
     .AddRepositories();
 
@@ -29,6 +31,10 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 await app.MapServicesAsync();
 
 await app.RunAsync();

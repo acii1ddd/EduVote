@@ -1,6 +1,7 @@
 using EduVote.DAL.Postgresql.Context;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Enums;
+using EduVote.DAL.Postgresql.Models.Roles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

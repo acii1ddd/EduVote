@@ -1,6 +1,6 @@
 using EduVote.DAL.Postgresql.Models.Abstractions;
 
-namespace EduVote.DAL.Postgresql.Models;
+namespace EduVote.DAL.Postgresql.Models.Roles;
 
 public class Role : IBaseEntity
 {

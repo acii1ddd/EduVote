@@ -1,8 +1,11 @@
 using EduVote.API.Mappers;
+using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EduVote.API.Services.Grpc;
 
+[Authorize(Roles = Roles.Administrator)]
 public class UserService(IUserRepository userRepository) 
     : Users.UsersBase
 {

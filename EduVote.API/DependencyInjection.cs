@@ -1,6 +1,10 @@
+using EduVote.API.Services.Auth;
+using EduVote.API.Services.Auth.PasswordHasher;
 using EduVote.API.Services.CronJobs;
 using EduVote.API.Services.Tools;
 using EduVote.DAL.Postgresql.Context;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 namespace EduVote.API;
@@ -17,6 +21,13 @@ public static class DependencyInjection
 
             // singleton
             services.AddHostedService<VotingExpirationBgService>();
+            
+            // auth
+            services.AddScoped<ITokenGenerator, JwtAccessTokenGenerator>();
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+            services.AddScoped<RegisterUserService>();
+            services.AddScoped<LoginUserService>();
         
             return services;
         }
@@ -52,6 +63,74 @@ public static class DependencyInjection
                 options.UseNpgsql(connString);
             });
         
+            return services;
+        }
+        
+        public IServiceCollection AddJwtAuthentication(IConfiguration config)
+        {
+            var issuer = config["AuthSettings:Issuer"];
+            var audience = config["AuthSettings:Audience"];
+            var secret = config["AuthSettings:Secret"];
+            
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = issuer,
+                        ValidateAudience = true,
+                        ValidAudience = audience,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(secret!)),
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
+            return services;
+        }
+        
+        public IServiceCollection AddAuthorizationPolitics()
+        {
+            // services.AddAuthorization(authOptions =>
+            // {
+            //     authOptions.AddPolicy
+            //     (
+            //         "Admin",
+            //         policy =>
+            //         {
+            //             policy.RequireAuthenticatedUser();
+            //             policy.RequireClaim(
+            //                 ClaimTypes.Role, 
+            //                 // allowed roles
+            //                 nameof(UserRole.Admin)
+            //             );
+            //         }
+            //     );
+            //     
+            //     authOptions.AddPolicy
+            //     (
+            //         "Default",
+            //         policy =>
+            //         {
+            //             policy.RequireAuthenticatedUser();
+            //             policy.RequireClaim(
+            //                 ClaimTypes.Role, 
+            //                 // allowed roles
+            //                 nameof(UserRole.Default)
+            //             );
+            //         }
+            //     );
+            // });
+            services.AddAuthorization();
+            
             return services;
         }
     }

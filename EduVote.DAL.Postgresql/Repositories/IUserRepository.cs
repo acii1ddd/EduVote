@@ -7,4 +7,8 @@ public interface IUserRepository
     Task<User?> GetByIdWithEducationUnitsAsync(Guid userId, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<User>> GetUsersWithRolesAsync(CancellationToken cancellationToken = default);
+
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    Task<Guid> AddAsync(User user, CancellationToken cancellationToken = default);
 }
