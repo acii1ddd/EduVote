@@ -25,12 +25,17 @@ public class VotingService(
     public override async Task<VotingResponse> CreateVoting(
         CreateVotingRequest request, ServerCallContext context)
     {
+        logger.LogInformation("[CreateVoting] Creating new voting with title '{Title}', type '{Type}', " +
+            "start time '{StartTime}', end time '{EndTime}'", request.Title, request.Type, request.StartTime, request.EndTime);
+        
         VotingValidator.ValidateDateRange(request.StartTime, request.EndTime);
 
         var voting = request.MapToEntity();
 
         var createdVoting = await votingRepository
             .CreateAsync(voting, context.CancellationToken);
+        
+        logger.LogInformation("[CreateVoting] Voting created successfully with ID '{VotingId}'", createdVoting.Id);
         
         return createdVoting.MapToResponse();
     }
@@ -142,6 +147,9 @@ public class VotingService(
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
         var userId = IdParser.ParseId(request.UserId, "User");
 
+        logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' attempting to " +
+            "cast vote in voting {VotingId}", DateTime.UtcNow, userId, votingId);
+        
         var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
         var user = await userRepository
@@ -165,7 +173,8 @@ public class VotingService(
 
         if (isPublicVoting)
         {
-            // Public voting - access allowed for all users
+            logger.LogInformation("[CastVote] [{Timestamp}] Voting '{VotingId}' is public, " +
+                "access allowed", DateTime.UtcNow, votingId);
         }
         else
         {
@@ -189,10 +198,16 @@ public class VotingService(
 
             if (!hasAccess)
             {
+                logger.LogWarning("[CastVote] [{Timestamp}] User '{UserId}' does not " +
+                    "have access to voting {VotingId}", DateTime.UtcNow, userId, votingId);
+                
                 throw new RpcException(new Status(
                     StatusCode.PermissionDenied,
                     "User does not have access to vote in this voting."));
             }
+            
+            logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' has access " +
+                "to restricted voting {VotingId}", DateTime.UtcNow, userId, votingId);
         }
         
         var existingVote = await voteRepository
@@ -200,6 +215,9 @@ public class VotingService(
 
         if (existingVote is not null && !voting.AllowVoteChange)
         {
+            logger.LogWarning("[CastVote] [{Timestamp}] User '{UserId}' already voted in voting '{VotingId}' " +
+                "and vote change not allowed", DateTime.UtcNow, userId, votingId);
+            
             throw new RpcException(new Status(
                 StatusCode.AlreadyExists,
                 "User has already voted in this voting and vote change is not allowed."));
@@ -221,6 +239,9 @@ public class VotingService(
             
             await voteRepository.SaveChangesAsync(context.CancellationToken);
             
+            logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' vote updated " +
+                "successfully in voting '{VotingId}'", DateTime.UtcNow, userId, votingId);
+            
             return existingVote.MapToResponse();
         }
 
@@ -230,6 +251,9 @@ public class VotingService(
         var createdVote = await voteRepository
             .CreateAsync(newVote, context.CancellationToken);
 
+        logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' vote created " +
+            "successfully in voting '{VotingId}'", DateTime.UtcNow, userId, votingId);
+        
         return createdVote.MapToResponse();
     }
     

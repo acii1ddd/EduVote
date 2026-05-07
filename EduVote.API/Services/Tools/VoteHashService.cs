@@ -12,7 +12,8 @@ public interface IVoteHashService
     );
 }
 
-public class VoteHashService : IVoteHashService
+public class VoteHashService 
+    : IVoteHashService
 {
     public string GenerateHash(
         Guid votingId,

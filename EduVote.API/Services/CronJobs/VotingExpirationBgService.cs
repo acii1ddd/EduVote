@@ -19,7 +19,7 @@ public class VotingExpirationBgService(
         }
     }
 
-    public async Task ProcessExpiredVotingsAsync(CancellationToken stoppingToken)
+    private async Task ProcessExpiredVotingsAsync(CancellationToken stoppingToken)
     {
         using var scope = scopeFactory.CreateScope();
             
