@@ -30,4 +30,10 @@ var pgAdmin = builder
     .WithHttpEndpoint(5050, 80)
     .WithReference(postgres);
     
+var frontend = builder.AddViteApp("frontend", "../EduVote.Web")
+    .WithReference(votingApi)
+    .WaitFor(votingApi);
+
+// votingApi.PublishWithContainerFiles(frontend, "wwwroot");
+
 builder.Build().Run();
