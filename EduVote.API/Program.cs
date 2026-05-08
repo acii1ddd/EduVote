@@ -16,6 +16,17 @@ builder.Services
     .AddDbInitializer()
     .AddRepositories();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.WebHost.ConfigureKestrel(options =>
 {
     // options.ListenLocalhost(5858, o =>
@@ -34,6 +45,7 @@ var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("AllowAll");
 
 await app.MapServicesAsync();
 

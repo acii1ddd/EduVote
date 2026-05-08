@@ -39,6 +39,6 @@ public static class WebAppExtensions
         app.MapGrpcService<UserService>();
         app.MapGrpcService<AuthService>();
         
-        // app.UseFileServer();
+        app.UseFileServer();
     }
 }

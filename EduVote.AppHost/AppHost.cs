@@ -20,7 +20,8 @@ var db = postgres
 var votingApi = builder
     .AddProject<Projects.EduVote_API>("voting-api")
     .WithHttpsEndpoint(port: 5959)
-    .WithReference(db);
+    .WithReference(db)
+    .WaitFor(db);
 
 var pgAdmin = builder
     .AddContainer("pgadmin", "dpage/pgadmin4")
@@ -34,6 +35,6 @@ var frontend = builder.AddViteApp("frontend", "../EduVote.Web")
     .WithReference(votingApi)
     .WaitFor(votingApi);
 
-// votingApi.PublishWithContainerFiles(frontend, "wwwroot");
+votingApi.PublishWithContainerFiles(frontend, "wwwroot");
 
 builder.Build().Run();
