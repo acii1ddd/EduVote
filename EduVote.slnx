@@ -1,10 +1,14 @@
 <Solution>
-  <Folder Name="/AspireHost/">
+  <Folder Name="/src/" />
+  <Folder Name="/src/AspireHost/">
     <Project Path="EduVote.AppHost/EduVote.AppHost.csproj" />
     <Project Path="EduVote.ServiceDefaults/EduVote.ServiceDefaults.csproj" />
   </Folder>
-  <Folder Name="/VotingAPI/">
+  <Folder Name="/src/VotingAPI/">
     <Project Path="EduVote.API/EduVote.API.csproj" />
     <Project Path="EduVote.DAL.Postgresql/EduVote.DAL.Postgresql.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EduVote.Tests/EduVote.Tests.csproj" />
   </Folder>
 </Solution>

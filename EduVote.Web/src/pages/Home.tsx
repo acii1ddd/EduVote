@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { parseJwt } from '../utils/jwt'
 
 export default function Home() {
   const [role, setRole] = useState<string | null>(null)

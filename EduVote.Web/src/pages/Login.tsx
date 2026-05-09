@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axiosClient'
-import { parseJwt } from '../utils/jwt'
+import { jwtDecode } from "jwt-decode";
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -15,11 +15,18 @@ export default function Login() {
     try {
       const resp = await api.post('/auth/login', { email, password })
       const data = resp.data
-      if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token)
+      if (data.accessToken) {
+        localStorage.setItem('access_token', data.accessToken)
       }
-      // optional: store role or parse it when needed
-      const claims = parseJwt(data.access_token)
+
+      type JwtPayload = {
+        nameid: string,
+        role: string;
+      };
+      
+      const claims = jwtDecode<JwtPayload>(data.accessToken)
+      console.log(claims)
+      
       // navigate to home
       navigate('/')
     } catch (err: any) {

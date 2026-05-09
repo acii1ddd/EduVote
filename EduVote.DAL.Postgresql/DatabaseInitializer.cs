@@ -216,7 +216,7 @@ public class DatabaseInitializer(
             new() { Id = Guid.NewGuid(), Email = "prof.irina.melnik@university.edu", RoleId = teacherRole.Id },
             new() { Id = Guid.NewGuid(), Email = "assoc.alexey.tkachenko@university.edu", RoleId = teacherRole.Id },
             new() { Id = Guid.NewGuid(), Email = "prof.natalia.bondar@university.edu", RoleId = teacherRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "admin@university.edu", RoleId = adminRole.Id }
+            new() { Id = Guid.NewGuid(), Email = "admin@admin", RoleId = adminRole.Id }
         };
 
         await context.Users.AddRangeAsync(users);
