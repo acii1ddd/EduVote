@@ -29,7 +29,7 @@ export default function Home() {
         break
 
       case 'Teacher':
-        navigate('/dashboard')
+        navigate('/votings')
         break
 
       case 'Student':
