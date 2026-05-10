@@ -8,6 +8,7 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import AdminPage from './pages/AdminPage'
 import StudentDashboard from './pages/StudentDashboard'
+import VotingManagement from './pages/VotingManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 
@@ -41,7 +42,22 @@ function Navbar() {
                 <div className="flex items-center gap-1">
                     {claims ? (
                         <>
-                            <span className="mr-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                            {claims.role === 'Student' && (
+                                <NavLink to="/dashboard" className={navLinkClass}>
+                                    Дашборд
+                                </NavLink>
+                            )}
+                            {(claims.role === 'Teacher' || claims.role === 'Administrator') && (
+                                <NavLink to="/votings" className={navLinkClass}>
+                                    Голосования
+                                </NavLink>
+                            )}
+                            {claims.role === 'Administrator' && (
+                                <NavLink to="/admin" className={navLinkClass}>
+                                    Администрирование
+                                </NavLink>
+                            )}
+                            <span className="mx-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                                 {claims.role}
                             </span>
                             <button
@@ -93,6 +109,14 @@ function App() {
                         element={
                             <ProtectedRoute allowedRoles={['Student', 'Teacher']}>
                                 <StudentDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/votings"
+                        element={
+                            <ProtectedRoute allowedRoles={['Teacher', 'Administrator']}>
+                                <VotingManagement />
                             </ProtectedRoute>
                         }
                     />

@@ -42,7 +42,6 @@ public class Voting : IBaseEntity, ICreatedAt
     /// <summary>
     /// Voting status
     /// </summary>
-    // todo rename to Status instead of VotingStatus and make migration
     public VotingStatus Status { get; set; }
     
     /// <summary>
