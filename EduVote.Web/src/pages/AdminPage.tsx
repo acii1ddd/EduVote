@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react"
-import {deleteUserRequest, getUsers, updateUser, type UserResponse} from "@/api/userApi.ts";
-import {getRoles} from "@/api/roleApi.ts";
-import {type EducationUnit, getEducationUnits} from "@/api/educationUnitApi.ts";
-import {assignUserToEducationUnit} from "@/api/assignUserToEducationUnit.ts";
+import { useEffect, useState } from 'react'
+import { deleteUserRequest, getUsers, updateUser, type UserResponse } from '@/api/userApi'
+import { getRoles } from '@/api/roleApi'
+import { type EducationUnit, getEducationUnits } from '@/api/educationUnitApi'
+import { assignUserToEducationUnit } from '@/api/assignUserToEducationUnit'
+import { Users } from 'lucide-react'
 
 export default function AdminPage() {
-
     const [users, setUsers] = useState<UserResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [roles, setRoles] = useState<string[]>([])
     const [educationUnits, setEducationUnits] = useState<EducationUnit[]>([])
+    const [selectedEducationUnitId, setSelectedEducationUnitId] = useState<string>('')
 
-    const [selectedEducationUnitId, setSelectedEducationUnitId] = useState<string>("")
-    
+    const [isEditOpen, setIsEditOpen] = useState(false)
+    const [editingUser, setEditingUser] = useState<UserResponse | null>(null)
+
     useEffect(() => {
         loadUsers()
+        loadEducationUnits()
         loadRoles()
     }, [])
 
@@ -24,474 +27,231 @@ export default function AdminPage() {
         setRoles(data.roles.map(r => r.name))
     }
 
-    useEffect(() => {
-        loadUsers()
-        loadEducationUnits()
-        loadRoles()
-    }, [])
-
     const loadEducationUnits = async () => {
         const data = await getEducationUnits()
         setEducationUnits(data.educationUnits)
     }
-    
-    // form state
-    // const [email, setEmail] = useState('')
-    // const [password, setPassword] = useState('')
-    // const [role, setRole] = useState('User')
-
-    const [isEditOpen, setIsEditOpen] = useState(false)
-    const [editingUser, setEditingUser] = useState<UserResponse | null>(null)
-
-    const openEdit = (user: UserResponse) => {
-        setEditingUser(user)
-        setIsEditOpen(true)
-    }
-
-    const saveUser = async () => {
-
-        if (!editingUser) return
-
-        try {
-
-            // 1. update basic user info
-            await updateUser({
-                id: editingUser.id,
-                name: editingUser.name,
-                email: editingUser.email,
-                role: editingUser.role
-            })
-
-            // 2. assign education unit
-            if (selectedEducationUnitId) {
-
-                await assignUserToEducationUnit(
-                    editingUser.id,
-                    selectedEducationUnitId
-                )
-            }
-
-            // 3. reload users from backend
-            await loadUsers()
-
-            // 4. close modal
-            setIsEditOpen(false)
-            setEditingUser(null)
-
-        } catch (err) {
-
-            console.error(err)
-        }
-    }
-    
-    useEffect(() => {
-        loadUsers()
-    }, [])
 
     const loadUsers = async () => {
-
         try {
-
             setLoading(true)
-
             const data = await getUsers()
-
             setUsers(data.users)
-
         } catch (err: any) {
-
-            setError(
-                err?.response?.data?.message || String(err)
-            )
-
+            setError(err?.response?.data?.message || String(err))
         } finally {
-
             setLoading(false)
         }
     }
 
-    // const addUser = async (
-    //     e: React.FormEvent
-    // ) => {
-    //
-    //     e.preventDefault()
-    //
-    //     if (!email.trim() || !password.trim()) {
-    //         return
-    //     }
-    //
-    //     try {
-    //
-    //         // TODO:
-    //         // backend request for create user
-    //
-    //         const newUser: UserResponse = {
-    //             id: crypto.randomUUID(),
-    //             email,
-    //             role,
-    //             createdAt: new Date().toISOString()
-    //         }
-    //
-    //         setUsers(prev => [...prev, newUser])
-    //
-    //         setEmail('')
-    //         setPassword('')
-    //         setRole('User')
-    //
-    //     } catch (err) {
-    //         console.error(err)
-    //     }
-    // }
+    const openEdit = (user: UserResponse) => {
+        setEditingUser(user)
+        setSelectedEducationUnitId('')
+        setIsEditOpen(true)
+    }
 
-    const deleteUser = async (
-        userId: string
-    ) => {
-
-        const confirmed = window.confirm(
-            "Вы уверены, что хотите удалить пользователя?"
-        )
-
-        if (!confirmed) {
-            return
-        }
-
+    const saveUser = async () => {
+        if (!editingUser) return
         try {
-
-            await deleteUserRequest(userId)
-
-            setUsers(prev =>
-                prev.filter(x => x.id !== userId)
-            )
-
+            await updateUser({
+                id: editingUser.id,
+                name: editingUser.name,
+                email: editingUser.email,
+                role: editingUser.role,
+            })
+            if (selectedEducationUnitId) {
+                await assignUserToEducationUnit(editingUser.id, selectedEducationUnitId)
+            }
+            await loadUsers()
+            setIsEditOpen(false)
+            setEditingUser(null)
         } catch (err) {
-
             console.error(err)
         }
     }
 
+    const deleteUser = async (userId: string) => {
+        if (!window.confirm('Вы уверены, что хотите удалить пользователя?')) return
+        try {
+            await deleteUserRequest(userId)
+            setUsers(prev => prev.filter(x => x.id !== userId))
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    const inputClass = `
+        w-full rounded-xl border border-border bg-background
+        px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground
+        focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
+        transition-colors
+    `
+
     return (
         <div className="space-y-8">
 
-            {/* Page title */}
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                    Admin Panel
-                </h1>
-
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Управление пользователями системы
-                </p>
+            <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Users className="h-5 w-5" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                        Панель администратора
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Управление пользователями системы
+                    </p>
+                </div>
             </div>
 
-            {/* Add user */}
-            {/*<section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">*/}
-            
-            {/*    <h2 className="mb-5 text-xl font-semibold">*/}
-            {/*        Добавить пользователя*/}
-            {/*    </h2>*/}
-            
-            {/*    <form*/}
-            {/*        onSubmit={addUser}*/}
-            {/*        className="grid gap-4 md:grid-cols-4"*/}
-            {/*    >*/}
-            
-            {/*        <input*/}
-            {/*            type="email"*/}
-            {/*            placeholder="Email"*/}
-            {/*            value={email}*/}
-            {/*            onChange={(e) =>*/}
-            {/*                setEmail(e.target.value)*/}
-            {/*            }*/}
-            {/*            className="*/}
-            {/*                h-11 rounded-lg border border-gray-300*/}
-            {/*                bg-transparent px-3 text-sm*/}
-            {/*                focus:outline-none focus:ring-2*/}
-            {/*                focus:ring-indigo-500*/}
-            {/*                dark:border-gray-700*/}
-            {/*            "*/}
-            {/*        />*/}
-            
-            {/*        <input*/}
-            {/*            type="password"*/}
-            {/*            placeholder="Password"*/}
-            {/*            value={password}*/}
-            {/*            onChange={(e) =>*/}
-            {/*                setPassword(e.target.value)*/}
-            {/*            }*/}
-            {/*            className="*/}
-            {/*                h-11 rounded-lg border border-gray-300*/}
-            {/*                bg-transparent px-3 text-sm*/}
-            {/*                focus:outline-none focus:ring-2*/}
-            {/*                focus:ring-indigo-500*/}
-            {/*                dark:border-gray-700*/}
-            {/*            "*/}
-            {/*        />*/}
-            
-            {/*        <select*/}
-            {/*            value={role}*/}
-            {/*            onChange={(e) =>*/}
-            {/*                setRole(e.target.value)*/}
-            {/*            }*/}
-            {/*            className="*/}
-            {/*                h-11 rounded-lg border border-gray-300*/}
-            {/*                bg-transparent px-3 text-sm*/}
-            {/*                focus:outline-none focus:ring-2*/}
-            {/*                focus:ring-indigo-500*/}
-            {/*                dark:border-gray-700*/}
-            {/*            "*/}
-            {/*        >*/}
-            {/*            <option value="User">*/}
-            {/*                User*/}
-            {/*            </option>*/}
-            
-            {/*            <option value="Admin">*/}
-            {/*                Admin*/}
-            {/*            </option>*/}
-            {/*        </select>*/}
-            
-            {/*        <button*/}
-            {/*            type="submit"*/}
-            {/*            className="*/}
-            {/*                inline-flex items-center justify-center*/}
-            {/*                rounded-lg bg-indigo-600 px-4 py-2*/}
-            {/*                text-sm font-medium text-white*/}
-            {/*                transition hover:bg-indigo-500*/}
-            {/*            "*/}
-            {/*        >*/}
-            {/*            Добавить*/}
-            {/*        </button>*/}
-            
-            {/*    </form>*/}
-            
-            {/*</section>*/}
-
             {/* Users table */}
-            <section className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <section className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
 
-                <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-
-                    <h2 className="text-xl font-semibold">
+                <div className="border-b border-border px-6 py-4">
+                    <h2 className="text-base font-semibold text-card-foreground">
                         Пользователи
                     </h2>
-
                 </div>
 
                 {loading ? (
-
-                    <div className="p-6 text-sm text-gray-500">
+                    <div className="px-6 py-10 text-sm text-muted-foreground">
                         Загрузка пользователей...
                     </div>
-
                 ) : error ? (
-
-                    <div className="p-6 text-sm text-red-500">
+                    <div className="px-6 py-10 text-sm text-destructive">
                         {error}
                     </div>
-
                 ) : (
-
                     <div className="overflow-x-auto">
+                        <table className="min-w-full">
 
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-
-                            <thead className="bg-gray-50 dark:bg-gray-800/50">
-
-                            <tr>
-
-                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Name
-                                </th>
-
-                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Email
-                                </th>
-
-                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Role
-                                </th>
-
-                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    educationUnitName
-                                </th>
-                                
-                                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                    Created
-                                </th>
-
-                            </tr>
-
+                            <thead className="bg-muted/40">
+                                <tr>
+                                    {['Имя', 'Email', 'Роль', 'Учебная группа', 'Создан', ''].map(h => (
+                                        <th key={h} className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                            {h}
+                                        </th>
+                                    ))}
+                                </tr>
                             </thead>
 
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                            <tbody className="divide-y divide-border">
+                                {users.map(user => (
+                                    <tr key={user.id} className="hover:bg-muted/20 transition-colors">
 
-                            {users.map(user => (
+                                        <td className="px-5 py-3.5 text-sm font-medium text-foreground">
+                                            {user.name}
+                                        </td>
 
-                                <tr
-                                    key={user.id}
-                                    className="hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                                >
-                                    <td className="px-6 text-left py-4 text-sm">
-                                        {user.name}
-                                    </td>
+                                        <td className="px-5 py-3.5 text-sm text-muted-foreground">
+                                            {user.email}
+                                        </td>
 
-                                    <td className="px-6 text-left py-4 text-sm">
-                                        {user.email}
-                                    </td>
+                                        <td className="px-5 py-3.5">
+                                            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                                                {user.role}
+                                            </span>
+                                        </td>
 
-                                    <td className="px-6 text-left py-4 text-sm">
-                                        <span className="
-                                            rounded-full bg-indigo-100
-                                            px-2.5 py-1 text-xs font-medium
-                                            text-indigo-700
-                                            dark:bg-indigo-900/40
-                                            dark:text-indigo-300
-                                        ">
-                                            {user.role}
-                                        </span>
-                                    </td>
+                                        <td className="px-5 py-3.5 text-sm text-muted-foreground">
+                                            {user.educationUnitName || '—'}
+                                        </td>
 
-                                    <td className="px-6 text-left py-4 text-sm">
-                                        {user.educationUnitName}
-                                    </td>
-                                    
-                                    <td className="px-6 text-left py-4 text-sm text-gray-500">
-                                        {new Date(user.createdAt)
-                                            .toLocaleDateString()}
-                                    </td>
+                                        <td className="px-5 py-3.5 text-sm text-muted-foreground">
+                                            {new Date(user.createdAt).toLocaleDateString('ru-RU')}
+                                        </td>
 
-                                    <td className="px-6 py-4 text-right">
+                                        <td className="px-5 py-3.5 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => openEdit(user)}
+                                                    className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary hover:border-primary/30"
+                                                >
+                                                    Изменить
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteUser(user.id)}
+                                                    className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                                                >
+                                                    Удалить
+                                                </button>
+                                            </div>
+                                        </td>
 
-                                        <button
-                                            onClick={() =>
-                                                deleteUser(user.id)
-                                            }
-                                            className="
-                                                rounded-lg bg-red-500
-                                                px-3 py-2 text-sm
-                                                font-medium text-white
-                                                transition hover:bg-red-400
-                                            "
-                                        >
-                                            Delete
-                                        </button>
-
-                                    </td>
-                                    
-                                    <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => openEdit(user)}
-                                            className="mr-2 rounded-lg bg-yellow-500 px-3 py-2 text-sm font-medium text-white hover:bg-yellow-400"
-                                        >
-                                            Edit
-                                        </button>
-                                    </td>
-                                    
-                                </tr>
-
-                            ))}
-
+                                    </tr>
+                                ))}
                             </tbody>
 
                         </table>
-
                     </div>
-
                 )}
 
             </section>
 
+            {/* Edit modal */}
             {isEditOpen && editingUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
 
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg dark:bg-gray-900 space-y-4">
-
-                        <h2 className="text-xl font-semibold">
-                            Edit user
+                        <h2 className="text-lg font-semibold text-card-foreground">
+                            Редактировать пользователя
                         </h2>
 
-                        {/* NAME */}
-                        <input
-                            className="w-full rounded-lg border px-3 py-2 dark:bg-gray-800"
-                            value={editingUser.name}
-                            onChange={(e) =>
-                                setEditingUser({
-                                    ...editingUser,
-                                    name: e.target.value
-                                })
-                            }
-                            placeholder="Name"
-                        />
+                        <div className="space-y-3">
+                            <input
+                                className={inputClass}
+                                value={editingUser.name}
+                                onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                                placeholder="Имя"
+                            />
+                            <input
+                                className={inputClass}
+                                value={editingUser.email}
+                                onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                                placeholder="Email"
+                            />
+                            <select
+                                className={inputClass}
+                                value={editingUser.role}
+                                onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                            >
+                                {roles.map(role => (
+                                    <option key={role} value={role}>{role}</option>
+                                ))}
+                            </select>
+                            <select
+                                className={inputClass}
+                                value={selectedEducationUnitId}
+                                onChange={(e) => setSelectedEducationUnitId(e.target.value)}
+                            >
+                                <option value="">Выбрать учебную группу</option>
+                                {educationUnits.map(unit => (
+                                    <option key={unit.id} value={unit.id}>
+                                        {unit.name} ({unit.type})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                        {/* EMAIL */}
-                        <input
-                            className="w-full rounded-lg border px-3 py-2 dark:bg-gray-800"
-                            value={editingUser.email}
-                            onChange={(e) =>
-                                setEditingUser({
-                                    ...editingUser,
-                                    email: e.target.value
-                                })
-                            }
-                            placeholder="Email"
-                        />
-
-                        {/* ROLE */}
-                        <select
-                            className="w-full rounded-lg border px-3 py-2 dark:bg-gray-800"
-                            value={editingUser.role}
-                            onChange={(e) =>
-                                setEditingUser({
-                                    ...editingUser,
-                                    role: e.target.value
-                                })
-                            }
-                        >
-                            {roles.map(role => (
-                                <option key={role} value={role}>
-                                    {role}
-                                </option>
-                            ))}
-                        </select>
-
-                        <select
-                            className="w-full rounded-lg border px-3 py-2 dark:bg-gray-800"
-                            value={selectedEducationUnitId}
-                            onChange={(e) => setSelectedEducationUnitId(e.target.value)}
-                        >
-                            <option value="">
-                                Select education unit
-                            </option>
-
-                            {educationUnits.map(unit => (
-                                <option key={unit.id} value={unit.id}>
-                                    {unit.name} ({unit.type})
-                                </option>
-                            ))}
-                        </select>
-
-                        {/* ACTIONS */}
-                        <div className="flex justify-end gap-2">
-
+                        <div className="flex justify-end gap-2 pt-1">
                             <button
                                 onClick={() => setIsEditOpen(false)}
-                                className="rounded-lg bg-gray-500 px-4 py-2 text-white hover:bg-gray-400"
+                                className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                             >
-                                Cancel
+                                Отмена
                             </button>
-
                             <button
                                 onClick={saveUser}
-                                className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
+                                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90"
                             >
-                                Save
+                                Сохранить
                             </button>
-
                         </div>
 
                     </div>
-
                 </div>
             )}
+
         </div>
     )
 }

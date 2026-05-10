@@ -16,4 +16,8 @@ public interface IVotingRepository
     Task DeleteAsync(Voting voting, CancellationToken cancellationToken = default);
     
     Task<IEnumerable<Voting>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<Voting>> GetVotingsForEducationUnitsAsync(
+        IEnumerable<Guid> educationUnitIds,
+        CancellationToken cancellationToken = default);
 }

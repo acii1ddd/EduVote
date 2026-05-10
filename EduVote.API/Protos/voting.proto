@@ -73,6 +73,12 @@ service Votings {
     };
   }
 
+  rpc GetVotingsForUser (GetVotingsForUserRequest) returns (GetVotingsResponse) {
+    option (google.api.http) = {
+      get: "/api/users/{user_id}/votings"
+    };
+  }
+
 //  rpc GetStats (GetVotingRequest) returns (VotingStatsResponse) {
 //    option (google.api.http) = {
 //      get: "/api/votings/{id}/stats"
@@ -163,6 +169,10 @@ message VotingResponse {
 
 message GetVotingsResponse {
   repeated VotingResponse votings = 1;
+}
+
+message GetVotingsForUserRequest {
+  string user_id = 1;
 }
 
 message CastVoteRequest {

@@ -47,4 +47,18 @@ public class VotingRepository(EduVoteDbContext dbContext)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<Voting>> GetVotingsForEducationUnitsAsync(
+        IEnumerable<Guid> educationUnitIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = educationUnitIds.ToList();
+
+        return await dbContext.Votings
+            .AsNoTracking()
+            .Include(v => v.VotingTargets)
+            .Where(v => !v.VotingTargets.Any() ||
+                        v.VotingTargets.Any(vt => ids.Contains(vt.EducationUnitId)))
+            .ToListAsync(cancellationToken);
+    }
 }

@@ -33,30 +33,32 @@ export function RegisterForm() {
         }
     }
 
-    const inputClass = "block h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:text-gray-100 dark:focus:border-indigo-400"
-    const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300"
+    const inputClass = `
+        block h-11 w-full rounded-xl border border-border bg-background
+        px-3.5 text-sm text-foreground placeholder:text-muted-foreground
+        focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
+        transition-colors
+    `
+    const labelClass = 'block text-sm font-medium text-foreground'
 
     return (
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center py-12">
             <div className="w-full max-w-sm">
 
+                {/* Logo */}
                 <div className="mb-8 text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/40">
-                        <Vote className="h-6 w-6" />
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
+                        <Vote className="h-7 w-7 text-primary-foreground" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Создать аккаунт
-                    </h1>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <h1 className="text-2xl font-bold text-foreground">Создать аккаунт</h1>
+                    <p className="mt-1.5 text-sm text-muted-foreground">
                         Заполните данные для регистрации
                     </p>
                 </div>
 
-                <form
-                    onSubmit={submit}
-                    className="rounded-2xl border border-gray-200 bg-white px-8 py-8 shadow-sm dark:border-gray-800 dark:bg-gray-900"
-                >
-                    <div className="space-y-5">
+                {/* Card */}
+                <div className="rounded-2xl border border-border bg-card px-8 py-8 shadow-sm">
+                    <form onSubmit={submit} className="space-y-5">
 
                         <div className="space-y-1.5">
                             <label htmlFor="name" className={labelClass}>Имя</label>
@@ -98,7 +100,7 @@ export function RegisterForm() {
                         </div>
 
                         {error && (
-                            <div className="rounded-lg bg-red-50 px-3 py-2.5 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                            <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-3.5 py-2.5 text-sm font-medium text-destructive">
                                 {error}
                             </div>
                         )}
@@ -106,17 +108,17 @@ export function RegisterForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="flex h-10 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                            className="flex h-11 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/30 transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isLoading ? 'Создаём...' : 'Создать аккаунт'}
                         </button>
 
-                    </div>
-                </form>
+                    </form>
+                </div>
 
-                <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-6 text-center text-sm text-muted-foreground">
                     Уже есть аккаунт?{' '}
-                    <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                    <Link to="/login" className="font-semibold text-primary hover:opacity-80 transition-opacity">
                         Войти
                     </Link>
                 </p>

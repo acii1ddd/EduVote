@@ -135,10 +135,40 @@ public class VotingService(
     {
         var existingVotings = await votingRepository
             .GetAllAsync(context.CancellationToken);
-        
+
         var response = new GetVotingsResponse();
         response.Votings.AddRange(existingVotings.MapToResponseList());
-        
+
+        return response;
+    }
+
+    public override async Task<GetVotingsResponse> GetVotingsForUser(
+        GetVotingsForUserRequest request, ServerCallContext context)
+    {
+        var userId = IdParser.ParseId(request.UserId, "User");
+
+        var user = await userRepository
+            .GetByIdWithEducationUnitsAsync(userId, context.CancellationToken);
+
+        if (user is null)
+            throw IdParser.CreateNotFoundException("User", request.UserId);
+
+        var userUnitIds = user.UserEducationUnits
+            .Select(ueu => ueu.EducationUnitId)
+            .ToList();
+
+        var allUnitIds = userUnitIds.Count > 0
+            ? (await educationUnitRepository
+                .GetAllParentIdsAsync(userUnitIds, context.CancellationToken))
+                .ToList()
+            : [];
+
+        var votings = await votingRepository
+            .GetVotingsForEducationUnitsAsync(allUnitIds, context.CancellationToken);
+
+        var response = new GetVotingsResponse();
+        response.Votings.AddRange(votings.MapToResponseList());
+
         return response;
     }
 
