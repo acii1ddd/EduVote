@@ -207,16 +207,16 @@ public class DatabaseInitializer(
 
         var users = new List<User>
         {
-            new() { Id = Guid.NewGuid(), Email = "ivan.petrov@university.edu", RoleId = studentRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "maria.sidorova@university.edu", RoleId = studentRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "dmitry.volkov@university.edu", RoleId = studentRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "anna.kuznetsova@university.edu", RoleId = studentRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "alexi.smirnov@university.edu", RoleId = studentRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "elena.popova@university.edu", RoleId = studentRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "prof.irina.melnik@university.edu", RoleId = teacherRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "assoc.alexey.tkachenko@university.edu", RoleId = teacherRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "prof.natalia.bondar@university.edu", RoleId = teacherRole.Id },
-            new() { Id = Guid.NewGuid(), Email = "admin@admin", RoleId = adminRole.Id }
+            new() { Id = Guid.NewGuid(), Email = "ivan@edu.com", Name = "Ivan", RoleId = studentRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "maria@edu.com", Name = "Maria", RoleId = studentRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "dmitry@edu.com", Name = "Dima", RoleId = studentRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "anna@edu.com", Name = "Anna", RoleId = studentRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "student@edu.com", Name = "Alex", RoleId = studentRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "elena@edu.com", Name = "Elana", RoleId = studentRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "irina@edu.com", Name = "Irina", RoleId = teacherRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "alex2@edu.com", Name = "Alex2", RoleId = teacherRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "teacher@gmail.com", Name = "Nata", RoleId = teacherRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
+            new() { Id = Guid.NewGuid(), Email = "admin@admin", Name = "Pasha", RoleId = adminRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"}
         };
 
         await context.Users.AddRangeAsync(users);

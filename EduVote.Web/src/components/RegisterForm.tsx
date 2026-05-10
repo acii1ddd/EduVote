@@ -1,23 +1,22 @@
-import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { login, type LoginResponse } from '../api/authApi'
-import { useAuth } from '@/context/AuthContext'
+import { useState } from 'react'
+import { register } from '../api/authApi'
 import { Vote } from 'lucide-react'
 
-export default function Login() {
+export function RegisterForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [name, setName] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
     const navigate = useNavigate()
-    const { setToken } = useAuth()
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
 
-        if (!email.trim() || !password.trim()) {
+        if (!name.trim() || !email.trim() || !password.trim()) {
             setError('Заполните все поля')
             return
         }
@@ -25,15 +24,17 @@ export default function Login() {
         setIsLoading(true)
 
         try {
-            const data: LoginResponse = await login({ email, password })
-            setToken(data.accessToken)
-            navigate('/')
+            await register({ email, password, name })
+            navigate('/login')
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Неверный email или пароль')
+            setError(err?.response?.data?.message || String(err))
         } finally {
             setIsLoading(false)
         }
     }
+
+    const inputClass = "block h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:text-gray-100 dark:focus:border-indigo-400"
+    const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300"
 
     return (
         <div className="flex min-h-[calc(100vh-64px)] items-center justify-center py-12">
@@ -44,10 +45,10 @@ export default function Login() {
                         <Vote className="h-6 w-6" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Вход в EduVote
+                        Создать аккаунт
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Введите данные для входа в аккаунт
+                        Заполните данные для регистрации
                     </p>
                 </div>
 
@@ -58,9 +59,20 @@ export default function Login() {
                     <div className="space-y-5">
 
                         <div className="space-y-1.5">
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Email
-                            </label>
+                            <label htmlFor="name" className={labelClass}>Имя</label>
+                            <input
+                                id="name"
+                                type="text"
+                                autoComplete="name"
+                                placeholder="Иван Иванов"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={inputClass}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label htmlFor="email" className={labelClass}>Email</label>
                             <input
                                 id="email"
                                 type="email"
@@ -68,22 +80,20 @@ export default function Login() {
                                 placeholder="you@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="block h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:text-gray-100 dark:focus:border-indigo-400"
+                                className={inputClass}
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Пароль
-                            </label>
+                            <label htmlFor="password" className={labelClass}>Пароль</label>
                             <input
                                 id="password"
                                 type="password"
-                                autoComplete="current-password"
-                                placeholder="Введите пароль"
+                                autoComplete="new-password"
+                                placeholder="Минимум 8 символов"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="block h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:text-gray-100 dark:focus:border-indigo-400"
+                                className={inputClass}
                             />
                         </div>
 
@@ -98,16 +108,16 @@ export default function Login() {
                             disabled={isLoading}
                             className="flex h-10 w-full items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                         >
-                            {isLoading ? 'Входим...' : 'Войти'}
+                            {isLoading ? 'Создаём...' : 'Создать аккаунт'}
                         </button>
 
                     </div>
                 </form>
 
                 <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    Нет аккаунта?{' '}
-                    <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-                        Зарегистрироваться
+                    Уже есть аккаунт?{' '}
+                    <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+                        Войти
                     </Link>
                 </p>
 

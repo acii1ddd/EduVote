@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+option csharp_namespace = "EduVote.API";
+
+package edu_vote.v1.user_education_units;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+service UserEducationUnits {
+
+  // Get all education units
+  rpc GetEducationUnits (google.protobuf.Empty)
+      returns (GetEducationUnitsResponse) {
+
+    option (google.api.http) = {
+      get: "/api/education-units"
+    };
+  }
+
+  // Assign user to education unit
+  rpc AssignUserToEducationUnit (
+      AssignUserToEducationUnitRequest
+      ) returns (google.protobuf.Empty) {
+
+    option (google.api.http) = {
+      post: "/api/users/{user_id}/education-units/{education_unit_id}"
+    };
+  }
+
+  // Remove user from education unit
+  rpc RemoveUserFromEducationUnit (
+      RemoveUserFromEducationUnitRequest
+      ) returns (google.protobuf.Empty) {
+
+    option (google.api.http) = {
+      delete: "/api/users/{user_id}/education-units/{education_unit_id}"
+    };
+  }
+}
+
+message EducationUnitResponse {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string parent_id = 4;
+}
+
+message GetEducationUnitsResponse {
+  repeated EducationUnitResponse education_units = 1;
+}
+
+message AssignUserToEducationUnitRequest {
+  string user_id = 1;
+  string education_unit_id = 2;
+}
+
+message RemoveUserFromEducationUnitRequest {
+  string user_id = 1;
+  string education_unit_id = 2;
+}

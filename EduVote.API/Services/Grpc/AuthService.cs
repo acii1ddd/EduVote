@@ -11,7 +11,7 @@ public class AuthService(
         RegisterRequest request, ServerCallContext context)
     {
         var result = await registerUserService
-            .Handle(request.Email, request.Password, context.CancellationToken);
+            .Handle(request.Email, request.Password, request.Name, context.CancellationToken);
         
         return new RegisterResponse { UserId = result.UserId.ToString() };
     }

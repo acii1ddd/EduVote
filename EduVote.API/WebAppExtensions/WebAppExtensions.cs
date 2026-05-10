@@ -38,6 +38,8 @@ public static class WebAppExtensions
         app.MapGrpcService<VotingTargetService>();
         app.MapGrpcService<UserService>();
         app.MapGrpcService<AuthService>();
+        app.MapGrpcService<UserEducationUnitsService>();
+        app.MapGrpcService<RoleService>();
         
         app.UseFileServer();
     }

@@ -1,26 +1,47 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import {getClaimsFromToken} from "@/unils/authUtils.ts";
 
 export default function Home() {
-  const [role, setRole] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    const claims: any = parseJwt(token || undefined)
-    if (claims) {
-      setRole(claims.role || null)
-      setUserId(claims.nameid || null)
-    }
-  }, [])
 
-  return (
-    <div>
-      <h1>Home</h1>
-      {role ? (
-        <p>Hello, {role} {userId ? `(${userId})` : ''}</p>
-      ) : (
-        <p>You are not logged in.</p>
-      )}
-    </div>
-  )
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
+    const claims = getClaimsFromToken(token)
+
+    if (!claims?.role) {
+      navigate('/login')
+      return
+    }
+
+    switch (claims.role) {
+
+      case 'Administrator':
+        navigate('/admin')
+        break
+
+      case 'Teacher':
+        navigate('/dashboard')
+        break
+
+      case 'Student':
+        navigate('/dashboard')
+        break
+
+      default:
+        navigate('/login')
+        break
+    }
+
+  }, [navigate])
+
+  return null
 }

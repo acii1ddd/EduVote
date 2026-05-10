@@ -25,6 +25,7 @@ public static class DependencyInjection
             services.AddScoped<IVotingResultRepository, VotingResultRepository>();
             services.AddScoped<IBlockchainRecordRepository, BlockchainRecordRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IUserEducationUnitRepository, UserEducationUnitRepository>();
             
             return services;
         }

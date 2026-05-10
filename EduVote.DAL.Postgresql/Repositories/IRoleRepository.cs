@@ -8,4 +8,6 @@ public interface IRoleRepository
     Task<Role?> GetByNameAsync(
         string roleName,
         CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<Role>> GetAllAsync();
 }

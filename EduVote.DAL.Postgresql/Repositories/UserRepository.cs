@@ -16,12 +16,14 @@ public class UserRepository(EduVoteDbContext dbContext)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
     }
 
-    public async Task<IEnumerable<User>> GetUsersWithRolesAsync(
+    public async Task<IEnumerable<User>> GetUsersWithRolesAndEducationUnitsAsync(
         CancellationToken cancellationToken = default)
     {
         return await dbContext.Users
             .AsNoTracking()
-            .Include(x => x.UserRole)
+                .Include(x => x.UserRole)
+                .Include(u => u.UserEducationUnits)
+                    .ThenInclude(ueu => ueu.EducationUnit)
             .ToListAsync(cancellationToken);
     }
 
@@ -41,5 +43,34 @@ public class UserRepository(EduVoteDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return user.Id;
+    }
+    
+    public async Task UpdateAsync(
+        User user,
+        CancellationToken cancellationToken = default)
+    {
+        dbContext.Users.Update(user);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+    
+    public async Task DeleteAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users
+            .FirstOrDefaultAsync(
+                x => x.Id == userId,
+                cancellationToken
+            );
+
+        if (user is null)
+        {
+            return;
+        }
+
+        dbContext.Users.Remove(user);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

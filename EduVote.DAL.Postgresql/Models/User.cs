@@ -15,6 +15,8 @@ public class User : IBaseEntity, ICreatedAt
     
     public string PasswordHash { get; set; } = string.Empty;
     
+    public string Name { get; set; } = string.Empty;
+    
     /// <summary>
     /// Votes that already cast by this user
     /// </summary>

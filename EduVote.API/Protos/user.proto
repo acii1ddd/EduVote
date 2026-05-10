@@ -14,6 +14,29 @@ service Users {
       get: "/api/users"
     };
   }
+  rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/api/users/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/users/{id}"
+    };
+  }
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+  string name = 4;
 }
 
 message GetUsersResponse {
@@ -24,5 +47,8 @@ message UserResponse {
   string id = 1;
   string email = 2;
   string role = 3;
-  google.protobuf.Timestamp created_at = 4;
+  string name = 4;
+  string education_unit_id = 5;
+  string education_unit_name = 6;
+  google.protobuf.Timestamp created_at = 7;
 }

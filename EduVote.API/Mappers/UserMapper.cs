@@ -10,6 +10,17 @@ public static class UserMapper
     {
         // Mapping from DAL Candidate to gRPC CandidateResponse
         Config.NewConfig<User, UserResponse>()
+            .Map(dest => dest.EducationUnitId,
+                src => src.UserEducationUnits
+                    .FirstOrDefault() != null
+                    ? src.UserEducationUnits.First().EducationUnitId.ToString()
+                    : "")
+            .Map(dest => dest.EducationUnitName,
+                src => src.UserEducationUnits
+                    .FirstOrDefault() != null
+                    ? src.UserEducationUnits.First().EducationUnit.Name
+                    : "")
+            .Map(dest => dest.Name, src => src.Name)
             .Map(dest => dest.Id, src => src.Id.ToString())
             .Map(dest => dest.Email, src => src.Email)
             .Map(dest => dest.Role, src => src.UserRole.Name)

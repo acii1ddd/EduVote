@@ -16,4 +16,10 @@ public class RoleRepository(EduVoteDbContext dbContext)
                 r => r.Name == roleName, cancellationToken
         );
     }
+
+    public async Task<IEnumerable<Role>> GetAllAsync()
+    {
+        return await dbContext.Roles
+            .AsNoTracking().ToListAsync();
+    }
 }

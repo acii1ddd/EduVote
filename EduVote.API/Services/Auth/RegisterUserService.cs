@@ -12,7 +12,7 @@ public class RegisterUserService(
     IRoleRepository roleRepository)
 {
     public async Task<RegisterUserResult> Handle(
-        string email, string password, CancellationToken cancellationToken)
+        string email, string password, string name, CancellationToken cancellationToken)
     {
         var existing = await userRepository
             .GetByEmailAsync(email, cancellationToken);
@@ -39,6 +39,7 @@ public class RegisterUserService(
             Id = Guid.NewGuid(),
             Email = email,
             RoleId =  studentRole.Id,
+            Name = name,
             PasswordHash = passwordHash
         };
 
