@@ -43,8 +43,17 @@ export const updateUser = async (
 export const deleteUserRequest = async (
     userId: string
 ) => {
+    await api.delete(`/users/${userId}`)
+}
 
-    await api.delete(
-        `/users/${userId}`
-    )
+export interface CreateUserRequest {
+    name: string
+    email: string
+    password: string
+    role: string
+}
+
+export const createUser = async (data: CreateUserRequest): Promise<UserResponse> => {
+    const response = await api.post<UserResponse>('/users', data)
+    return response.data
 }

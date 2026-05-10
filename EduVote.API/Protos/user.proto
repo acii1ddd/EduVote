@@ -14,6 +14,14 @@ service Users {
       get: "/api/users"
     };
   }
+
+  rpc CreateUser (CreateUserRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/api/users"
+      body: "*"
+    };
+  }
+
   rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       put: "/api/users/{id}"
@@ -26,6 +34,13 @@ service Users {
       delete: "/api/users/{id}"
     };
   }
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+  string role = 4;
 }
 
 message DeleteUserRequest {
