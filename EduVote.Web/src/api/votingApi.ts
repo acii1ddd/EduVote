@@ -49,3 +49,19 @@ export const updateVoting = async (id: string, payload: VotingFormPayload): Prom
     const response = await api.put<VotingResponse>(`/votings/${id}`, payload)
     return response.data
 }
+
+export const deleteVoting = async (id: string): Promise<void> => {
+    await api.delete(`/votings/${id}`)
+}
+
+export const startVoting = async (id: string): Promise<void> => {
+    await api.post(`/votings/${id}/start`)
+}
+
+export const pauseVoting = async (id: string): Promise<void> => {
+    await api.post(`/votings/${id}/pause`)
+}
+
+export const finishVoting = async (id: string): Promise<void> => {
+    await api.post(`/votings/${id}/finish`)
+}
