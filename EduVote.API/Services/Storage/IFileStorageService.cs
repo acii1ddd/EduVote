@@ -7,4 +7,6 @@ public interface IFileStorageService
     );
     
     Task DeleteFileAsync(string objectName, Guid objectId, CancellationToken cancellationToken = default);
+
+    public Task<string> GetPresignedUrlAsync(Guid objectId, string objectName);
 }

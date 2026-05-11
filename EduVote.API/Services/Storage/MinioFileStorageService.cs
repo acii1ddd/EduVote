@@ -62,21 +62,21 @@ public class MinioFileStorageService(
             cancellationToken);
     }
 
-    private async Task<string> GetPresignedUrlAsync(
-        Guid candidateId,
-        string fileName)
+    public async Task<string> GetPresignedUrlAsync(
+        Guid objectId,
+        string objectName)
     {
         try
         {
-            var objectName = GetObjectPath(candidateId, fileName);
+            var fullObjectName = GetObjectPath(objectId, objectName);
 
             var url = await minioClient.PresignedGetObjectAsync(
                 new PresignedGetObjectArgs()
                     .WithBucket(BucketName)
-                    .WithObject(objectName)
+                    .WithObject(fullObjectName)
                     .WithExpiry(ExpirationSeconds));
 
-            logger.LogInformation("Generated presigned URL for object '{ObjectName}': {Url}", objectName, url);
+            logger.LogInformation("Generated presigned URL for object '{ObjectName}': {Url}", fullObjectName, url);
             
             return url;
         }
@@ -86,7 +86,7 @@ public class MinioFileStorageService(
             throw;
         }
     }
-    
+
     private static string GetObjectPath(Guid objectId, string objectName) =>
         $"{objectId}/{objectName}";
 }

@@ -94,7 +94,22 @@ public class CandidateService(
         );
 
         var response = new GetCandidatesResponse();
-        response.Candidates.AddRange(candidates.MapToResponseList());
+        
+        // photos with object names
+        var candidateResponses = candidates
+            .MapToResponseList()
+            .ToList();
+
+        // replace photo object names with PresignedURLs
+        foreach (var candidate in candidateResponses)
+        {
+            if(candidate.PhotoUrl.StartsWith("https://picsum.photos/200?random")) continue;
+            
+            candidate.PhotoUrl = await fileStorageService
+                .GetPresignedUrlAsync(Guid.Parse(candidate.Id), candidate.PhotoUrl);
+        }
+        
+        response.Candidates.AddRange(candidateResponses);
         
         return response;
     }
