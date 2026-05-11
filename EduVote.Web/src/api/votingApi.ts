@@ -1,6 +1,6 @@
 import api from './axiosClient'
 
-export type VotingStatus = 'Draft' | 'Active' | 'Paused' | 'Finished'
+export type VotingStatus = 'Draft' | 'Active' | 'Paused' | 'Finished' | 'PendingApproval'
 export type VotingType = 'SingleChoice' | 'MultipleChoice' | 'Rating' | 'OpenAnswer'
 
 export interface VotingResponse {
@@ -64,4 +64,8 @@ export const pauseVoting = async (id: string): Promise<void> => {
 
 export const finishVoting = async (id: string): Promise<void> => {
     await api.post(`/votings/${id}/finish`)
+}
+
+export const approveVoting = async (id: string): Promise<void> => {
+    await api.post(`/votings/${id}/approve`)
 }

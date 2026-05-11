@@ -36,7 +36,7 @@ public class VotingExpirationBgService(
 
         foreach (var voting in votings)
         {
-            var isExpirable = voting.Status is DbVotingStatus.Active or DbVotingStatus.Paused;
+            var isExpirable = voting.Status is DbVotingStatus.Active or DbVotingStatus.Paused or DbVotingStatus.PendingApproval;
             var isExpired   = now >= voting.EndTime;
 
             if (!isExpirable || !isExpired)

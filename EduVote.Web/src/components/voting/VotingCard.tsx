@@ -1,9 +1,10 @@
-import { Calendar, FlagTriangleRight, Pause, Pencil, Play, Target, Trash2, Users } from 'lucide-react'
+import { Calendar, CheckCircle, FlagTriangleRight, Pause, Pencil, Play, ShieldAlert, Target, Trash2, Users } from 'lucide-react'
 import type { VotingResponse } from '@/api/votingApi'
 import { STATUS_CONFIG, TYPE_LABELS } from './votingConstants'
 
 interface Props {
     voting: VotingResponse
+    userRole: string
     busy: boolean
     onEdit: () => void
     onCandidates: () => void
@@ -12,19 +13,24 @@ interface Props {
     onPause: () => void
     onFinish: () => void
     onDelete: () => void
+    onApprove: () => void
 }
 
 export default function VotingCard({
-    voting, busy,
+    voting, userRole, busy,
     onEdit, onCandidates, onTargets,
-    onStart, onPause, onFinish, onDelete,
+    onStart, onPause, onFinish, onDelete, onApprove,
 }: Props) {
     const cfg = STATUS_CONFIG[voting.status] ?? STATUS_CONFIG.Draft
     const hasCandidates = voting.type !== 'OpenAnswer'
 
-    const canStart  = voting.status === 'Draft'  || voting.status === 'Paused'
-    const canPause  = voting.status === 'Active'
-    const canFinish = voting.status === 'Active'  || voting.status === 'Paused'
+    const isPendingApproval = voting.status === 'PendingApproval'
+    const isTeacher = userRole === 'Teacher'
+    const isAdmin   = userRole === 'Administrator'
+
+    const canStart  = !isPendingApproval && (voting.status === 'Draft'  || voting.status === 'Paused')
+    const canPause  = !isPendingApproval && voting.status === 'Active'
+    const canFinish = !isPendingApproval && (voting.status === 'Active' || voting.status === 'Paused')
 
     const fmt = (iso: string) => iso ? new Date(iso).toLocaleDateString('ru-RU') : '—'
 
@@ -77,62 +83,82 @@ export default function VotingCard({
             {/* Actions */}
             <div className="flex items-center justify-between gap-2 border-t border-border px-5 py-3">
 
-                {/* Lifecycle */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    {canStart && (
-                        <ActionBtn
-                            disabled={busy}
-                            onClick={onStart}
-                            className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800"
-                        >
-                            <Play className="h-3.5 w-3.5" />
-                            {voting.status === 'Paused' ? 'Возобновить' : 'Запустить'}
-                        </ActionBtn>
-                    )}
-                    {canPause && (
-                        <ActionBtn
-                            disabled={busy}
-                            onClick={onPause}
-                            className="text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 border-amber-200 dark:border-amber-800"
-                        >
-                            <Pause className="h-3.5 w-3.5" />
-                            Пауза
-                        </ActionBtn>
-                    )}
-                    {canFinish && (
-                        <ActionBtn
-                            disabled={busy}
-                            onClick={onFinish}
-                            className="text-muted-foreground hover:bg-secondary border-border"
-                        >
-                            <FlagTriangleRight className="h-3.5 w-3.5" />
-                            Завершить
-                        </ActionBtn>
-                    )}
-                </div>
+                {isPendingApproval && isTeacher ? (
+                    /* Teacher sees moderation banner — no action buttons */
+                    <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+                        <ShieldAlert className="h-4 w-4 shrink-0" />
+                        <span>Голосование на этапе модерации. Ожидайте одобрения администратора.</span>
+                    </div>
+                ) : (
+                    <>
+                        {/* Lifecycle */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {isPendingApproval && isAdmin && (
+                                <ActionBtn
+                                    disabled={busy}
+                                    onClick={onApprove}
+                                    className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800"
+                                >
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                    Одобрить
+                                </ActionBtn>
+                            )}
+                            {canStart && (
+                                <ActionBtn
+                                    disabled={busy}
+                                    onClick={onStart}
+                                    className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800"
+                                >
+                                    <Play className="h-3.5 w-3.5" />
+                                    {voting.status === 'Paused' ? 'Возобновить' : 'Запустить'}
+                                </ActionBtn>
+                            )}
+                            {canPause && (
+                                <ActionBtn
+                                    disabled={busy}
+                                    onClick={onPause}
+                                    className="text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 border-amber-200 dark:border-amber-800"
+                                >
+                                    <Pause className="h-3.5 w-3.5" />
+                                    Пауза
+                                </ActionBtn>
+                            )}
+                            {canFinish && (
+                                <ActionBtn
+                                    disabled={busy}
+                                    onClick={onFinish}
+                                    className="text-muted-foreground hover:bg-secondary border-border"
+                                >
+                                    <FlagTriangleRight className="h-3.5 w-3.5" />
+                                    Завершить
+                                </ActionBtn>
+                            )}
+                        </div>
 
-                {/* Management */}
-                <div className="flex items-center gap-1 shrink-0">
-                    <IconBtn onClick={onTargets} title="Таргетинг" disabled={busy}>
-                        <Target className="h-4 w-4" />
-                    </IconBtn>
-                    {hasCandidates && (
-                        <IconBtn onClick={onCandidates} title="Кандидаты" disabled={busy}>
-                            <Users className="h-4 w-4" />
-                        </IconBtn>
-                    )}
-                    <IconBtn onClick={onEdit} title="Редактировать" disabled={busy}>
-                        <Pencil className="h-4 w-4" />
-                    </IconBtn>
-                    <IconBtn
-                        onClick={onDelete}
-                        title="Удалить"
-                        disabled={busy}
-                        className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </IconBtn>
-                </div>
+                        {/* Management */}
+                        <div className="flex items-center gap-1 shrink-0">
+                            <IconBtn onClick={onTargets} title="Таргетинг" disabled={busy}>
+                                <Target className="h-4 w-4" />
+                            </IconBtn>
+                            {hasCandidates && (
+                                <IconBtn onClick={onCandidates} title="Кандидаты" disabled={busy}>
+                                    <Users className="h-4 w-4" />
+                                </IconBtn>
+                            )}
+                            <IconBtn onClick={onEdit} title="Редактировать" disabled={busy}>
+                                <Pencil className="h-4 w-4" />
+                            </IconBtn>
+                            <IconBtn
+                                onClick={onDelete}
+                                title="Удалить"
+                                disabled={busy}
+                                className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </IconBtn>
+                        </div>
+                    </>
+                )}
 
             </div>
         </div>

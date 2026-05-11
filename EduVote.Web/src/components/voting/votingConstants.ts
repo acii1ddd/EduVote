@@ -1,5 +1,5 @@
 import type { VotingStatus, VotingType } from '@/api/votingApi'
-import { CheckCircle, Clock, FileText, PauseCircle } from 'lucide-react'
+import { CheckCircle, Clock, FileText, PauseCircle, ShieldAlert } from 'lucide-react'
 import { createElement } from 'react'
 
 export const inputClass = `
@@ -52,5 +52,11 @@ export const STATUS_CONFIG: Record<VotingStatus, {
         cardClass: 'border-border opacity-75',
         badgeClass: 'bg-secondary text-secondary-foreground',
         icon: createElement(Clock, { className: 'h-3 w-3' }),
+    },
+    PendingApproval: {
+        label:     'На модерации',
+        cardClass: 'border-violet-300 dark:border-violet-800',
+        badgeClass: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400',
+        icon: createElement(ShieldAlert, { className: 'h-3 w-3' }),
     },
 }

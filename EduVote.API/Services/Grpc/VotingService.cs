@@ -3,6 +3,7 @@ using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
 using EduVote.API.Validators;
 using EduVote.DAL.Postgresql.Models;
+using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
@@ -28,17 +29,48 @@ public class VotingService(
     {
         logger.LogInformation("[CreateVoting] Creating new voting with title '{Title}', type '{Type}', " +
             "start time '{StartTime}', end time '{EndTime}'", request.Title, request.Type, request.StartTime, request.EndTime);
-        
+
         VotingValidator.ValidateDateRange(request.StartTime, request.EndTime);
 
         var voting = request.MapToEntity();
 
+        var callerRole = context.GetHttpContext()
+            .User.FindFirst(ClaimTypes.Role)?.Value;
+
+        // Votings created by Teacher require Administrator approval before becoming active
+        if (callerRole == Roles.Teacher)
+            voting.Status = DbVotingStatus.PendingApproval;
+
         var createdVoting = await votingRepository
             .CreateAsync(voting, context.CancellationToken);
-        
-        logger.LogInformation("[CreateVoting] Voting created successfully with ID '{VotingId}'", createdVoting.Id);
-        
+
+        logger.LogInformation("[CreateVoting] Voting '{VotingId}' created with status '{Status}'",
+            createdVoting.Id, createdVoting.Status);
+
         return createdVoting.MapToResponse();
+    }
+
+    public override async Task<Empty> ApproveVoting(
+        VotingActionRequest request, ServerCallContext context)
+    {
+        var votingId = IdParser.ParseId(request.Id, "Voting");
+
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
+
+        if (voting.Status != DbVotingStatus.PendingApproval)
+        {
+            throw new RpcException(new Status(
+                StatusCode.FailedPrecondition,
+                $"Voting {votingId} is not pending approval (current status: {voting.Status})."));
+        }
+
+        voting.Status = DbVotingStatus.Draft;
+
+        await votingRepository.SaveChangesAsync(context.CancellationToken);
+
+        logger.LogInformation("[ApproveVoting] Voting '{VotingId}' approved, moved to Draft", votingId);
+
+        return new Empty();
     }
 
     public override async Task<VotingResponse> UpdateVoting(

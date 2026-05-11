@@ -16,7 +16,7 @@ public class VotingLifecycleService(
         var voting = await GetVotingOrThrowAsync(votingId, cancellationToken);
         
         // Skip votings that cannot be finalized
-        if (voting.Status is DbVotingStatus.Finished or DbVotingStatus.Draft)
+        if (voting.Status is DbVotingStatus.Finished or DbVotingStatus.Draft or DbVotingStatus.PendingApproval)
             return;
         
         ChangeStatus(

@@ -92,12 +92,13 @@ public static class VotingMapper
     {
         return status switch
         {
-            VotingStatus.Draft => DbVotingStatus.Draft,
-            VotingStatus.Active => DbVotingStatus.Active,
-            VotingStatus.Paused => DbVotingStatus.Paused,
-            VotingStatus.Finished => DbVotingStatus.Finished,
-            VotingStatus.Unspecified => throw new RpcException(
-                new Status(StatusCode.InvalidArgument, "Voting type must be specified.")),
+            VotingStatus.Draft          => DbVotingStatus.Draft,
+            VotingStatus.Active         => DbVotingStatus.Active,
+            VotingStatus.Paused         => DbVotingStatus.Paused,
+            VotingStatus.Finished       => DbVotingStatus.Finished,
+            VotingStatus.PendingApproval => DbVotingStatus.PendingApproval,
+            VotingStatus.Unspecified    => throw new RpcException(
+                new Status(StatusCode.InvalidArgument, "Voting status must be specified.")),
             _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting status is not valid."))
         };
     }
@@ -106,10 +107,11 @@ public static class VotingMapper
     {
         return status switch
         {
-            DbVotingStatus .Draft => VotingStatus.Draft,
-            DbVotingStatus .Active => VotingStatus.Active,
-            DbVotingStatus .Paused => VotingStatus.Paused,
-            DbVotingStatus .Finished => VotingStatus.Finished,
+            DbVotingStatus.Draft           => VotingStatus.Draft,
+            DbVotingStatus.Active          => VotingStatus.Active,
+            DbVotingStatus.Paused          => VotingStatus.Paused,
+            DbVotingStatus.Finished        => VotingStatus.Finished,
+            DbVotingStatus.PendingApproval => VotingStatus.PendingApproval,
             _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting status is not valid."))
         };
     }

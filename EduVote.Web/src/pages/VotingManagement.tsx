@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Vote } from 'lucide-react'
 import {
     getVotings, createVoting, updateVoting,
-    deleteVoting, startVoting, pauseVoting, finishVoting,
+    deleteVoting, startVoting, pauseVoting, finishVoting, approveVoting,
     type VotingResponse, type VotingFormPayload,
 } from '@/api/votingApi'
 import Modal from '@/components/ui/Modal'
@@ -10,6 +10,7 @@ import VotingCard from '@/components/voting/VotingCard'
 import VotingForm, { type VotingFormData, EMPTY_VOTING_FORM } from '@/components/voting/VotingForm'
 import CandidatesModal from '@/components/voting/CandidatesModal'
 import VotingTargetsModal from '@/components/voting/VotingTargetsModal'
+import { useAuth } from '@/context/AuthContext'
 
 // ── Helpers ────────────────────────────────────────────────
 
@@ -49,6 +50,9 @@ type ModalState =
     | { kind: 'targets';    voting: VotingResponse }
 
 export default function VotingManagement() {
+    const { claims } = useAuth()
+    const userRole = claims?.role ?? ''
+
     const [votings, setVotings] = useState<VotingResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error,   setError]   = useState<string | null>(null)
@@ -200,6 +204,7 @@ export default function VotingManagement() {
                         <VotingCard
                             key={voting.id}
                             voting={voting}
+                            userRole={userRole}
                             busy={busyId === voting.id}
                             onEdit={() => openEdit(voting)}
                             onCandidates={() => setModal({ kind: 'candidates', voting })}
@@ -208,6 +213,7 @@ export default function VotingManagement() {
                             onPause={() => runAction(voting, pauseVoting)}
                             onFinish={() => runAction(voting, finishVoting)}
                             onDelete={() => handleDelete(voting)}
+                            onApprove={() => runAction(voting, approveVoting)}
                         />
                     ))}
                 </div>
