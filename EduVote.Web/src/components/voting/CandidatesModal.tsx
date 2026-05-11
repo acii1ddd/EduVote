@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Camera, Loader2, Plus, Trash2, UserRound, X } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import { Field } from '@/components/ui/Field'
-import { getCandidates, createCandidate, deleteCandidate, type CandidateResponse } from '@/api/candidateApi'
+import {
+    getCandidates,
+    createCandidate,
+    deleteCandidate,
+    uploadCandidatePhoto,
+    deleteCandidatePhoto,
+    type CandidateResponse,
+} from '@/api/candidateApi'
 import { inputClass } from './votingConstants'
 
 interface Props {
@@ -18,6 +25,9 @@ export default function CandidatesModal({ votingId, votingTitle, onClose }: Prop
     const [newDesc, setNewDesc]       = useState('')
     const [adding,  setAdding]        = useState(false)
     const [error,   setError]         = useState<string | null>(null)
+    const [photoLoading, setPhotoLoading] = useState<string | null>(null)
+
+    const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
     useEffect(() => {
         getCandidates(votingId)
@@ -51,6 +61,34 @@ export default function CandidatesModal({ votingId, votingTitle, onClose }: Prop
         }
     }
 
+    const handleUploadPhoto = async (candidateId: string, file: File) => {
+        setPhotoLoading(candidateId)
+        try {
+            const { photo_url } = await uploadCandidatePhoto(candidateId, file)
+            setCandidates(prev =>
+                prev.map(c => c.id === candidateId ? { ...c, photoUrl: photo_url } : c)
+            )
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setPhotoLoading(null)
+        }
+    }
+
+    const handleDeletePhoto = async (candidateId: string) => {
+        setPhotoLoading(candidateId)
+        try {
+            await deleteCandidatePhoto(candidateId)
+            setCandidates(prev =>
+                prev.map(c => c.id === candidateId ? { ...c, photoUrl: '' } : c)
+            )
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setPhotoLoading(null)
+        }
+    }
+
     return (
         <Modal title={`Кандидаты — ${votingTitle}`} onClose={onClose}>
             <div className="space-y-5">
@@ -63,26 +101,90 @@ export default function CandidatesModal({ votingId, votingTitle, onClose }: Prop
                     </div>
                 ) : (
                     <ul className="space-y-2">
-                        {candidates.map(c => (
-                            <li
-                                key={c.id}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-3"
-                            >
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
-                                    {c.description && (
-                                        <p className="text-xs text-muted-foreground truncate mt-0.5">{c.description}</p>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => handleDelete(c.id)}
-                                    className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                    title="Удалить"
+                        {candidates.map(c => {
+                            const isPhotoLoading = photoLoading === c.id
+                            const hasPhoto = Boolean(c.photoUrl)
+
+                            return (
+                                <li
+                                    key={c.id}
+                                    className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3"
                                 >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                            </li>
-                        ))}
+                                    {/* Photo thumbnail */}
+                                    <div className="relative shrink-0">
+                                        {hasPhoto ? (
+                                            <img
+                                                src={c.photoUrl}
+                                                alt={c.name}
+                                                className="h-10 w-10 rounded-lg object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                                                <UserRound className="h-5 w-5 text-muted-foreground" />
+                                            </div>
+                                        )}
+                                        {isPhotoLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/70">
+                                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Name + description */}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
+                                        {c.description && (
+                                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.description}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex shrink-0 items-center gap-1">
+                                        {/* Upload photo */}
+                                        <label
+                                            title="Загрузить фото"
+                                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                        >
+                                            <Camera className="h-3.5 w-3.5" />
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                disabled={isPhotoLoading}
+                                                ref={el => { fileInputRefs.current[c.id] = el }}
+                                                onChange={e => {
+                                                    const file = e.target.files?.[0]
+                                                    if (file) handleUploadPhoto(c.id, file)
+                                                    e.target.value = ''
+                                                }}
+                                            />
+                                        </label>
+
+                                        {/* Delete photo */}
+                                        {hasPhoto && (
+                                            <button
+                                                onClick={() => handleDeletePhoto(c.id)}
+                                                disabled={isPhotoLoading}
+                                                title="Удалить фото"
+                                                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
+
+                                        {/* Delete candidate */}
+                                        <button
+                                            onClick={() => handleDelete(c.id)}
+                                            disabled={isPhotoLoading}
+                                            title="Удалить кандидата"
+                                            className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                </li>
+                            )
+                        })}
                     </ul>
                 )}
 

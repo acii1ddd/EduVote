@@ -298,7 +298,7 @@ public class DatabaseInitializer(
                         VotingId = princessVotingId,
                         Name = "Алина Ковальчук",
                         Description = "Организатор научного клуба, победительница университетской олимпиады по математике.",
-                        PhotoUrl = "https://picsum.photos/200?random=101"
+                        PhotoObjectName = "https://picsum.photos/200?random=101"
                     },
                     new Candidate
                     {
@@ -306,7 +306,7 @@ public class DatabaseInitializer(
                         VotingId = princessVotingId,
                         Name = "Мария Шевченко",
                         Description = "Староста потока, координировала волонтерские проекты факультета в этом году.",
-                        PhotoUrl = "https://picsum.photos/200?random=102"
+                        PhotoObjectName = "https://picsum.photos/200?random=102"
                     },
                     new Candidate
                     {
@@ -314,7 +314,7 @@ public class DatabaseInitializer(
                         VotingId = princessVotingId,
                         Name = "Екатерина Левченко",
                         Description = "Капитан команды дебатов, автор серии образовательных подкастов для первокурсников.",
-                        PhotoUrl = "https://picsum.photos/200?random=103"
+                        PhotoObjectName = "https://picsum.photos/200?random=103"
                     },
                     new Candidate
                     {
@@ -322,7 +322,7 @@ public class DatabaseInitializer(
                         VotingId = princessVotingId,
                         Name = "София Дорошенко",
                         Description = "Лидер студенческого театра, инициировала благотворительный фестиваль в кампусе.",
-                        PhotoUrl = "https://picsum.photos/200?random=104"
+                        PhotoObjectName = "https://picsum.photos/200?random=104"
                     }
                 ]
             },
@@ -345,7 +345,7 @@ public class DatabaseInitializer(
                         VotingId = bestTeacherVotingId,
                         Name = "Проф. Ирина Мельник",
                         Description = "Кафедра программной инженерии, известна практико-ориентированными занятиями и менторством.",
-                        PhotoUrl = "https://picsum.photos/200?random=105"
+                        PhotoObjectName = "https://picsum.photos/200?random=105"
                     },
                     new Candidate
                     {
@@ -353,7 +353,7 @@ public class DatabaseInitializer(
                         VotingId = bestTeacherVotingId,
                         Name = "Доц. Алексей Ткаченко",
                         Description = "Кафедра экономики, внедрил кейс-метод и еженедельные карьерные воркшопы.",
-                        PhotoUrl = "https://picsum.photos/200?random=106"
+                        PhotoObjectName = "https://picsum.photos/200?random=106"
                     },
                     new Candidate
                     {
@@ -361,7 +361,7 @@ public class DatabaseInitializer(
                         VotingId = bestTeacherVotingId,
                         Name = "Проф. Наталья Бондарь",
                         Description = "Кафедра биотехнологий, руководитель лабораторных практикумов и студенческих исследований.",
-                        PhotoUrl = "https://picsum.photos/200?random=107"
+                        PhotoObjectName = "https://picsum.photos/200?random=107"
                     },
                     new Candidate
                     {
@@ -369,7 +369,7 @@ public class DatabaseInitializer(
                         VotingId = bestTeacherVotingId,
                         Name = "Ст. преп. Дмитрий Поляков",
                         Description = "Кафедра кибербезопасности, проводит открытые разборы реальных инцидентов.",
-                        PhotoUrl = "https://picsum.photos/200?random=108"
+                        PhotoObjectName = "https://picsum.photos/200?random=108"
                     }
                 ]
             },
@@ -392,7 +392,7 @@ public class DatabaseInitializer(
                         VotingId = eventsVotingId,
                         Name = "Хакатон выходного дня",
                         Description = "48-часовой командный хакатон с треками по AI, web и мобильной разработке.",
-                        PhotoUrl = "https://picsum.photos/200?random=109"
+                        PhotoObjectName = "https://picsum.photos/200?random=109"
                     },
                     new Candidate
                     {
@@ -400,7 +400,7 @@ public class DatabaseInitializer(
                         VotingId = eventsVotingId,
                         Name = "Фестиваль культур",
                         Description = "Неделя стендов, мастер-классов и кулинарных презентаций от международных студентов.",
-                        PhotoUrl = "https://picsum.photos/200?random=110"
+                        PhotoObjectName = "https://picsum.photos/200?random=110"
                     },
                     new Candidate
                     {
@@ -408,7 +408,7 @@ public class DatabaseInitializer(
                         VotingId = eventsVotingId,
                         Name = "Ярмарка стажировок",
                         Description = "Встреча с работодателями и быстрые интервью для студентов 2–4 курсов.",
-                        PhotoUrl = "https://picsum.photos/200?random=111"
+                        PhotoObjectName = "https://picsum.photos/200?random=111"
                     },
                     new Candidate
                     {
@@ -416,7 +416,7 @@ public class DatabaseInitializer(
                         VotingId = eventsVotingId,
                         Name = "Ночь кино в кампусе",
                         Description = "Открытый кинопоказ и дискуссия о фильмах с приглашенными спикерами.",
-                        PhotoUrl = "https://picsum.photos/200?random=112"
+                        PhotoObjectName = "https://picsum.photos/200?random=112"
                     },
                     new Candidate
                     {
@@ -424,7 +424,7 @@ public class DatabaseInitializer(
                         VotingId = eventsVotingId,
                         Name = "Спортивный кубок факультетов",
                         Description = "Серия соревнований между факультетами по футболу, волейболу и настольному теннису.",
-                        PhotoUrl = "https://picsum.photos/200?random=113"
+                        PhotoObjectName = "https://picsum.photos/200?random=113"
                     }
                 ]
             },
@@ -447,7 +447,7 @@ public class DatabaseInitializer(
                         VotingId = servicesVotingId,
                         Name = "24/7 онлайн-поддержка студентов",
                         Description = "Единый чат для вопросов по расписанию, справкам и административным процедурам.",
-                        PhotoUrl = "https://picsum.photos/200?random=114"
+                        PhotoObjectName = "https://picsum.photos/200?random=114"
                     },
                     new Candidate
                     {
@@ -455,7 +455,7 @@ public class DatabaseInitializer(
                         VotingId = servicesVotingId,
                         Name = "Сервис записи к психологу",
                         Description = "Конфиденциальная платформа для бронирования консультаций с психологической службой.",
-                        PhotoUrl = "https://picsum.photos/200?random=115"
+                        PhotoObjectName = "https://picsum.photos/200?random=115"
                     },
                     new Candidate
                     {
@@ -463,7 +463,7 @@ public class DatabaseInitializer(
                         VotingId = servicesVotingId,
                         Name = "Мобильный пропуск в кампус",
                         Description = "Доступ в корпуса и общежития через приложение вместо пластиковых карт.",
-                        PhotoUrl = "https://picsum.photos/200?random=116"
+                        PhotoObjectName = "https://picsum.photos/200?random=116"
                     },
                     new Candidate
                     {
@@ -471,7 +471,7 @@ public class DatabaseInitializer(
                         VotingId = servicesVotingId,
                         Name = "Сервис аренды оборудования",
                         Description = "Онлайн-бронирование ноутбуков, камер и лабораторных наборов для проектов.",
-                        PhotoUrl = "https://picsum.photos/200?random=117"
+                        PhotoObjectName = "https://picsum.photos/200?random=117"
                     },
                     new Candidate
                     {
@@ -479,7 +479,7 @@ public class DatabaseInitializer(
                         VotingId = servicesVotingId,
                         Name = "Платформа поиска соседей по общежитию",
                         Description = "Подбор совместимого соседа по интересам, графику и бытовым привычкам.",
-                        PhotoUrl = "https://picsum.photos/200?random=118"
+                        PhotoObjectName = "https://picsum.photos/200?random=118"
                     }
                 ]
             },
@@ -502,7 +502,7 @@ public class DatabaseInitializer(
                         VotingId = cafeteriaRatingVotingId,
                         Name = "Качество блюд",
                         Description = "Насколько вкусные и свежие блюда подаются в столовой.",
-                        PhotoUrl = "https://picsum.photos/200?random=119"
+                        PhotoObjectName = "https://picsum.photos/200?random=119"
                     },
                     new Candidate
                     {
@@ -510,7 +510,7 @@ public class DatabaseInitializer(
                         VotingId = cafeteriaRatingVotingId,
                         Name = "Разнообразие меню",
                         Description = "Оцените выбор блюд, включая вегетарианские и диетические опции.",
-                        PhotoUrl = "https://picsum.photos/200?random=120"
+                        PhotoObjectName = "https://picsum.photos/200?random=120"
                     },
                     new Candidate
                     {
@@ -518,7 +518,7 @@ public class DatabaseInitializer(
                         VotingId = cafeteriaRatingVotingId,
                         Name = "Цены",
                         Description = "Соответствие стоимости блюд студенческому бюджету.",
-                        PhotoUrl = "https://picsum.photos/200?random=121"
+                        PhotoObjectName = "https://picsum.photos/200?random=121"
                     },
                     new Candidate
                     {
@@ -526,7 +526,7 @@ public class DatabaseInitializer(
                         VotingId = cafeteriaRatingVotingId,
                         Name = "Чистота и обслуживание",
                         Description = "Состояние зала, скорость обслуживания и вежливость персонала.",
-                        PhotoUrl = "https://picsum.photos/200?random=122"
+                        PhotoObjectName = "https://picsum.photos/200?random=122"
                     }
                 ]
             },
@@ -549,7 +549,7 @@ public class DatabaseInitializer(
                         VotingId = coursesRatingVotingId,
                         Name = "Архитектура программных систем",
                         Description = "Курс о проектировании масштабируемых приложений и паттернах интеграции.",
-                        PhotoUrl = "https://picsum.photos/200?random=123"
+                        PhotoObjectName = "https://picsum.photos/200?random=123"
                     },
                     new Candidate
                     {
@@ -557,7 +557,7 @@ public class DatabaseInitializer(
                         VotingId = coursesRatingVotingId,
                         Name = "Анализ данных и визуализация",
                         Description = "Практический курс по Python, статистике и построению дашбордов.",
-                        PhotoUrl = "https://picsum.photos/200?random=124"
+                        PhotoObjectName = "https://picsum.photos/200?random=124"
                     },
                     new Candidate
                     {
@@ -565,7 +565,7 @@ public class DatabaseInitializer(
                         VotingId = coursesRatingVotingId,
                         Name = "Экономика инноваций",
                         Description = "Изучение бизнес-моделей стартапов и механизмов финансирования проектов.",
-                        PhotoUrl = "https://picsum.photos/200?random=125"
+                        PhotoObjectName = "https://picsum.photos/200?random=125"
                     },
                     new Candidate
                     {
@@ -573,7 +573,7 @@ public class DatabaseInitializer(
                         VotingId = coursesRatingVotingId,
                         Name = "Кибербезопасность веб-приложений",
                         Description = "Основы защиты приложений, secure coding и тестирование на уязвимости.",
-                        PhotoUrl = "https://picsum.photos/200?random=126"
+                        PhotoObjectName = "https://picsum.photos/200?random=126"
                     }
                 ]
             },

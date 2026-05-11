@@ -14,7 +14,7 @@ public static class CandidateMapper
             .Map(dest => dest.VotingId, src => src.VotingId.ToString())
             .Map(dest => dest.Name, src => src.Name)
             .Map(dest => dest.Description, src => src.Description)
-            .Map(dest => dest.PhotoUrl, src => src.PhotoUrl ?? string.Empty);
+            .Map(dest => dest.PhotoUrl, src => src.PhotoObjectName ?? string.Empty);
 
         // Mapping from gRPC AddCandidateRequest to DAL Candidate
         Config.NewConfig<AddCandidateRequest, DbCandidate>()

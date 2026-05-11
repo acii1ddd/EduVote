@@ -16,6 +16,8 @@ builder.Services
     .AddDbInitializer()
     .AddRepositories();
 
+builder.AddMinioClient("minio");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -42,10 +44,6 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 var app = builder.Build();
-
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseCors("AllowAll");
 
 await app.MapServicesAsync();
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle } from 'lucide-react'
+import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert } from 'lucide-react'
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
 import { getTargets } from '@/api/votingTargetApi'
@@ -26,6 +26,11 @@ const STATUS_CONFIG: Record<VotingStatus, { label: string; className: string; ic
         label: 'Завершено',
         className: 'bg-secondary text-secondary-foreground',
         icon: <Clock className="h-3 w-3" />,
+    },
+    PendingApproval: {
+        label: 'На модерации',
+        className: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400',
+        icon: <ShieldAlert className="h-3 w-3" />,
     },
 }
 

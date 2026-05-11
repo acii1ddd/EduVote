@@ -33,3 +33,21 @@ export const createCandidate = async (
 export const deleteCandidate = async (votingId: string, candidateId: string): Promise<void> => {
     await api.delete(`/votings/${votingId}/candidates/${candidateId}`)
 }
+
+export const uploadCandidatePhoto = async (
+    candidateId: string,
+    photo: File,
+): Promise<{ photo_url: string }> => {
+    const formData = new FormData()
+    formData.append('photo', photo)
+    const response = await api.post<{ photo_url: string }>(
+        `/candidates/${candidateId}/photo`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+    )
+    return response.data
+}
+
+export const deleteCandidatePhoto = async (candidateId: string): Promise<void> => {
+    await api.delete(`/candidates/${candidateId}/photo`)
+}

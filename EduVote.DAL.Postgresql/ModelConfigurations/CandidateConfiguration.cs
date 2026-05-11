@@ -22,7 +22,7 @@ public class CandidateConfiguration : IEntityTypeConfiguration<Candidate>
             .HasMaxLength(MaxLength)
             .IsRequired();
 
-        builder.Property(x => x.PhotoUrl)
+        builder.Property(x => x.PhotoObjectName)
             .HasMaxLength(MaxLength);
         
         // Votings

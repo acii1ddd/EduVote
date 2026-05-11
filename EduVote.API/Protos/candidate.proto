@@ -21,10 +21,9 @@ service Candidates {
     };
   }
 
-  rpc UploadCandidatePhoto (UploadCandidatePhotoRequest) returns (UploadCandidatePhotoResponse) {
+  rpc DeleteCandidatePhoto (DeleteCandidatePhotoRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/api/candidates/{candidate_id}/photo"
-      body: "*"
+      delete: "/api/candidates/{candidate_id}/photo"
     };
   }
 
@@ -46,10 +45,8 @@ message DeleteCandidateRequest {
   string candidate_id = 2;
 }
 
-message UploadCandidatePhotoRequest {
+message DeleteCandidatePhotoRequest {
   string candidate_id = 1;
-  string image_base64 = 2;
-  string content_type = 3;
 }
 
 message GetCandidatesRequest {
@@ -58,10 +55,6 @@ message GetCandidatesRequest {
  
 message GetCandidatesResponse {
   repeated CandidateResponse candidates = 1;
-}
-
-message UploadCandidatePhotoResponse {
-  string photo_url = 1;
 }
 
 message CandidateResponse {

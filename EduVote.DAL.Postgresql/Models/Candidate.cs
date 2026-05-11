@@ -15,7 +15,7 @@ public class Candidate
     
     public string Description { get; set; } = string.Empty;
     
-    public string? PhotoUrl { get; set; }
+    public string? PhotoObjectName { get; set; }
     
     /// <summary>
     /// Votes that already cast for this candidate

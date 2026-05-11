@@ -1,4 +1,5 @@
 using EduVote.API.Mappers;
+using EduVote.API.Services.Storage;
 using EduVote.API.Services.Tools;
 using EduVote.DAL.Postgresql.Repositories;
 
@@ -6,7 +7,9 @@ namespace EduVote.API.Services.Grpc;
 
 public class CandidateService(
     IVotingRepository votingRepository,
-    ICandidateRepository candidateRepository)
+    ICandidateRepository candidateRepository,
+    IFileStorageService fileStorageService,
+    ILogger<CandidateService> logger)
     : Candidates.CandidatesBase
 {
     public override async Task<CandidateResponse> CreateCandidate(
@@ -96,9 +99,27 @@ public class CandidateService(
         return response;
     }
 
-    public override Task<UploadCandidatePhotoResponse> UploadCandidatePhoto(UploadCandidatePhotoRequest request, ServerCallContext context)
+    public override async Task<Empty> DeleteCandidatePhoto(
+        DeleteCandidatePhotoRequest request,
+        ServerCallContext context)
     {
-        // todo сделать логику загрузки фотограмии для сущности кандидата + хранить ее в s3 и обращаться через свой file storage service
-        return base.UploadCandidatePhoto(request, context);
+        var candidateId = IdParser.ParseId(request.CandidateId, "Candidate");
+
+        var candidate = await candidateRepository.GetByIdAsync(
+            candidateId, context.CancellationToken);
+
+        if (candidate is null)
+            throw IdParser.CreateNotFoundException("Candidate", request.CandidateId);
+
+        if (candidate.PhotoObjectName is null)
+            return new Empty();
+        
+        await fileStorageService
+            .DeleteFileAsync(candidate.PhotoObjectName, candidate.Id, context.CancellationToken);
+
+        candidate.PhotoObjectName = null;
+        await candidateRepository.SaveChangesAsync(context.CancellationToken);
+
+        return new Empty();
     }
 }

@@ -16,12 +16,26 @@ var postgres = builder
 var db = postgres
     .AddDatabase("eduvote-db");
 
+// Minio
+var minioUser = builder
+    .AddParameter("minio-user", "user");
+
+var minioPassword = builder
+    .AddParameter("minio-password", "admin123");
+
+var minio = builder
+    .AddMinioContainer("minio", minioUser, minioPassword)
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
+
 // Voting API
 var votingApi = builder
     .AddProject<Projects.EduVote_API>("voting-api")
     .WithHttpsEndpoint(port: 5959)
     .WithReference(db)
-    .WaitFor(db);
+    .WaitFor(db)
+    .WithReference(minio)
+    .WaitFor(minio);
 
 var pgAdmin = builder
     .AddContainer("pgadmin", "dpage/pgadmin4")
