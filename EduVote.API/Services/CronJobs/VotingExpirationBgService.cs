@@ -31,21 +31,26 @@ public class VotingExpirationBgService(
             
         var now = DateTime.UtcNow;
 
-        // todo выбирать только active голосования
         var votings = await votingRepository
             .GetAllAsync(stoppingToken);
 
         foreach (var voting in votings)
         {
-            var isNotFinished = voting.Status != DbVotingStatus.Finished;
-            var isExpired = now >= voting.EndTime; 
-                
-            if (isNotFinished && isExpired)
+            var isExpirable = voting.Status is DbVotingStatus.Active or DbVotingStatus.Paused;
+            var isExpired   = now >= voting.EndTime;
+
+            if (!isExpirable || !isExpired)
+                continue;
+
+            try
             {
                 await votingLyfecycleService.FinalizeVotingAsync(voting.Id, stoppingToken);
-                    
-                logger.LogInformation("Voting with id {VotingId} was expired " +
-                    "and result data was appeared at VotingResults table", voting.Id);
+
+                logger.LogInformation("Voting {VotingId} expired and was finalized", voting.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to finalize expired voting {VotingId}", voting.Id);
             }
         }
     }

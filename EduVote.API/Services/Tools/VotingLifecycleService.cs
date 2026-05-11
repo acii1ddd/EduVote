@@ -15,8 +15,8 @@ public class VotingLifecycleService(
     {
         var voting = await GetVotingOrThrowAsync(votingId, cancellationToken);
         
-        // to avoid race condition between cron job and grpc finish method
-        if (voting.Status == DbVotingStatus.Finished)
+        // Skip votings that cannot be finalized
+        if (voting.Status is DbVotingStatus.Finished or DbVotingStatus.Draft)
             return;
         
         ChangeStatus(
