@@ -105,6 +105,8 @@ public class CandidateService(
         {
             if(candidate.PhotoUrl.StartsWith("https://picsum.photos/200?random")) continue;
             
+            if(candidate.PhotoUrl == "") continue;
+            
             candidate.PhotoUrl = await fileStorageService
                 .GetPresignedUrlAsync(Guid.Parse(candidate.Id), candidate.PhotoUrl);
         }
@@ -132,7 +134,7 @@ public class CandidateService(
         await fileStorageService
             .DeleteFileAsync(candidate.PhotoObjectName, candidate.Id, context.CancellationToken);
 
-        candidate.PhotoObjectName = null;
+        candidate.PhotoObjectName = "";
         await candidateRepository.SaveChangesAsync(context.CancellationToken);
 
         return new Empty();
