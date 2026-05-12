@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\EduVote.API\EduVote.API.csproj" />
+      <ProjectReference Include="..\..\src\EduVote.API\EduVote.API.csproj" />
     </ItemGroup>
 
     <ItemGroup>

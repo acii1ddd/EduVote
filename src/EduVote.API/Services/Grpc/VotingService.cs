@@ -232,14 +232,13 @@ public class VotingService(
     public override async Task<CastVoteResponse> CastVote(
         CastVoteRequest request, ServerCallContext context)
     {
-        // todo user id instead query parameter
-        var userIdClaim = context.GetHttpContext()
+        var userIdStr = context.GetHttpContext()
             .User
             .FindFirst(ClaimTypes.NameIdentifier)?
-            .Value;
+            .Value!;
         
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        var userId = IdParser.ParseId(request.UserId, "User");
+        var userId = IdParser.ParseId(userIdStr, "User");
 
         logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' attempting to " +
             "cast vote in voting {VotingId}", DateTime.UtcNow, userId, votingId);
