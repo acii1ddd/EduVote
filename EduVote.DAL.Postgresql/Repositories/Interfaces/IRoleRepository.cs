@@ -1,7 +1,6 @@
-using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 public interface IRoleRepository
 {

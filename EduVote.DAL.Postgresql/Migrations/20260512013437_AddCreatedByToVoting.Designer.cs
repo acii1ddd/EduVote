@@ -3,6 +3,7 @@ using System;
 using EduVote.DAL.Postgresql.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EduVote.DAL.Postgresql.Migrations
 {
     [DbContext(typeof(EduVoteDbContext))]
-    partial class EduVoteDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260512013437_AddCreatedByToVoting")]
+    partial class AddCreatedByToVoting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,7 +268,7 @@ namespace EduVote.DAL.Postgresql.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedById")
+                    b.Property<Guid?>("CreatedById")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Description")
@@ -441,9 +444,7 @@ namespace EduVote.DAL.Postgresql.Migrations
                 {
                     b.HasOne("EduVote.DAL.Postgresql.Models.User", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CreatedById");
 
                     b.Navigation("CreatedBy");
                 });

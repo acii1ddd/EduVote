@@ -1,5 +1,6 @@
 using EduVote.API.Services.Tools;
 using EduVote.DAL.Postgresql.Repositories;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 
 namespace EduVote.API.Services.CronJobs;

@@ -21,7 +21,8 @@ public static class VotingMapper
             .Map(dest => dest.StartTime, src => Timestamp.FromDateTime(src.StartTime.ToUniversalTime()))
             .Map(dest => dest.EndTime, src => Timestamp.FromDateTime(src.EndTime.ToUniversalTime()))
             .Map(dest => dest.Status, src => MapToGrpcStatus(src.Status))
-            .Map(dest => dest.CreatedAt, src => Timestamp.FromDateTime(src.CreatedAt.ToUniversalTime()));
+            .Map(dest => dest.CreatedAt, src => Timestamp.FromDateTime(src.CreatedAt.ToUniversalTime()))
+            .Map(dest => dest.CreatedById, src => src.CreatedById.ToString());
 
         // Обратное сопоставление (если понадобится)
         Config.NewConfig<CreateVotingRequest, DbVoting>()

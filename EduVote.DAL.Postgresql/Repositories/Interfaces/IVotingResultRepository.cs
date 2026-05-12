@@ -1,6 +1,6 @@
 using EduVote.DAL.Postgresql.Models;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 public interface IVotingResultRepository
 {

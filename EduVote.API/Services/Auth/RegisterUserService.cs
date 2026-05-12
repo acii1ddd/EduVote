@@ -3,6 +3,7 @@ using EduVote.DAL.Postgresql.Repositories;
 using EduVote.API.Services.Auth.PasswordHasher;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 namespace EduVote.API.Services.Auth;
 

@@ -8,6 +8,7 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import AdminPage from './pages/AdminPage'
 import StudentDashboard from './pages/StudentDashboard'
+import TeacherDashboard from './pages/TeacherDashboard'
 import VotingManagement from './pages/VotingManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
@@ -44,6 +45,11 @@ function Navbar() {
                         <>
                             {claims.role === 'Student' && (
                                 <NavLink to="/dashboard" className={navLinkClass}>
+                                    Дашборд
+                                </NavLink>
+                            )}
+                            {claims.role === 'Teacher' && (
+                                <NavLink to="/teacher-dashboard" className={navLinkClass}>
                                     Дашборд
                                 </NavLink>
                             )}
@@ -107,8 +113,16 @@ function App() {
                     <Route
                         path="/dashboard"
                         element={
-                            <ProtectedRoute allowedRoles={['Student', 'Teacher']}>
+                            <ProtectedRoute allowedRoles={['Student']}>
                                 <StudentDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/teacher-dashboard"
+                        element={
+                            <ProtectedRoute allowedRoles={['Teacher']}>
+                                <TeacherDashboard />
                             </ProtectedRoute>
                         }
                     />

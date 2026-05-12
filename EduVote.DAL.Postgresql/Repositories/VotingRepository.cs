@@ -1,5 +1,6 @@
 using EduVote.DAL.Postgresql.Context;
 using EduVote.DAL.Postgresql.Models;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace EduVote.DAL.Postgresql.Repositories;
@@ -59,6 +60,16 @@ public class VotingRepository(EduVoteDbContext dbContext)
             .Include(v => v.VotingTargets)
             .Where(v => !v.VotingTargets.Any() ||
                         v.VotingTargets.Any(vt => ids.Contains(vt.EducationUnitId)))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Voting>> GetByCreatedByAsync(
+        Guid createdById,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Votings
+            .AsNoTracking()
+            .Where(v => v.CreatedById == createdById)
             .ToListAsync(cancellationToken);
     }
 }

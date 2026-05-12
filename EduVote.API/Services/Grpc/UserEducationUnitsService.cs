@@ -2,6 +2,7 @@ using EduVote.API.Mappers;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
 namespace EduVote.API.Services.Grpc;

@@ -29,6 +29,7 @@ public class VotingConfiguration : IEntityTypeConfiguration<Voting>
         builder.Property(x => x.EndTime).IsRequired();
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.CreatedAt).IsRequired();
+        builder.Property(x => x.CreatedById).IsRequired();
         
         // Votes
         builder.HasMany(x => x.Votes)

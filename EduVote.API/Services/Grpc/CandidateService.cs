@@ -2,6 +2,7 @@ using EduVote.API.Mappers;
 using EduVote.API.Services.Storage;
 using EduVote.API.Services.Tools;
 using EduVote.DAL.Postgresql.Repositories;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 namespace EduVote.API.Services.Grpc;
 
@@ -103,8 +104,10 @@ public class CandidateService(
         // replace photo object names with PresignedURLs
         foreach (var candidate in candidateResponses)
         {
+            // random photos from picsum don't have object names and don't need presigned URLs
             if(candidate.PhotoUrl.StartsWith("https://picsum.photos/200?random")) continue;
-            
+
+            // skip candidates without photos
             if(candidate.PhotoUrl == "") continue;
             
             candidate.PhotoUrl = await fileStorageService

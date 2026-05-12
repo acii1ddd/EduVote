@@ -1,4 +1,5 @@
 using EduVote.DAL.Postgresql.Repositories;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 

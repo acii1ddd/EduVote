@@ -30,7 +30,8 @@ export const createCandidate = async (
     return response.data
 }
 
-export const deleteCandidate = async (votingId: string, candidateId: string): Promise<void> => {
+export const deleteCandidate = async (
+    votingId: string, candidateId: string): Promise<void> => {
     await api.delete(`/votings/${votingId}/candidates/${candidateId}`)
 }
 

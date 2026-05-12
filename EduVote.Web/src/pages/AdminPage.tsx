@@ -327,13 +327,13 @@ export default function AdminPage() {
                             </select>
                         </Field>
 
-                        <Field label="Учебная группа">
+                        <Field label="Учебная единица">
                             <select
                                 className={inputClass}
                                 value={selectedEducationUnitId}
                                 onChange={e => setSelectedEducationUnitId(e.target.value)}
                             >
-                                <option value="">Не менять</option>
+                                <option value="">Выберите учебную единицу</option>
                                 {educationUnits.map(u => (
                                     <option key={u.id} value={u.id}>{u.name} ({u.type})</option>
                                 ))}

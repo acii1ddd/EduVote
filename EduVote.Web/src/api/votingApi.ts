@@ -14,6 +14,7 @@ export interface VotingResponse {
     endTime: string
     status: VotingStatus
     createdAt: string
+    createdById: string
 }
 
 export interface GetVotingsResponse {
@@ -32,6 +33,11 @@ export interface VotingFormPayload {
 
 export const getVotingsForUser = async (userId: string): Promise<GetVotingsResponse> => {
     const response = await api.get<GetVotingsResponse>(`/users/${userId}/votings`)
+    return response.data
+}
+
+export const getVotingsCreatedByUser = async (): Promise<GetVotingsResponse> => {
+    const response = await api.get<GetVotingsResponse>('/votings/created')
     return response.data
 }
 

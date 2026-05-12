@@ -1,7 +1,6 @@
 using EduVote.DAL.Postgresql.Models;
-using EduVote.DAL.Postgresql.Models.Enums;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 public interface IVotingRepository
 {
@@ -19,5 +18,9 @@ public interface IVotingRepository
 
     Task<IEnumerable<Voting>> GetVotingsForEducationUnitsAsync(
         IEnumerable<Guid> educationUnitIds,
+        CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<Voting>> GetByCreatedByAsync(
+        Guid createdById,
         CancellationToken cancellationToken = default);
 }

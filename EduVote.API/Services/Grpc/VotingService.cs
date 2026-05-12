@@ -5,6 +5,7 @@ using EduVote.API.Validators;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
@@ -34,8 +35,13 @@ public class VotingService(
 
         var voting = request.MapToEntity();
 
-        var callerRole = context.GetHttpContext()
-            .User.FindFirst(ClaimTypes.Role)?.Value;
+        // put in a separate method
+        var httpUser = context.GetHttpContext().User;
+        var callerRole = httpUser.FindFirst(ClaimTypes.Role)?.Value;
+        var callerIdStr = httpUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(callerIdStr, out var callerId))
+            voting.CreatedById = callerId;
 
         // Votings created by Teacher require Administrator approval before becoming active
         if (callerRole == Roles.Teacher)
@@ -174,6 +180,7 @@ public class VotingService(
         return response;
     }
 
+    // targeting votings for user - only those which are related to user's education units and above in hierarchy
     public override async Task<GetVotingsResponse> GetVotingsForUser(
         GetVotingsForUserRequest request, ServerCallContext context)
     {
@@ -202,6 +209,24 @@ public class VotingService(
         response.Votings.AddRange(votings.MapToResponseList());
 
         return response;
+    }
+
+    public override async Task<GetVotingsResponse> GetVotingsCreatedByUser(
+        Empty request, ServerCallContext context)
+    {
+        var userIdStr = context.GetHttpContext()
+            .User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!Guid.TryParse(userIdStr, out var userId))
+            throw new RpcException(new Status(StatusCode.Unauthenticated, "User identity not found in token."));
+
+        var createdVotings = await votingRepository
+            .GetByCreatedByAsync(userId, context.CancellationToken);
+
+        var createdResponse = new GetVotingsResponse();
+        createdResponse.Votings.AddRange(createdVotings.MapToResponseList());
+
+        return createdResponse;
     }
 
     public override async Task<CastVoteResponse> CastVote(
@@ -356,7 +381,6 @@ public class VotingService(
         return vote;
     }
     
-
     private static void PopulateVoteData(
         Vote vote, 
         CastVoteRequest request, 

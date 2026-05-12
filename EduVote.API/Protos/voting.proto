@@ -85,6 +85,12 @@ service Votings {
     };
   }
 
+  rpc GetVotingsCreatedByUser (google.protobuf.Empty) returns (GetVotingsResponse) {
+    option (google.api.http) = {
+      get: "/api/votings/created"
+    };
+  }
+
 //  rpc GetStats (GetVotingRequest) returns (VotingStatsResponse) {
 //    option (google.api.http) = {
 //      get: "/api/votings/{id}/stats"
@@ -172,6 +178,7 @@ message VotingResponse {
   google.protobuf.Timestamp end_time = 8;
   VotingStatus status = 9;
   google.protobuf.Timestamp created_at = 10;
+  string created_by_id = 11;
 }
 
 message GetVotingsResponse {

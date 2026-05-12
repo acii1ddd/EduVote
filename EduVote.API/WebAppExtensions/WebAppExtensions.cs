@@ -2,6 +2,7 @@ using EduVote.API.Services.Grpc;
 using EduVote.API.Services.Storage;
 using EduVote.DAL.Postgresql;
 using EduVote.DAL.Postgresql.Repositories;
+using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EduVote.API.WebAppExtensions;

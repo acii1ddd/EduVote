@@ -55,13 +55,13 @@ export default function VotingManagement() {
 
     const [votings, setVotings] = useState<VotingResponse[]>([])
     const [loading, setLoading] = useState(true)
-    const [error,   setError]   = useState<string | null>(null)
-    const [busyId,  setBusyId]  = useState<string | null>(null)
-    const [modal,   setModal]   = useState<ModalState>({ kind: 'none' })
+    const [error, setError] = useState<string | null>(null)
+    const [busyId, setBusyId]  = useState<string | null>(null)
+    const [modal, setModal] = useState<ModalState>({ kind: 'none' })
 
-    const [formData,    setFormData]    = useState<VotingFormData>(EMPTY_VOTING_FORM)
-    const [formError,   setFormError]   = useState<string | null>(null)
-    const [formBusy,    setFormBusy]    = useState(false)
+    const [formData, setFormData] = useState<VotingFormData>(EMPTY_VOTING_FORM)
+    const [formError, setFormError] = useState<string | null>(null)
+    const [formBusy, setFormBusy] = useState(false)
 
     useEffect(() => { loadVotings() }, [])
 

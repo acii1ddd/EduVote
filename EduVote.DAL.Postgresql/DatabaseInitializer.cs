@@ -93,7 +93,7 @@ public class DatabaseInitializer(
         var facultyIT = new EducationUnit
         {
             Id = Guid.NewGuid(),
-            Name = "Факультет информационных технологий",
+            Name = "Факультет автоматизированных и информационных систем",
             Type = EducationUnitType.Faculty,
             ParentId = university.Id
         };
@@ -156,7 +156,7 @@ public class DatabaseInitializer(
         var groupSE1_1 = new EducationUnit
         {
             Id = Guid.NewGuid(),
-            Name = "Группа 1-СО-1",
+            Name = "Группа ИП-11",
             Type = EducationUnitType.Group,
             ParentId = courseSE1.Id
         };
@@ -164,7 +164,7 @@ public class DatabaseInitializer(
         var groupSE1_2 = new EducationUnit
         {
             Id = Guid.NewGuid(),
-            Name = "Группа 1-СО-2",
+            Name = "Группа ИП-12",
             Type = EducationUnitType.Group,
             ParentId = courseSE1.Id
         };
@@ -173,7 +173,7 @@ public class DatabaseInitializer(
         var groupSE2_1 = new EducationUnit
         {
             Id = Guid.NewGuid(),
-            Name = "Группа 2-СО-1",
+            Name = "Группа ИП-21",
             Type = EducationUnitType.Group,
             ParentId = courseSE2.Id
         };
@@ -182,7 +182,7 @@ public class DatabaseInitializer(
         var groupIS1_1 = new EducationUnit
         {
             Id = Guid.NewGuid(),
-            Name = "Группа 1-ИБ-1",
+            Name = "Группа ИБ-11",
             Type = EducationUnitType.Group,
             ParentId = courseIS1.Id
         };
@@ -216,7 +216,7 @@ public class DatabaseInitializer(
             new() { Id = Guid.NewGuid(), Email = "irina@edu.com", Name = "Irina", RoleId = teacherRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
             new() { Id = Guid.NewGuid(), Email = "alex2@edu.com", Name = "Alex2", RoleId = teacherRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
             new() { Id = Guid.NewGuid(), Email = "teacher@gmail.com", Name = "Nata", RoleId = teacherRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"},
-            new() { Id = Guid.NewGuid(), Email = "admin@admin", Name = "Pasha", RoleId = adminRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"}
+            new() { Id = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11"), Email = "admin@admin", Name = "Pasha", RoleId = adminRole.Id, PasswordHash = "$2a$11$KJ039LcL7.rf3UQXJMisse1JfiaorlbOTLlJZGv4iiDjwbLJIS7Fm"}
         };
 
         await context.Users.AddRangeAsync(users);
@@ -225,11 +225,11 @@ public class DatabaseInitializer(
         // Link users to education units
         var educationUnits = await context.EducationUnits.ToListAsync();
         
-        var groupSE1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа 1-СО-1")!;
-        var groupSE1_2 = educationUnits.FirstOrDefault(u => u.Name == "Группа 1-СО-2")!;
-        var groupSE2_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа 2-СО-1")!;
-        var groupIS1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа 1-ИБ-1")!;
-        var facultyIT = educationUnits.FirstOrDefault(u => u.Name == "Факультет информационных технологий")!;
+        var groupSE1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИП-11")!;
+        var groupSE1_2 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИП-12")!;
+        var groupSE2_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИП-21")!;
+        var groupIS1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИБ-11")!;
+        var facultyIT = educationUnits.FirstOrDefault(u => u.Name == "Факультет автоматизированных и информационных систем")!;
 
         var userEducationUnits = new List<UserEducationUnit>
         {
@@ -324,7 +324,8 @@ public class DatabaseInitializer(
                         Description = "Лидер студенческого театра, инициировала благотворительный фестиваль в кампусе.",
                         PhotoObjectName = "https://picsum.photos/200?random=104"
                     }
-                ]
+                ],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -371,7 +372,8 @@ public class DatabaseInitializer(
                         Description = "Кафедра кибербезопасности, проводит открытые разборы реальных инцидентов.",
                         PhotoObjectName = "https://picsum.photos/200?random=108"
                     }
-                ]
+                ],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -426,7 +428,8 @@ public class DatabaseInitializer(
                         Description = "Серия соревнований между факультетами по футболу, волейболу и настольному теннису.",
                         PhotoObjectName = "https://picsum.photos/200?random=113"
                     }
-                ]
+                ],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -481,7 +484,8 @@ public class DatabaseInitializer(
                         Description = "Подбор совместимого соседа по интересам, графику и бытовым привычкам.",
                         PhotoObjectName = "https://picsum.photos/200?random=118"
                     }
-                ]
+                ],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -528,7 +532,8 @@ public class DatabaseInitializer(
                         Description = "Состояние зала, скорость обслуживания и вежливость персонала.",
                         PhotoObjectName = "https://picsum.photos/200?random=122"
                     }
-                ]
+                ],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -575,7 +580,8 @@ public class DatabaseInitializer(
                         Description = "Основы защиты приложений, secure coding и тестирование на уязвимости.",
                         PhotoObjectName = "https://picsum.photos/200?random=126"
                     }
-                ]
+                ],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -588,7 +594,8 @@ public class DatabaseInitializer(
                 StartTime = now,
                 EndTime = now.AddDays(30),
                 Status = VotingStatus.Active,
-                Candidates = []
+                Candidates = [],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             },
             new()
             {
@@ -601,7 +608,8 @@ public class DatabaseInitializer(
                 StartTime = now.AddDays(1),
                 EndTime = now.AddDays(40),
                 Status = VotingStatus.Draft,
-                Candidates = []
+                Candidates = [],
+                CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             }
         };
 
@@ -616,11 +624,11 @@ public class DatabaseInitializer(
     {
         var educationUnits = await context.EducationUnits.ToListAsync();
         
-        var facultyIT = educationUnits.FirstOrDefault(u => u.Name == "Факультет информационных технологий");
-        var groupSE1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа 1-СО-1");
-        var groupSE1_2 = educationUnits.FirstOrDefault(u => u.Name == "Группа 1-СО-2");
-        var groupSE2_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа 2-СО-1");
-        var groupIS1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа 1-ИБ-1");
+        var facultyIT = educationUnits.FirstOrDefault(u => u.Name == "Факультет автоматизированных и информационных систем");
+        var groupSE1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИП-11");
+        var groupSE1_2 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИП-12");
+        var groupSE2_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИП-21");
+        var groupIS1_1 = educationUnits.FirstOrDefault(u => u.Name == "Группа ИБ-11");
 
         var targets = new List<VotingTarget>();
 
