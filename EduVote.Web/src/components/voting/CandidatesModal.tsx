@@ -54,6 +54,10 @@ export default function CandidatesModal({ votingId, votingTitle, onClose }: Prop
 
     const handleDelete = async (id: string) => {
         try {
+            const candidate = candidates.find(c => c.id === id)
+            if (candidate?.photoUrl) {
+                await deleteCandidatePhoto(id)
+            }
             await deleteCandidate(votingId, id)
             setCandidates(prev => prev.filter(c => c.id !== id))
         } catch (err) {
