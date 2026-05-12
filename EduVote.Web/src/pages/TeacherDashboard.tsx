@@ -4,6 +4,7 @@ import ProfileCard from '@/components/ProfileCard'
 import {
     getVotingsCreatedByUser, getVotingsForUser, createVoting, updateVoting,
     deleteVoting, startVoting, pauseVoting, finishVoting,
+    sortVotingsFinishedLast,
     type VotingResponse, type VotingFormPayload,
 } from '@/api/votingApi'
 import { getUsers, type UserResponse } from '@/api/userApi'
@@ -75,7 +76,7 @@ export default function TeacherDashboard() {
     const reloadMyVotings = async () => {
         try {
             const data = await getVotingsCreatedByUser()
-            setMyVotings(data.votings ?? [])
+            setMyVotings(sortVotingsFinishedLast(data.votings ?? []))
         } catch (err) {
             console.error(err)
         }
@@ -91,8 +92,8 @@ export default function TeacherDashboard() {
             getEducationUnits(),
         ])
             .then(([myData, availableData, usersData, unitsData]) => {
-                setMyVotings(myData.votings ?? [])
-                setAvailableVotings(availableData.votings ?? [])
+                setMyVotings(sortVotingsFinishedLast(myData.votings ?? []))
+                setAvailableVotings(sortVotingsFinishedLast(availableData.votings ?? []))
                 setAllUnits(unitsData.educationUnits ?? [])
                 const map: Record<string, UserResponse> = {}
                 for (const u of usersData.users) map[u.id] = u

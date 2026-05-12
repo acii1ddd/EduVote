@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Vote } from 'lucide-react'
-import { getVotingsForUser, type VotingResponse } from '@/api/votingApi'
+import { getVotingsForUser, type VotingResponse, sortVotingsFinishedLast } from '@/api/votingApi'
 import { getUsers, type UserResponse } from '@/api/userApi'
 import { getEducationUnits, type EducationUnit } from '@/api/educationUnitApi'
 import { useAuth } from '@/context/AuthContext'
@@ -42,8 +42,10 @@ export default function StudentDashboard() {
             .finally(() => setLoading(false))
     }, [claims?.nameid])
 
-    const active = votings.filter(v => v.status === 'Active')
-    const other  = votings.filter(v => v.status !== 'Active')
+    const sorted   = sortVotingsFinishedLast(votings)
+    const active   = sorted.filter(v => v.status === 'Active')
+    const inProg   = sorted.filter(v => v.status !== 'Active' && v.status !== 'Finished')
+    const finished = sorted.filter(v => v.status === 'Finished')
 
     return (
         <div className="space-y-8">
@@ -106,31 +108,35 @@ export default function StudentDashboard() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {active.map(v => (
-                            <StudentVotingCard
-                                key={v.id}
-                                voting={v}
-                                allUnits={allUnits}
-                                createdByName={userMap[v.createdById]?.name ?? v.createdById}
-                            />
+                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} />
                         ))}
                     </div>
                 </section>
             )}
 
-            {/* Other votings */}
-            {other.length > 0 && (
+            {/* In-progress votings (Draft / Paused / PendingApproval) */}
+            {inProg.length > 0 && (
                 <section className="space-y-3">
                     <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                         Остальные
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        {other.map(v => (
-                            <StudentVotingCard
-                                key={v.id}
-                                voting={v}
-                                allUnits={allUnits}
-                                createdByName={userMap[v.createdById]?.name ?? v.createdById}
-                            />
+                        {inProg.map(v => (
+                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* Finished votings — always last */}
+            {finished.length > 0 && (
+                <section className="space-y-3">
+                    <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                        Завершённые
+                    </h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        {finished.map(v => (
+                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} />
                         ))}
                     </div>
                 </section>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert, User } from 'lucide-react'
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
@@ -52,6 +53,7 @@ interface Props {
 // ── Component ──────────────────────────────────────────────
 
 export default function StudentVotingCard({ voting, allUnits, createdByName }: Props) {
+    const navigate = useNavigate()
     const status = STATUS_CONFIG[voting.status] ?? STATUS_CONFIG.Draft
 
     const [open,    setOpen]    = useState(false)
@@ -79,11 +81,16 @@ export default function StudentVotingCard({ voting, allUnits, createdByName }: P
 
     const fmt = (iso: string) => iso ? new Date(iso).toLocaleDateString('ru-RU') : '—'
 
+    const isFinished = voting.status === 'Finished'
+
     return (
-        <div className="group flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
+        <div className={`flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all ${isFinished ? 'opacity-60' : 'hover:border-primary/30 hover:shadow-md'}`}>
 
             {/* Main content */}
-            <div className="flex flex-col gap-3 p-5">
+            <div
+                className={`flex flex-col gap-3 p-5 ${isFinished ? '' : 'cursor-pointer'}`}
+                onClick={isFinished ? undefined : () => navigate(`/votings/${voting.id}`)}
+            >
 
                 <div className="flex items-start justify-between gap-3">
                     <h3 className="text-base font-semibold leading-snug text-card-foreground">

@@ -3,6 +3,7 @@ import { Plus, Vote } from 'lucide-react'
 import {
     getVotings, createVoting, updateVoting,
     deleteVoting, startVoting, pauseVoting, finishVoting, approveVoting,
+    sortVotingsFinishedLast,
     type VotingResponse, type VotingFormPayload,
 } from '@/api/votingApi'
 import { getUsers, type UserResponse } from '@/api/userApi'
@@ -71,7 +72,7 @@ export default function VotingManagement() {
         try {
             setLoading(true)
             const [votingsData, usersData] = await Promise.all([getVotings(), getUsers()])
-            setVotings(votingsData.votings ?? [])
+            setVotings(sortVotingsFinishedLast(votingsData.votings ?? []))
             const map: Record<string, UserResponse> = {}
             for (const u of usersData.users) map[u.id] = u
             setUserMap(map)

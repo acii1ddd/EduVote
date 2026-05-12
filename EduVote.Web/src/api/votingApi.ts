@@ -46,6 +46,22 @@ export const getVotings = async (): Promise<GetVotingsResponse> => {
     return response.data
 }
 
+export const getVotingById = async (id: string): Promise<VotingResponse> => {
+    const response = await api.get<VotingResponse>(`/votings/${id}`)
+    return response.data
+}
+
+const STATUS_ORDER: Record<VotingStatus, number> = {
+    Active:          0,
+    PendingApproval: 1,
+    Draft:           2,
+    Paused:          3,
+    Finished:        4,
+}
+
+export const sortVotingsFinishedLast = (list: VotingResponse[]): VotingResponse[] =>
+    [...list].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
+
 export const createVoting = async (payload: VotingFormPayload): Promise<VotingResponse> => {
     const response = await api.post<VotingResponse>('/votings', payload)
     return response.data
