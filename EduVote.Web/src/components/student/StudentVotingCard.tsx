@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert } from 'lucide-react'
+import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert, User } from 'lucide-react'
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
 import { getTargets } from '@/api/votingTargetApi'
@@ -46,11 +46,12 @@ const TYPE_LABELS: Record<string, string> = {
 interface Props {
     voting: VotingResponse
     allUnits: EducationUnit[]
+    createdByName?: string
 }
 
 // ── Component ──────────────────────────────────────────────
 
-export default function StudentVotingCard({ voting, allUnits }: Props) {
+export default function StudentVotingCard({ voting, allUnits, createdByName }: Props) {
     const status = STATUS_CONFIG[voting.status] ?? STATUS_CONFIG.Draft
 
     const [open,    setOpen]    = useState(false)
@@ -93,6 +94,13 @@ export default function StudentVotingCard({ voting, allUnits }: Props) {
                         {status.label}
                     </span>
                 </div>
+
+                {createdByName && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <User className="h-3 w-3 shrink-0" />
+                        <span>{createdByName}</span>
+                    </div>
+                )}
 
                 {voting.description && (
                     <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">

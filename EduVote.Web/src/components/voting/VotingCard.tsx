@@ -1,4 +1,4 @@
-import { Calendar, CheckCircle, FlagTriangleRight, Pause, Pencil, Play, ShieldAlert, Target, Trash2, Users } from 'lucide-react'
+import { Calendar, CheckCircle, FlagTriangleRight, Pause, Pencil, Play, ShieldAlert, Target, Trash2, User, Users } from 'lucide-react'
 import type { VotingResponse } from '@/api/votingApi'
 import { STATUS_CONFIG, TYPE_LABELS } from './votingConstants'
 
@@ -6,6 +6,7 @@ interface Props {
     voting: VotingResponse
     userRole: string
     busy: boolean
+    createdByName?: string
     onEdit: () => void
     onCandidates: () => void
     onTargets: () => void
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export default function VotingCard({
-    voting, userRole, busy,
+    voting, userRole, busy, createdByName,
     onEdit, onCandidates, onTargets,
     onStart, onPause, onFinish, onDelete, onApprove,
 }: Props) {
@@ -50,6 +51,13 @@ export default function VotingCard({
 
             {/* Body */}
             <div className="flex flex-col gap-3 px-5 pb-4 flex-1">
+                {createdByName && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <User className="h-3 w-3 shrink-0" />
+                        <span>{createdByName}</span>
+                    </div>
+                )}
+
                 {voting.description && (
                     <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
                         {voting.description}

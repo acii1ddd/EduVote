@@ -5,6 +5,7 @@ import {
     deleteVoting, startVoting, pauseVoting, finishVoting, approveVoting,
     type VotingResponse, type VotingFormPayload,
 } from '@/api/votingApi'
+import { getUsers, type UserResponse } from '@/api/userApi'
 import Modal from '@/components/ui/Modal'
 import VotingCard from '@/components/voting/VotingCard'
 import VotingForm, { type VotingFormData, EMPTY_VOTING_FORM } from '@/components/voting/VotingForm'
@@ -54,6 +55,7 @@ export default function VotingManagement() {
     const userRole = claims?.role ?? ''
 
     const [votings, setVotings] = useState<VotingResponse[]>([])
+    const [userMap, setUserMap] = useState<Record<string, UserResponse>>({})
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [busyId, setBusyId]  = useState<string | null>(null)
@@ -68,8 +70,11 @@ export default function VotingManagement() {
     const loadVotings = async () => {
         try {
             setLoading(true)
-            const data = await getVotings()
-            setVotings(data.votings ?? [])
+            const [votingsData, usersData] = await Promise.all([getVotings(), getUsers()])
+            setVotings(votingsData.votings ?? [])
+            const map: Record<string, UserResponse> = {}
+            for (const u of usersData.users) map[u.id] = u
+            setUserMap(map)
         } catch (err: any) {
             setError(err?.response?.data?.message ?? 'Не удалось загрузить голосования')
         } finally {
@@ -206,6 +211,7 @@ export default function VotingManagement() {
                             voting={voting}
                             userRole={userRole}
                             busy={busyId === voting.id}
+                            createdByName={userMap[voting.createdById]?.name ?? voting.createdById}
                             onEdit={() => openEdit(voting)}
                             onCandidates={() => setModal({ kind: 'candidates', voting })}
                             onTargets={() => setModal({ kind: 'targets', voting })}

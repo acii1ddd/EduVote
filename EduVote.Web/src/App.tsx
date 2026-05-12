@@ -53,7 +53,7 @@ function Navbar() {
                                     Дашборд
                                 </NavLink>
                             )}
-                            {(claims.role === 'Teacher' || claims.role === 'Administrator') && (
+                            {claims.role === 'Administrator' && (
                                 <NavLink to="/votings" className={navLinkClass}>
                                     Голосования
                                 </NavLink>
@@ -129,7 +129,7 @@ function App() {
                     <Route
                         path="/votings"
                         element={
-                            <ProtectedRoute allowedRoles={['Teacher', 'Administrator']}>
+                            <ProtectedRoute allowedRoles={['Administrator']}>
                                 <VotingManagement />
                             </ProtectedRoute>
                         }

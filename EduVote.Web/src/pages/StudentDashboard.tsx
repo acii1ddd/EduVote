@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Vote } from 'lucide-react'
 import { getVotingsForUser, type VotingResponse } from '@/api/votingApi'
-import { getUsers } from '@/api/userApi'
+import { getUsers, type UserResponse } from '@/api/userApi'
 import { getEducationUnits, type EducationUnit } from '@/api/educationUnitApi'
 import { useAuth } from '@/context/AuthContext'
 import StudentVotingCard from '@/components/student/StudentVotingCard'
+import ProfileCard from '@/components/ProfileCard'
 
 export default function StudentDashboard() {
     const { claims } = useAuth()
 
     const [votings,   setVotings]   = useState<VotingResponse[]>([])
     const [allUnits,  setAllUnits]  = useState<EducationUnit[]>([])
+    const [userMap,   setUserMap]   = useState<Record<string, UserResponse>>({})
     const [unitName,  setUnitName]  = useState<string | null>(null)
     const [loading,   setLoading]   = useState(true)
     const [error,     setError]     = useState<string | null>(null)
@@ -29,6 +31,10 @@ export default function StudentDashboard() {
                 setVotings(votingsData.votings ?? [])
                 setAllUnits(unitsData.educationUnits ?? [])
 
+                const map: Record<string, UserResponse> = {}
+                for (const u of usersData.users) map[u.id] = u
+                setUserMap(map)
+
                 const me = usersData.users.find(u => u.id === userId)
                 if (me?.educationUnitName) setUnitName(me.educationUnitName)
             })
@@ -43,20 +49,24 @@ export default function StudentDashboard() {
         <div className="space-y-8">
 
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                    Мои голосования
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    {unitName ? (
-                        <>
-                            Голосования для моей группы{' '}
-                            (<span className="font-semibold text-foreground">{unitName}</span>)
-                        </>
-                    ) : (
-                        'Голосования, доступные для вашей учебной группы'
-                    )}
-                </p>
+            <div className="space-y-3">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                        Мои голосования
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Голосования, доступные для вашей учебной группы
+                    </p>
+                </div>
+
+                {claims && (
+                    <ProfileCard fields={[
+                        { label: 'Имя студента',    value: userMap[claims.nameid]?.name ?? '—' },
+                        { label: 'Email',            value: userMap[claims.nameid]?.email ?? '—' },
+                        { label: 'Ваша роль',        value: claims.role, highlight: true },
+                        ...(unitName ? [{ label: 'Учебная группа', value: unitName }] : []),
+                    ]} />
+                )}
             </div>
 
             {/* Loading */}
@@ -96,7 +106,12 @@ export default function StudentDashboard() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {active.map(v => (
-                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} />
+                            <StudentVotingCard
+                                key={v.id}
+                                voting={v}
+                                allUnits={allUnits}
+                                createdByName={userMap[v.createdById]?.name ?? v.createdById}
+                            />
                         ))}
                     </div>
                 </section>
@@ -110,7 +125,12 @@ export default function StudentDashboard() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {other.map(v => (
-                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} />
+                            <StudentVotingCard
+                                key={v.id}
+                                voting={v}
+                                allUnits={allUnits}
+                                createdByName={userMap[v.createdById]?.name ?? v.createdById}
+                            />
                         ))}
                     </div>
                 </section>

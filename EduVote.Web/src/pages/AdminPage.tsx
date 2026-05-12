@@ -3,6 +3,8 @@ import { deleteUserRequest, getUsers, updateUser, createUser, type UserResponse 
 import { getRoles } from '@/api/roleApi'
 import { type EducationUnit, getEducationUnits } from '@/api/educationUnitApi'
 import { assignUserToEducationUnit } from '@/api/assignUserToEducationUnit'
+import { useAuth } from '@/context/AuthContext'
+import ProfileCard from '@/components/ProfileCard'
 import { Users, Plus, X } from 'lucide-react'
 
 const inputClass = `
@@ -15,6 +17,7 @@ const inputClass = `
 const EMPTY_CREATE = { name: '', email: '', password: '', role: '' }
 
 export default function AdminPage() {
+    const { claims } = useAuth()
     const [users, setUsers] = useState<UserResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -130,28 +133,38 @@ export default function AdminPage() {
         <div className="space-y-8">
 
             {/* Page header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Users className="h-5 w-5" />
+            <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                                Панель администратора
+                            </h1>
+                            <p className="text-sm text-muted-foreground">
+                                Управление пользователями системы
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                            Панель администратора
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                            Управление пользователями системы
-                        </p>
-                    </div>
+
+                    <button
+                        onClick={openCreate}
+                        className="flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Добавить
+                    </button>
                 </div>
 
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                >
-                    <Plus className="h-4 w-4" />
-                    Добавить
-                </button>
+                {claims && !loading && (
+                    <ProfileCard fields={[
+                        { label: 'Имя администратора', value: users.find(u => u.id === claims.nameid)?.name ?? '—' },
+                        { label: 'Email',               value: users.find(u => u.id === claims.nameid)?.email ?? '—' },
+                        { label: 'Ваша роль',           value: claims.role, highlight: true },
+                    ]} />
+                )}
             </div>
 
             {/* Users table */}
