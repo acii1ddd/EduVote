@@ -11,7 +11,9 @@ public class VoteRepository(EduVoteDbContext dbContext) : IVoteRepository
         CancellationToken cancellationToken = default)
     {
         dbContext.Votes.Add(voteModel);
+        
         await dbContext.SaveChangesAsync(cancellationToken);
+        
         return voteModel;
     }
 

@@ -1,5 +1,4 @@
 using EduVote.DAL.Postgresql.Models;
-using EduVote.DAL.Postgresql.Repositories;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;

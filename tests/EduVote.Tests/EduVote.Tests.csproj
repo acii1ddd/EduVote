@@ -22,4 +22,10 @@
       <ProjectReference Include="..\..\EduVote.API\EduVote.API.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>

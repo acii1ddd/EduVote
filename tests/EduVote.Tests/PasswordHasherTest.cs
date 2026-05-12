@@ -3,7 +3,7 @@ using Xunit.Abstractions;
 
 namespace EduVote.Tests;
 
-public class UnitTest1(ITestOutputHelper output)
+public class PasswordHasherTest(ITestOutputHelper output)
 {
     [Fact]
     public void Should_Hash_Password_123()
