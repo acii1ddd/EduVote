@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert, User, Vote } from 'lucide-react'
+import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, Lock, MapPin, PauseCircle, ShieldAlert, Unlock, User, Vote } from 'lucide-react'
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
 import { getTargets } from '@/api/votingTargetApi'
@@ -131,6 +131,17 @@ export default function StudentVotingCard({ voting, allUnits, createdByName, has
                     {voting.isAnonymous && (
                         <span className="rounded-md bg-secondary px-2 py-0.5 text-secondary-foreground font-medium">
                             Анонимное
+                        </span>
+                    )}
+                    {voting.allowVoteChange ? (
+                        <span className="flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-secondary-foreground font-medium">
+                            <Unlock className="h-3 w-3" />
+                            Смена голоса доступна
+                        </span>
+                    ) : (
+                        <span className="flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-secondary-foreground font-medium">
+                            <Lock className="h-3 w-3" />
+                            Смена голоса недоступна
                         </span>
                     )}
                     <span className="ml-auto whitespace-nowrap">

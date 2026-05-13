@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, UserRound, Vote } from 'lucide-react'
+import { ArrowLeft, Calendar, Lock, Unlock, UserRound, Vote } from 'lucide-react'
 import { getVotingById, castVote, getVotedVotingIds, type VotingResponse } from '@/api/votingApi'
 import { getCandidates, type CandidateResponse } from '@/api/candidateApi'
 import { STATUS_CONFIG, TYPE_LABELS } from '@/components/voting/votingConstants'
@@ -151,6 +151,17 @@ export default function VotingDetail() {
                             Анонимное
                         </span>
                     )}
+                    {voting.allowVoteChange ? (
+                        <span className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 font-medium text-secondary-foreground">
+                            <Unlock className="h-3 w-3" />
+                            Смена голоса доступна
+                        </span>
+                    ) : (
+                        <span className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 font-medium text-secondary-foreground">
+                            <Lock className="h-3 w-3" />
+                            Смена голоса недоступна
+                        </span>
+                    )}
                     {(voting.startTime || voting.endTime) && (
                         <span className="flex items-center gap-1.5 text-muted-foreground">
                             <Calendar className="h-3.5 w-3.5" />
@@ -160,13 +171,13 @@ export default function VotingDetail() {
                 </div>
             </div>
 
-            {/* Already voted banner */}
-            {voted && (
+            {/* Already voted banner — hidden right after voting to avoid duplicate with success message */}
+            {voted && !justVoted && (
                 <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
                     <Vote className="h-4 w-4 shrink-0" />
                     {voting.allowVoteChange
-                        ? 'Вы уже проголосовали.'
-                        : 'Вы уже проголосовали в этом голосовании.'}
+                        ? 'Вы уже проголосовали. Можете изменить свой голос.'
+                        : 'Вы уже проголосовали.'}
                 </div>
             )}
 
