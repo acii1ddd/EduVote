@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, UserRound, Vote } from 'lucide-react'
-import { getVotingById, type VotingResponse } from '@/api/votingApi'
+import { getVotingById, castVote, getVotedVotingIds, type VotingResponse } from '@/api/votingApi'
 import { getCandidates, type CandidateResponse } from '@/api/candidateApi'
 import { STATUS_CONFIG, TYPE_LABELS } from '@/components/voting/votingConstants'
 
@@ -11,8 +11,12 @@ export default function VotingDetail() {
 
     const [voting, setVoting]       = useState<VotingResponse | null>(null)
     const [candidates, setCandidates] = useState<CandidateResponse[]>([])
-    const [loading, setLoading]     = useState(true)
-    const [error, setError]         = useState<string | null>(null)
+    const [loading, setLoading]         = useState(true)
+    const [error, setError]             = useState<string | null>(null)
+    const [submitting, setSubmitting]     = useState(false)
+    const [voteError, setVoteError]       = useState<string | null>(null)
+    const [voted, setVoted]               = useState(false)
+    const [justVoted, setJustVoted]       = useState(false)
 
     // Selection state for all voting types
     const [singleId, setSingleId]   = useState<string | null>(null)
@@ -22,10 +26,11 @@ export default function VotingDetail() {
 
     useEffect(() => {
         if (!id) return
-        Promise.all([getVotingById(id), getCandidates(id)])
-            .then(([v, c]) => {
+        Promise.all([getVotingById(id), getCandidates(id), getVotedVotingIds()])
+            .then(([v, c, votedSet]) => {
                 setVoting(v)
                 setCandidates(c.candidates ?? [])
+                setVoted(votedSet.has(id))
             })
             .catch(err => {
                 const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -56,21 +61,32 @@ export default function VotingDetail() {
         }
     })()
 
-    const handleVote = () => {
-        if (!voting) return
-        switch (voting.type) {
-            case 'SingleChoice':
-                console.log('Vote:', { votingId: voting.id, type: 'SingleChoice', candidateId: singleId })
-                break
-            case 'MultipleChoice':
-                console.log('Vote:', { votingId: voting.id, type: 'MultipleChoice', candidateIds: [...multiIds] })
-                break
-            case 'Rating':
-                console.log('Vote:', { votingId: voting.id, type: 'Rating', ratings })
-                break
-            case 'OpenAnswer':
-                console.log('Vote:', { votingId: voting.id, type: 'OpenAnswer', answer: openText })
-                break
+    const handleVote = async () => {
+        if (!voting || !canVote || submitting) return
+        setSubmitting(true)
+        setVoteError(null)
+        try {
+            switch (voting.type) {
+                case 'SingleChoice':
+                    await castVote(voting.id, { selectedCandidateId: singleId! })
+                    break
+                case 'MultipleChoice':
+                    await castVote(voting.id, { selectedCandidateIds: [...multiIds] })
+                    break
+                case 'Rating':
+                    await castVote(voting.id, { ratingAnswers: ratings })
+                    break
+                case 'OpenAnswer':
+                    await castVote(voting.id, { textAnswer: openText })
+                    break
+            }
+            setVoted(true)
+            setJustVoted(true)
+        } catch (err) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+            setVoteError(msg ?? 'Не удалось проголосовать. Попробуйте ещё раз.')
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -144,6 +160,16 @@ export default function VotingDetail() {
                 </div>
             </div>
 
+            {/* Already voted banner */}
+            {voted && (
+                <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                    <Vote className="h-4 w-4 shrink-0" />
+                    {voting.allowVoteChange
+                        ? 'Вы уже проголосовали.'
+                        : 'Вы уже проголосовали в этом голосовании.'}
+                </div>
+            )}
+
             {/* Voting area */}
             {voting.type === 'OpenAnswer' ? (
                 <OpenAnswerSection text={openText} onChange={setOpenText} />
@@ -160,15 +186,33 @@ export default function VotingDetail() {
                 />
             )}
 
+            {/* Vote feedback */}
+            {justVoted && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                    Ваш голос успешно учтён!
+                </div>
+            )}
+            {voteError && (
+                <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+                    {voteError}
+                </div>
+            )}
+
             {/* Vote button */}
             <div className="flex justify-end pt-2">
                 <button
                     onClick={handleVote}
-                    disabled={!canVote}
+                    disabled={!canVote || submitting || (voted && !voting.allowVoteChange)}
                     className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     <Vote className="h-4 w-4" />
-                    Проголосовать
+                    {submitting
+                        ? 'Отправка...'
+                        : voted && !voting.allowVoteChange
+                            ? 'Проголосовано'
+                            : voted
+                                ? 'Изменить голос'
+                                : 'Проголосовать'}
                 </button>
             </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Vote } from 'lucide-react'
-import { getVotingsForUser, type VotingResponse, sortVotingsFinishedLast } from '@/api/votingApi'
+import { getVotingsForUser, getVotedVotingIds, type VotingResponse, sortVotingsFinishedLast } from '@/api/votingApi'
 import { getUsers, type UserResponse } from '@/api/userApi'
 import { getEducationUnits, type EducationUnit } from '@/api/educationUnitApi'
 import { useAuth } from '@/context/AuthContext'
@@ -14,6 +14,7 @@ export default function StudentDashboard() {
     const [allUnits,  setAllUnits]  = useState<EducationUnit[]>([])
     const [userMap,   setUserMap]   = useState<Record<string, UserResponse>>({})
     const [unitName,  setUnitName]  = useState<string | null>(null)
+    const [votedIds,  setVotedIds]  = useState<Set<string>>(new Set())
     const [loading,   setLoading]   = useState(true)
     const [error,     setError]     = useState<string | null>(null)
 
@@ -26,10 +27,12 @@ export default function StudentDashboard() {
             getVotingsForUser(userId),
             getUsers(),
             getEducationUnits(),
+            getVotedVotingIds(),
         ])
-            .then(([votingsData, usersData, unitsData]) => {
+            .then(([votingsData, usersData, unitsData, votedSet]) => {
                 setVotings(votingsData.votings ?? [])
                 setAllUnits(unitsData.educationUnits ?? [])
+                setVotedIds(votedSet)
 
                 const map: Record<string, UserResponse> = {}
                 for (const u of usersData.users) map[u.id] = u
@@ -108,7 +111,7 @@ export default function StudentDashboard() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {active.map(v => (
-                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} />
+                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} hasVoted={votedIds.has(v.id)} />
                         ))}
                     </div>
                 </section>
@@ -122,7 +125,7 @@ export default function StudentDashboard() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {inProg.map(v => (
-                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} />
+                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} hasVoted={votedIds.has(v.id)} />
                         ))}
                     </div>
                 </section>
@@ -136,7 +139,7 @@ export default function StudentDashboard() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2">
                         {finished.map(v => (
-                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} />
+                            <StudentVotingCard key={v.id} voting={v} allUnits={allUnits} createdByName={userMap[v.createdById]?.name ?? v.createdById} hasVoted={votedIds.has(v.id)} />
                         ))}
                     </div>
                 </section>

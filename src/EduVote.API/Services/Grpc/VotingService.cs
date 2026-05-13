@@ -4,7 +4,6 @@ using EduVote.API.Services.Tools;
 using EduVote.API.Validators;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
-using EduVote.DAL.Postgresql.Repositories;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
@@ -229,6 +228,23 @@ public class VotingService(
         return createdResponse;
     }
 
+    public override async Task<GetVotedVotingIdsResponse> GetVotedVotingIds(
+        Empty request, ServerCallContext context)
+    {
+        var userIdStr = context.GetHttpContext()
+            .User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!Guid.TryParse(userIdStr, out var userId))
+            throw new RpcException(new Status(StatusCode.Unauthenticated, "User identity not found in token."));
+
+        var ids = await voteRepository
+            .GetVotedVotingIdsAsync(userId, context.CancellationToken);
+
+        var response = new GetVotedVotingIdsResponse();
+        response.VotingIds.AddRange(ids.Select(id => id.ToString()));
+        return response;
+    }
+
     public override async Task<CastVoteResponse> CastVote(
         CastVoteRequest request, ServerCallContext context)
     {
@@ -245,12 +261,26 @@ public class VotingService(
         
         var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
+        if (voting.Status == DbVotingStatus.Finished)
+        {
+            logger.LogWarning(
+                "[CastVote] [{Timestamp}] User '{UserId}' attempted to vote in finished voting '{VotingId}'",
+                DateTime.UtcNow,
+                userId,
+                votingId
+            );
+
+            throw new RpcException(new Status(
+                StatusCode.FailedPrecondition,
+                "Voting is already finished."));
+        }
+        
         var user = await userRepository
             .GetByIdWithEducationUnitsAsync(userId, context.CancellationToken);
         
         if (user is null)
         {
-            throw IdParser.CreateNotFoundException("User", request.UserId);
+            throw IdParser.CreateNotFoundException("User", userId.ToString());
         }
 
         // Get voting targets (education units where this voting is restricted to)

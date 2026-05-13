@@ -91,3 +91,28 @@ export const finishVoting = async (id: string): Promise<void> => {
 export const approveVoting = async (id: string): Promise<void> => {
     await api.post(`/votings/${id}/approve`)
 }
+
+export interface CastVotePayload {
+    selectedCandidateId?: string
+    selectedCandidateIds?: string[]
+    ratingAnswers?: Record<string, number>
+    textAnswer?: string
+}
+
+export interface CastVoteResult {
+    voteId: string
+    voteHash: string
+    createdAt: string
+}
+
+export const castVote = async (votingId: string, payload: CastVotePayload): Promise<CastVoteResult> => {
+    const response = await api.post<CastVoteResult>(`/votings/${votingId}/vote`, payload)
+    return response.data
+}
+
+export const getVotedVotingIds = async (): Promise<Set<string>> => {
+    const response = await api.get<{ votingIds: string[] }>('/votings/voted', {
+        headers: { 'Cache-Control': 'no-cache' },
+    })
+    return new Set(response.data.votingIds ?? [])
+}

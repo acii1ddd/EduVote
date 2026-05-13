@@ -91,6 +91,12 @@ service Votings {
     };
   }
 
+  rpc GetVotedVotingIds (google.protobuf.Empty) returns (GetVotedVotingIdsResponse) {
+    option (google.api.http) = {
+      get: "/api/votings/voted"
+    };
+  }
+
 //  rpc GetStats (GetVotingRequest) returns (VotingStatsResponse) {
 //    option (google.api.http) = {
 //      get: "/api/votings/{id}/stats"
@@ -185,13 +191,16 @@ message GetVotingsResponse {
   repeated VotingResponse votings = 1;
 }
 
+message GetVotedVotingIdsResponse {
+  repeated string voting_ids = 1;
+}
+
 message GetVotingsForUserRequest {
   string user_id = 1;
 }
 
 message CastVoteRequest {
   string voting_id = 1;
-  string user_id = 2;
   // Single Choice - selected candidate ID
   string selected_candidate_id = 3;
   // Multiple Choice - selected candidate IDs

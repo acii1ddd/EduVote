@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert, User } from 'lucide-react'
+import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, MapPin, PauseCircle, ShieldAlert, User, Vote } from 'lucide-react'
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
 import { getTargets } from '@/api/votingTargetApi'
@@ -48,11 +48,12 @@ interface Props {
     voting: VotingResponse
     allUnits: EducationUnit[]
     createdByName?: string
+    hasVoted?: boolean
 }
 
 // ── Component ──────────────────────────────────────────────
 
-export default function StudentVotingCard({ voting, allUnits, createdByName }: Props) {
+export default function StudentVotingCard({ voting, allUnits, createdByName, hasVoted }: Props) {
     const navigate = useNavigate()
     const status = STATUS_CONFIG[voting.status] ?? STATUS_CONFIG.Draft
 
@@ -96,10 +97,18 @@ export default function StudentVotingCard({ voting, allUnits, createdByName }: P
                     <h3 className="text-base font-semibold leading-snug text-card-foreground">
                         {voting.title}
                     </h3>
-                    <span className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
-                        {status.icon}
-                        {status.label}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
+                            {status.icon}
+                            {status.label}
+                        </span>
+                        {hasVoted && (
+                            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                                <Vote className="h-3 w-3" />
+                                Вы проголосовали
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 {createdByName && (

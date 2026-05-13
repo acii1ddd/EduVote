@@ -33,6 +33,17 @@ public class VoteRepository(EduVoteDbContext dbContext) : IVoteRepository
             );
     }
 
+    public async Task<IEnumerable<Guid>> GetVotedVotingIdsAsync(Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Votes
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .Select(x => x.VotingId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<Vote>> GetByVotingIdAsync(
         Guid votingId,
         CancellationToken cancellationToken = default)
