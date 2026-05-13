@@ -1,4 +1,5 @@
-import { Calendar, CheckCircle, FlagTriangleRight, Pause, Pencil, Play, ShieldAlert, Target, Trash2, User, Users } from 'lucide-react'
+import { BarChart2, Calendar, CheckCircle, FlagTriangleRight, Pause, Pencil, Play, ShieldAlert, Target, Trash2, User, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import type { VotingResponse } from '@/api/votingApi'
 import { STATUS_CONFIG, TYPE_LABELS } from './votingConstants'
 
@@ -29,6 +30,7 @@ export default function VotingCard({
     const isTeacher = userRole === 'Teacher'
     const isAdmin   = userRole === 'Administrator'
 
+    const isFinished = voting.status === 'Finished'
     const canStart  = !isPendingApproval && (voting.status === 'Draft'  || voting.status === 'Paused')
     const canPause  = !isPendingApproval && voting.status === 'Active'
     const canFinish = !isPendingApproval && (voting.status === 'Active' || voting.status === 'Paused')
@@ -91,7 +93,25 @@ export default function VotingCard({
             {/* Actions */}
             <div className="flex items-center justify-between gap-2 border-t border-border px-5 py-3">
 
-                {isPendingApproval && isTeacher ? (
+                {isFinished ? (
+                    <>
+                        <Link
+                            to={`/votings/${voting.id}/results`}
+                            className="flex items-center gap-1.5 rounded-lg border border-primary/30 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                        >
+                            <BarChart2 className="h-3.5 w-3.5" />
+                            Смотреть результаты
+                        </Link>
+                        <IconBtn
+                            onClick={onDelete}
+                            title="Удалить"
+                            disabled={busy}
+                            className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </IconBtn>
+                    </>
+                ) : isPendingApproval && isTeacher ? (
                     /* Teacher sees moderation banner — no action buttons */
                     <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
                         <ShieldAlert className="h-4 w-4 shrink-0" />

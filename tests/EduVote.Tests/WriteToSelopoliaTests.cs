@@ -28,13 +28,13 @@ public class WriteToSepoliaTests(ITestOutputHelper output)
         const string testHash = "a3f8c2d1e4b5a6f7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1";
         
         // Act
-        var txHash = await service.WriteResultHashAsync(testHash);
+        var (txHash, blockNumber) = await service.WriteResultHashAsync(testHash);
         
         // Assert
         Assert.NotNull(txHash);
         Assert.StartsWith("0x", txHash);
         
-        output.WriteLine($"TxHash: {txHash}");
+        output.WriteLine($"TxHash: {txHash}, BlockNumber: {blockNumber}");
         output.WriteLine($"Etherscan: https://sepolia.etherscan.io/tx/{txHash}");
     }
 }

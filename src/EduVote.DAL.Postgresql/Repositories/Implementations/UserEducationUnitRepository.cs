@@ -2,7 +2,7 @@ using EduVote.DAL.Postgresql.Context;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Implementations;
 
 public class UserEducationUnitRepository(
     EduVoteDbContext dbContext)

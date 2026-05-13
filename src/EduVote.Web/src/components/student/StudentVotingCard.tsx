@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, ChevronDown, ChevronUp, Clock, FileText, Lock, MapPin, PauseCircle, ShieldAlert, Unlock, User, Vote } from 'lucide-react'
+import { BarChart2, CheckCircle, ChevronDown, ChevronUp, Clock, FileText, Lock, MapPin, PauseCircle, ShieldAlert, Unlock, User, Vote } from 'lucide-react'
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
 import { getTargets } from '@/api/votingTargetApi'
@@ -85,12 +85,12 @@ export default function StudentVotingCard({ voting, allUnits, createdByName, has
     const isFinished = voting.status === 'Finished'
 
     return (
-        <div className={`flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all ${isFinished ? 'opacity-60' : 'hover:border-primary/30 hover:shadow-md'}`}>
+        <div className={`flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all ${isFinished ? 'opacity-80 hover:border-primary/30 hover:shadow-md hover:opacity-100' : 'hover:border-primary/30 hover:shadow-md'}`}>
 
             {/* Main content */}
             <div
-                className={`flex flex-col gap-3 p-5 ${isFinished ? '' : 'cursor-pointer'}`}
-                onClick={isFinished ? undefined : () => navigate(`/votings/${voting.id}`)}
+                className="flex flex-col gap-3 p-5 cursor-pointer"
+                onClick={() => navigate(isFinished ? `/votings/${voting.id}/results` : `/votings/${voting.id}`)}
             >
 
                 <div className="flex items-start justify-between gap-3">
@@ -102,7 +102,13 @@ export default function StudentVotingCard({ voting, allUnits, createdByName, has
                             {status.icon}
                             {status.label}
                         </span>
-                        {hasVoted && (
+                        {isFinished && (
+                            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                                <BarChart2 className="h-3 w-3" />
+                                Результаты доступны
+                            </span>
+                        )}
+                        {hasVoted && !isFinished && (
                             <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
                                 <Vote className="h-3 w-3" />
                                 Вы проголосовали

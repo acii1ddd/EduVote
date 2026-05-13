@@ -1,54 +1,102 @@
+using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using Nethereum.Hex.HexTypes;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 
 namespace EduVote.API.Services.Tools;
 
 public class VotingLifecycleService(
-    IVotingRepository votingRepository, 
-    ICandidateRepository candidateRepository, 
+    IVotingRepository votingRepository,
+    ICandidateRepository candidateRepository,
     IVotingResultRepository votingResultRepository,
-    VotingResultCalculatorService votingResultCalculatorService)
+    VotingResultCalculatorService votingResultCalculatorService,
+    BlockchainService blockchainService,
+    IBlockchainRecordRepository blockchainRecordRepository,
+    ILogger<VotingLifecycleService> logger)
 {
-    public async Task FinalizeVotingAsync(Guid votingId, 
+    public async Task<(string? TxHash, string? EtherscanUrl)> FinalizeVotingAsync(Guid votingId,
         CancellationToken cancellationToken = default)
     {
         var voting = await GetVotingOrThrowAsync(votingId, cancellationToken);
-        
+
         // Skip votings that cannot be finalized
         if (voting.Status is DbVotingStatus.Finished or DbVotingStatus.Draft or DbVotingStatus.PendingApproval)
-            return;
-        
+            return (null, null);
+
         ChangeStatus(
             voting,
             DbVotingStatus.Finished,
             [DbVotingStatus.Active, DbVotingStatus.Paused]
         );
-        
+
         await votingRepository
             .SaveChangesAsync(cancellationToken);
-        
+
         var existingResult = await votingResultRepository
             .GetByVotingIdAsync(votingId, cancellationToken);
-        
+
         if (existingResult is not null)
         {
-            return;
+            var existingRecord = await blockchainRecordRepository
+                .GetByVotingResultIdAsync(existingResult.Id, cancellationToken);
+
+            if (existingRecord is not null)
+            {
+                var existingUrl = $"https://sepolia.etherscan.io/tx/{existingRecord.TransactionHash}";
+                return (existingRecord.TransactionHash, existingUrl);
+            }
+
+            return (null, null);
         }
-        
+
         // Calculate new results
         var candidates = await candidateRepository
             .GetByVotingIdAsync(votingId, cancellationToken);
-        
+
         var votingResult = await votingResultCalculatorService.CalculateVotingResultAsync(
-            voting, 
-            candidates, 
+            voting,
+            candidates,
             cancellationToken
         );
 
-        // Save results to database
         await votingResultRepository
             .CreateAsync(votingResult, cancellationToken);
+
+        string? txHash = null;
+        string? etherscanUrl = null;
+
+        try
+        {
+            (txHash, var blockNumber) = await blockchainService
+                .WriteResultHashAsync(votingResult.ResultHash);
+            
+            etherscanUrl = $"https://sepolia.etherscan.io/tx/{txHash}";
+
+            logger.LogInformation(
+                "[FinalizeVoting] Voting {VotingId} anchored. TxHash: {TxHash}, Etherscan: {EtherscanUrl}",
+                votingId, txHash, etherscanUrl
+            );
+
+            await blockchainRecordRepository.CreateAsync(new BlockchainRecord
+            {
+                Id = Guid.NewGuid(),
+                VotingResultId = votingResult.Id,
+                VotingId = votingId,
+                TransactionHash = txHash,
+                VotesHash = votingResult.ResultHash,
+                BlockNumber = blockNumber.ToString(),
+                Network = "sepolia",
+                Status = "confirmed",
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[FinalizeVoting] Blockchain write failed for voting {VotingId}", votingId);
+        }
+
+        return (txHash, etherscanUrl);
     }
     
     public async Task ChangeStatusAsync(

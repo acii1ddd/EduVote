@@ -42,7 +42,7 @@ service Votings {
     };
   }
 
-  rpc FinishVoting (VotingActionRequest) returns (google.protobuf.Empty) {
+  rpc FinishVoting (VotingActionRequest) returns (FinishVotingResponse) {
     option (google.api.http) = {
       post: "/api/votings/{id}/finish"
     };
@@ -217,12 +217,21 @@ message CastVoteResponse {
   google.protobuf.Timestamp created_at = 3;
 }
 
+message FinishVotingResponse {
+  string voting_id = 1;
+  VotingStatus status = 2;
+  string tx_hash = 3;
+  string etherscan_url = 4;
+}
+
 message VotingResultsResponse {
   string voting_id = 1;
   map<string, google.protobuf.Struct> results = 2;  // Candidate ID -> result object
   string result_hash = 3;
   google.protobuf.Timestamp calculated_at = 4;
   int32 total_votes = 5;
+  string tx_hash = 6;
+  string etherscan_url = 7;
 }
 
 //message VotingStatsResponse {

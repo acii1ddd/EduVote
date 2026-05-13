@@ -1,10 +1,9 @@
 using EduVote.DAL.Postgresql.Context;
-using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Implementations;
 
 public class RoleRepository(EduVoteDbContext dbContext)
     : IRoleRepository

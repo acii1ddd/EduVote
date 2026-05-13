@@ -20,7 +20,8 @@ public class VotingService(
     IVoteHashService voteHashService,
     IEducationUnitRepository educationUnitRepository,
     IVotingResultRepository votingResultRepository,
-    VotingLifecycleService votingLifecycleService, 
+    IBlockchainRecordRepository blockchainRecordRepository,
+    VotingLifecycleService votingLifecycleService,
     ILogger<VotingService> logger)
     : Votings.VotingsBase
 {
@@ -145,15 +146,21 @@ public class VotingService(
         return new Empty();
     }
 
-    public override async Task<Empty> FinishVoting(
+    public override async Task<FinishVotingResponse> FinishVoting(
         VotingActionRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        await votingLifecycleService
+        var (txHash, etherscanUrl) = await votingLifecycleService
             .FinalizeVotingAsync(votingId, context.CancellationToken);
-        
-        return new Empty();
+
+        return new FinishVotingResponse
+        {
+            VotingId = request.Id,
+            Status = VotingStatus.Finished,
+            TxHash = txHash ?? string.Empty,
+            EtherscanUrl = etherscanUrl ?? string.Empty
+        };
     }
 
     public override async Task<VotingResponse> GetVoting(
@@ -469,10 +476,20 @@ public class VotingService(
                 "Results will be available in the next minute."));
         }
         
-        logger.LogInformation("Results for voting {VotingId} requested. " +
-            "Existing result is not null!:", votingId);
-        
-        return MapVotingResultToResponse(existingResult);
+        logger.LogInformation("Results for voting {VotingId} requested.", votingId);
+
+        var response = MapVotingResultToResponse(existingResult);
+
+        var blockchainRecord = await blockchainRecordRepository
+            .GetByVotingResultIdAsync(existingResult.Id, context.CancellationToken);
+
+        if (blockchainRecord is not null)
+        {
+            response.TxHash = blockchainRecord.TransactionHash;
+            response.EtherscanUrl = $"https://sepolia.etherscan.io/tx/{blockchainRecord.TransactionHash}";
+        }
+
+        return response;
     }
 
     private VotingResultsResponse MapVotingResultToResponse(VotingResult votingResult)

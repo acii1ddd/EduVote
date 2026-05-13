@@ -11,6 +11,7 @@ import StudentDashboard from './pages/StudentDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
 import VotingManagement from './pages/VotingManagement'
 import VotingDetail from './pages/VotingDetail'
+import VotingResults from './pages/VotingResults'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 
@@ -140,6 +141,14 @@ function App() {
                         element={
                             <ProtectedRoute allowedRoles={['Student', 'Teacher']}>
                                 <VotingDetail />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/votings/:id/results"
+                        element={
+                            <ProtectedRoute allowedRoles={['Student', 'Teacher', 'Administrator']}>
+                                <VotingResults />
                             </ProtectedRoute>
                         }
                     />

@@ -33,18 +33,12 @@ public class BlockchainRecordConfiguration : IEntityTypeConfiguration<Blockchain
             .HasMaxLength(50)
             .IsRequired();
         
-        builder.Property(x => x.SmartContractAddress)
-            .HasMaxLength(256);
-        
         builder.Property(x => x.CreatedAt)
             .IsRequired();
         
         builder.Property(x => x.Status)
             .HasMaxLength(50)
             .IsRequired();
-        
-        builder.Property(x => x.ErrorMessage)
-            .HasMaxLength(512);
         
         // Many-to-one relationship with VotingResult
         builder.HasOne(x => x.VotingResult)

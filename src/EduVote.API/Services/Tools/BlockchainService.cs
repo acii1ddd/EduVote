@@ -26,7 +26,7 @@ public class BlockchainService
         _logger = logger;
     }
 
-    public async Task<string> WriteResultHashAsync(string resultHash)
+    public async Task<(string, HexBigInteger)> WriteResultHashAsync(string resultHash)
     {
         try
         {
@@ -59,7 +59,8 @@ public class BlockchainService
             _logger.LogInformation("Transaction confirmed! Block: {Block}", receipt.BlockNumber);
             _logger.LogInformation("Etherscan: https://sepolia.etherscan.io/tx/{TxHash}", txHash);
         
-            return txHash;
+            
+            return (txHash, receipt.BlockNumber);
         }
         catch (Exception e)
         {
@@ -67,6 +68,4 @@ public class BlockchainService
             throw;
         }
     }
-    
-    // var txHash = await _blockchainService.WriteResultHashAsync(resultHash)
 }

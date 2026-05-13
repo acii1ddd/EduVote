@@ -3,7 +3,7 @@ using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Implementations;
 
 public class VoteRepository(EduVoteDbContext dbContext) : IVoteRepository
 {

@@ -84,8 +84,57 @@ export const pauseVoting = async (id: string): Promise<void> => {
     await api.post(`/votings/${id}/pause`)
 }
 
-export const finishVoting = async (id: string): Promise<void> => {
-    await api.post(`/votings/${id}/finish`)
+export interface FinishVotingResponse {
+    votingId: string
+    status: VotingStatus
+    txHash: string
+    etherscanUrl: string
+}
+
+export const finishVoting = async (id: string): Promise<FinishVotingResponse> => {
+    const response = await api.post<FinishVotingResponse>(`/votings/${id}/finish`)
+    return response.data
+}
+
+export interface SingleChoiceResult {
+    candidateId: string
+    candidateName: string
+    voteCount: number
+    percentage: number
+}
+
+export interface MultipleChoiceResult {
+    candidateId: string
+    candidateName: string
+    selectionCount: number
+    percentage: number
+}
+
+export interface RatingResult {
+    candidateId: string
+    candidateName: string
+    averageRating: number
+    totalRatings: number
+}
+
+export interface OpenAnswerResultData {
+    totalAnswers: number
+    answers: string[]
+}
+
+export interface VotingResultsData {
+    votingId: string
+    results: Record<string, SingleChoiceResult | MultipleChoiceResult | RatingResult | Record<string, unknown>>
+    resultHash: string
+    calculatedAt: string
+    totalVotes: number
+    txHash: string
+    etherscanUrl: string
+}
+
+export const getVotingResults = async (id: string): Promise<VotingResultsData> => {
+    const response = await api.get<VotingResultsData>(`/votings/${id}/results`)
+    return response.data
 }
 
 export const approveVoting = async (id: string): Promise<void> => {

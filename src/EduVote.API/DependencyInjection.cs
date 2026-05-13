@@ -19,6 +19,7 @@ public static class DependencyInjection
         {
             services.AddScoped<IVoteHashService, VoteHashService>();
             services.AddScoped<VotingResultCalculatorService>();
+            services.AddScoped<BlockchainService>();
             services.AddScoped<VotingLifecycleService>();
 
             // singleton

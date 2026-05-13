@@ -23,7 +23,7 @@ public class BlockchainRecord : IBaseEntity
     public Guid VotingId { get; set; }
     
     /// <summary>
-    /// Transaction hash on blockchain (e.g., Ethereum Sepolia)
+    /// Transaction hash on blockchain
     /// </summary>
     public string TransactionHash { get; set; } = string.Empty;
     
@@ -35,17 +35,12 @@ public class BlockchainRecord : IBaseEntity
     /// <summary>
     /// Block number where the transaction was recorded
     /// </summary>
-    public long BlockNumber { get; set; }
+    public string BlockNumber { get; set; } = string.Empty;
     
     /// <summary>
-    /// Blockchain network identifier (e.g., "sepolia", "mainnet")
+    /// Blockchain network identifier ("sepolia", "mainnet", etc.)
     /// </summary>
     public string Network { get; set; } = "sepolia";
-    
-    /// <summary>
-    /// Smart contract address if any (for future use)
-    /// </summary>
-    public string? SmartContractAddress { get; set; }
     
     /// <summary>
     /// When the record was created on blockchain
@@ -55,10 +50,5 @@ public class BlockchainRecord : IBaseEntity
     /// <summary>
     /// Status of blockchain recording (pending, confirmed, failed)
     /// </summary>
-    public string Status { get; set; } = "pending"; // "pending", "confirmed", "failed"
-    
-    /// <summary>
-    /// Error message if recording failed
-    /// </summary>
-    public string? ErrorMessage { get; set; }
+    public string Status { get; set; } = "pending";
 }

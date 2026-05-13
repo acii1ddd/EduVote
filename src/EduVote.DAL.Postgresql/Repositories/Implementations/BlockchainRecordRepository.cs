@@ -3,44 +3,44 @@ using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace EduVote.DAL.Postgresql.Repositories;
+namespace EduVote.DAL.Postgresql.Repositories.Implementations;
 
-public class VotingResultRepository(EduVoteDbContext dbContext) : IVotingResultRepository
+public class BlockchainRecordRepository(EduVoteDbContext dbContext) : IBlockchainRecordRepository
 {
-    public async Task<VotingResult> CreateAsync(
-        VotingResult votingResult,
+    public async Task<BlockchainRecord> CreateAsync(
+        BlockchainRecord record,
         CancellationToken cancellationToken = default)
     {
-        await dbContext.AddAsync(votingResult, cancellationToken);
+        await dbContext.AddAsync(record, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return votingResult;
+        return record;
     }
 
-    public async Task<VotingResult?> GetByVotingIdAsync(
-        Guid votingId,
+    public async Task<BlockchainRecord?> GetByVotingResultIdAsync(
+        Guid votingResultId,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.VotingResults
+        return await dbContext.BlockchainRecords
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.VotingId == votingId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.VotingResultId == votingResultId, cancellationToken);
     }
 
-    public async Task<VotingResult?> GetByIdAsync(
+    public async Task<BlockchainRecord?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        return await dbContext.VotingResults
+        return await dbContext.BlockchainRecords
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public async Task<VotingResult?> UpdateAsync(
-        VotingResult votingResult,
+    public async Task<BlockchainRecord?> UpdateAsync(
+        BlockchainRecord record,
         CancellationToken cancellationToken = default)
     {
-        dbContext.VotingResults.Update(votingResult);
+        dbContext.BlockchainRecords.Update(record);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return votingResult;
+        return record;
     }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)

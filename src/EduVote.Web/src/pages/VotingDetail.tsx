@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, Lock, Unlock, UserRound, Vote } from 'lucide-react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft, BarChart2, Calendar, Lock, Unlock, UserRound, Vote } from 'lucide-react'
 import { getVotingById, castVote, getVotedVotingIds, type VotingResponse } from '@/api/votingApi'
 import { getCandidates, type CandidateResponse } from '@/api/candidateApi'
 import { STATUS_CONFIG, TYPE_LABELS } from '@/components/voting/votingConstants'
@@ -181,51 +181,70 @@ export default function VotingDetail() {
                 </div>
             )}
 
-            {/* Voting area */}
-            {voting.type === 'OpenAnswer' ? (
-                <OpenAnswerSection text={openText} onChange={setOpenText} />
+            {/* Finished state */}
+            {voting.status === 'Finished' ? (
+                <div className="space-y-4">
+                    <div className="rounded-xl border border-border bg-secondary/50 px-5 py-4 text-sm text-muted-foreground">
+                        <p className="font-semibold text-foreground">Голосование завершено</p>
+                        <p className="mt-1">Результаты подсчитаны и доступны для просмотра.</p>
+                    </div>
+                    <Link
+                        to={`/votings/${voting.id}/results`}
+                        className="flex w-fit items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90"
+                    >
+                        <BarChart2 className="h-4 w-4" />
+                        Смотреть результаты
+                    </Link>
+                </div>
             ) : (
-                <CandidatesSection
-                    type={voting.type}
-                    candidates={candidates}
-                    singleId={singleId}
-                    multiIds={multiIds}
-                    ratings={ratings}
-                    onSelectSingle={setSingleId}
-                    onToggleMulti={toggleMulti}
-                    onSetStars={setStars}
-                />
-            )}
+                <>
+                    {/* Voting area */}
+                    {voting.type === 'OpenAnswer' ? (
+                        <OpenAnswerSection text={openText} onChange={setOpenText} />
+                    ) : (
+                        <CandidatesSection
+                            type={voting.type}
+                            candidates={candidates}
+                            singleId={singleId}
+                            multiIds={multiIds}
+                            ratings={ratings}
+                            onSelectSingle={setSingleId}
+                            onToggleMulti={toggleMulti}
+                            onSetStars={setStars}
+                        />
+                    )}
 
-            {/* Vote feedback */}
-            {justVoted && (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
-                    Ваш голос успешно учтён!
-                </div>
-            )}
-            {voteError && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
-                    {voteError}
-                </div>
-            )}
+                    {/* Vote feedback */}
+                    {justVoted && (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            Ваш голос успешно учтён!
+                        </div>
+                    )}
+                    {voteError && (
+                        <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+                            {voteError}
+                        </div>
+                    )}
 
-            {/* Vote button */}
-            <div className="flex justify-end pt-2">
-                <button
-                    onClick={handleVote}
-                    disabled={!canVote || submitting || (voted && !voting.allowVoteChange)}
-                    className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                    <Vote className="h-4 w-4" />
-                    {submitting
-                        ? 'Отправка...'
-                        : voted && !voting.allowVoteChange
-                            ? 'Проголосовано'
-                            : voted
-                                ? 'Изменить голос'
-                                : 'Проголосовать'}
-                </button>
-            </div>
+                    {/* Vote button */}
+                    <div className="flex justify-end pt-2">
+                        <button
+                            onClick={handleVote}
+                            disabled={!canVote || submitting || (voted && !voting.allowVoteChange)}
+                            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            <Vote className="h-4 w-4" />
+                            {submitting
+                                ? 'Отправка...'
+                                : voted && !voting.allowVoteChange
+                                    ? 'Проголосовано'
+                                    : voted
+                                        ? 'Изменить голос'
+                                        : 'Проголосовать'}
+                        </button>
+                    </div>
+                </>
+            )}
 
         </div>
     )
