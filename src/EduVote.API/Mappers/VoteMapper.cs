@@ -11,6 +11,7 @@ public static class VoteMapper
         Config.NewConfig<DbVote, CastVoteResponse>()
             .Map(dest => dest.VoteId, src => src.Id.ToString())
             .Map(dest => dest.VoteHash, src => src.VoteHash)
+            .Map(dest => dest.VoteSalt, src => src.VoteSalt)
             .Map(dest => dest.CreatedAt, src => Timestamp.FromDateTime(src.CreatedAt.ToUniversalTime()));
     }
 

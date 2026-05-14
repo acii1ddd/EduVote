@@ -1,10 +1,9 @@
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
-using Nethereum.Hex.HexTypes;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 
-namespace EduVote.API.Services.Tools;
+namespace EduVote.API.Services.Tools.Votings;
 
 public class VotingLifecycleService(
     IVotingRepository votingRepository,

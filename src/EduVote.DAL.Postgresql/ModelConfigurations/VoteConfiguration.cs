@@ -7,6 +7,7 @@ namespace EduVote.DAL.Postgresql.ModelConfigurations;
 public class VoteConfiguration : IEntityTypeConfiguration<Vote>
 {
     private const int VoteHashMaxLength = 512;
+    private const int VoteSaltMaxLength = 36;
     private const int VotesMaxLength = 2000;
     
     public void Configure(EntityTypeBuilder<Vote> builder)
@@ -15,6 +16,10 @@ public class VoteConfiguration : IEntityTypeConfiguration<Vote>
         
         builder.HasKey(x => x.Id);
         
+        builder.Property(x => x.VoteSalt)
+            .HasMaxLength(VoteSaltMaxLength)
+            .IsRequired();
+
         builder.Property(x => x.VoteHash)
             .HasMaxLength(VoteHashMaxLength)
             .IsRequired();

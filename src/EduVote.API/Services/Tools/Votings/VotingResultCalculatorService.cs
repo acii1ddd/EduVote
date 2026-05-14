@@ -3,12 +3,14 @@ using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 
-namespace EduVote.API.Services.Tools;
+namespace EduVote.API.Services.Tools.Votings;
 
 /// <summary>
 /// Service for calculating voting results based on voting type
 /// </summary>
-public class VotingResultCalculatorService(IVoteRepository voteRepository)
+public class VotingResultCalculatorService(
+    IVoteRepository voteRepository,
+    IVoteHashService voteHashService)
 {
     public async Task<VotingResult> CalculateVotingResultAsync(
         DbVoting votingModel,
@@ -31,7 +33,7 @@ public class VotingResultCalculatorService(IVoteRepository voteRepository)
         };
 
         var resultJson = JsonSerializer.Serialize(resultData);
-        var resultHash = GenerateResultHash(resultJson);
+        var resultHash = voteHashService.GenerateResultHash(votes);
 
         return new VotingResult
         {
@@ -178,16 +180,5 @@ public class VotingResultCalculatorService(IVoteRepository voteRepository)
         result["answers"] = answers;
 
         return result;
-    }
-
-    /// <summary>
-    /// Generate SHA256 hash of result JSON for verification
-    /// </summary>
-    private static string GenerateResultHash(string resultJson)
-    {
-        var hashBytes = SHA256
-            .HashData(Encoding.UTF8.GetBytes(resultJson));
-        
-        return Convert.ToHexString(hashBytes);
     }
 }

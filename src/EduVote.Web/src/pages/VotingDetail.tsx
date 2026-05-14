@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, BarChart2, Calendar, Lock, Unlock, UserRound, Vote } from 'lucide-react'
+import { ArrowLeft, BarChart2, Calendar, Check, Copy, Lock, Unlock, UserRound, Vote } from 'lucide-react'
 import { getVotingById, castVote, getVotedVotingIds, type VotingResponse } from '@/api/votingApi'
 import { getCandidates, type CandidateResponse } from '@/api/candidateApi'
 import { STATUS_CONFIG, TYPE_LABELS } from '@/components/voting/votingConstants'
@@ -13,10 +13,11 @@ export default function VotingDetail() {
     const [candidates, setCandidates] = useState<CandidateResponse[]>([])
     const [loading, setLoading]         = useState(true)
     const [error, setError]             = useState<string | null>(null)
-    const [submitting, setSubmitting]     = useState(false)
-    const [voteError, setVoteError]       = useState<string | null>(null)
-    const [voted, setVoted]               = useState(false)
-    const [justVoted, setJustVoted]       = useState(false)
+    const [submitting, setSubmitting]         = useState(false)
+    const [voteError, setVoteError]           = useState<string | null>(null)
+    const [voted, setVoted]                   = useState(false)
+    const [justVoted, setJustVoted]           = useState(false)
+    const [voteReceipt, setVoteReceipt]       = useState<{ voteId: string; voteHash: string; voteSalt: string } | null>(null)
 
     // Selection state for all voting types
     const [singleId, setSingleId]   = useState<string | null>(null)
@@ -66,22 +67,24 @@ export default function VotingDetail() {
         setSubmitting(true)
         setVoteError(null)
         try {
+            let receipt: { voteId: string; voteHash: string } | undefined
             switch (voting.type) {
                 case 'SingleChoice':
-                    await castVote(voting.id, { selectedCandidateId: singleId! })
+                    receipt = await castVote(voting.id, { selectedCandidateId: singleId! })
                     break
                 case 'MultipleChoice':
-                    await castVote(voting.id, { selectedCandidateIds: [...multiIds] })
+                    receipt = await castVote(voting.id, { selectedCandidateIds: [...multiIds] })
                     break
                 case 'Rating':
-                    await castVote(voting.id, { ratingAnswers: ratings })
+                    receipt = await castVote(voting.id, { ratingAnswers: ratings })
                     break
                 case 'OpenAnswer':
-                    await castVote(voting.id, { textAnswer: openText })
+                    receipt = await castVote(voting.id, { textAnswer: openText })
                     break
             }
             setVoted(true)
             setJustVoted(true)
+            if (receipt) setVoteReceipt(receipt)
         } catch (err) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
             setVoteError(msg ?? 'Не удалось проголосовать. Попробуйте ещё раз.')
@@ -214,8 +217,26 @@ export default function VotingDetail() {
                         />
                     )}
 
-                    {/* Vote feedback */}
-                    {justVoted && (
+                    {/* Vote receipt */}
+                    {justVoted && voteReceipt && (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3 dark:border-emerald-800 dark:bg-emerald-950/30">
+                            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                                Ваш голос успешно учтён!
+                            </p>
+                            <p className="text-xs text-emerald-600/80 dark:text-emerald-500">
+                                Сохраните хэш и соль — с их помощью вы сможете убедиться, что ваш голос корректно учтён в результатах.
+                            </p>
+                            <ReceiptRow
+                                label="Хэш голоса"
+                                value={voteReceipt.voteHash}
+                            />
+                            <ReceiptRow
+                                label="Соль"
+                                value={voteReceipt.voteSalt}
+                            />
+                        </div>
+                    )}
+                    {justVoted && !voteReceipt && (
                         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
                             Ваш голос успешно учтён!
                         </div>
@@ -395,6 +416,29 @@ function CheckboxIndicator({ selected }: { selected: boolean }) {
     return (
         <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors ${selected ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`}>
             {selected && <span className="text-[10px] font-bold leading-none text-primary-foreground">✓</span>}
+        </div>
+    )
+}
+
+function ReceiptRow({ label, value }: { label: string; value: string }) {
+    const [copied, setCopied] = useState(false)
+    return (
+        <div className="space-y-1">
+            <p className="text-xs text-emerald-600/70 dark:text-emerald-500">{label}</p>
+            <div className="flex items-center gap-2 rounded-lg bg-white/60 px-3 py-2 dark:bg-black/20">
+                <code className="flex-1 text-xs font-mono text-foreground break-all select-all">{value}</code>
+                <button
+                    onClick={() => {
+                        navigator.clipboard.writeText(value)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                    }}
+                    className="shrink-0 text-emerald-600 transition-colors hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+                    title={`Копировать ${label.toLowerCase()}`}
+                >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </button>
+            </div>
         </div>
     )
 }

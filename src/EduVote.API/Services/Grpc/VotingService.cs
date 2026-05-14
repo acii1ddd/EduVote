@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
+using EduVote.API.Services.Tools.Votings;
 using EduVote.API.Validators;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
@@ -359,13 +360,14 @@ public class VotingService(
 
         VoteValidator.ValidateVote(request, voting, candidates);
 
+        var salt = Guid.NewGuid().ToString("N");
         var voteHash = voteHashService
-            .GenerateHash(votingId, userId, voting.Type, request);
+            .GenerateVoteHash(votingId, userId, voting.Type, salt, request);
 
         // Update existing vote way
         if (existingVote is not null)
         {
-            UpdateExistingVote(existingVote, request, voteHash, voting.Type);
+            UpdateExistingVote(existingVote, request, voteHash, salt, voting.Type);
             
             await voteRepository.SaveChangesAsync(context.CancellationToken);
             
@@ -376,7 +378,7 @@ public class VotingService(
         }
 
         // Create new vote way
-        var newVote = CreateNewVote(votingId, userId, request, voteHash, voting.Type);
+        var newVote = CreateNewVote(votingId, userId, request, voteHash, salt, voting.Type);
         
         var createdVote = await voteRepository
             .CreateAsync(newVote, context.CancellationToken);
@@ -391,10 +393,12 @@ public class VotingService(
         Vote vote,
         CastVoteRequest request,
         string voteHash,
+        string salt,
         DbVotingType votingType)
     {
         vote.VoteHash = voteHash;
-        
+        vote.VoteSalt = salt;
+
         PopulateVoteData(vote, request, votingType);
     }
 
@@ -403,6 +407,7 @@ public class VotingService(
         Guid userId,
         CastVoteRequest request,
         string voteHash,
+        string salt,
         DbVotingType votingType)
     {
         var vote = new Vote
@@ -411,6 +416,7 @@ public class VotingService(
             VotingId = votingId,
             UserId = userId,
             VoteHash = voteHash,
+            VoteSalt = salt,
         };
 
         PopulateVoteData(vote, request, votingType);
@@ -450,11 +456,104 @@ public class VotingService(
         }
     }
 
+    public override async Task<MyVoteResponse> GetMyVote(
+        GetVotingRequest request, ServerCallContext context)
+    {
+        var votingId  = IdParser.ParseId(request.Id, "Voting");
+        
+        var userIdStr = context.GetHttpContext()
+            .User.FindFirst(ClaimTypes.NameIdentifier)?
+            .Value;
+        
+        if (!Guid.TryParse(userIdStr, out var userId))
+            throw new RpcException(new Status(
+                StatusCode.Unauthenticated, "Invalid user identity."));
+
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
+
+        var vote = await voteRepository
+            .GetUserVoteAsync(votingId, userId, context.CancellationToken);
+        
+        if (vote is null)
+            throw new RpcException(new Status(
+                StatusCode.NotFound, "You have not voted in this voting.")
+            );
+
+        if (vote.UserId != userId)
+        {
+            throw new RpcException(new Status(
+                StatusCode.PermissionDenied,
+                "This vote does not belong to the current user."
+            ));
+        }
+        
+        var candidates = (await candidateRepository
+            .GetByVotingIdAsync(votingId, context.CancellationToken)).ToList();
+
+        var hashInput = voteHashService
+            .BuildHashInput(vote, voting.Type);
+        
+        var voteData  = BuildVoteDataStruct(vote, voting.Type, candidates);
+
+        return new MyVoteResponse
+        {
+            VoteId = vote.Id.ToString(),
+            VoteHash = vote.VoteHash,
+            VoteSalt = vote.VoteSalt,
+            HashInput = hashInput,
+            VoteData = voteData
+        };
+    }
+
+    private static Struct BuildVoteDataStruct(Vote vote, DbVotingType votingType, 
+        List<Candidate> candidates)
+    {
+        object data = votingType switch
+        {
+            DbVotingType.SingleChoice => new
+            {
+                type = "SingleChoice",
+                candidate = candidates
+                    .Where(c => c.Id == vote.CandidateId)
+                    .Select(c => new { id = c.Id.ToString(), name = c.Name })
+                    .FirstOrDefault()
+            },
+            DbVotingType.MultipleChoice => new
+            {
+                type = "MultipleChoice",
+                candidates = vote.GetSelectedCandidateIds()
+                    .Select(id => candidates.FirstOrDefault(c => c.Id == id))
+                    .Where(c => c is not null)
+                    .Select(c => new { id = c!.Id.ToString(), name = c.Name })
+                    .ToList()
+            },
+            DbVotingType.Rating => new
+            {
+                type = "Rating",
+                ratings = vote.GetRatingAnswers()
+                    .Select(kvp =>
+                    {
+                        var candidate = candidates.FirstOrDefault(c => c.Id == kvp.Key);
+                        return new { id = kvp.Key.ToString(), name = candidate?.Name ?? "Unknown", rating = kvp.Value };
+                    })
+                    .ToList()
+            },
+            DbVotingType.OpenAnswer => new
+            {
+                type = "OpenAnswer",
+                textAnswer = vote.TextAnswer ?? string.Empty
+            },
+            _ => new { type = "Unknown" }
+        };
+
+        return Struct.Parser.ParseJson(JsonSerializer.Serialize(data));
+    }
+
     public override async Task<VotingResultsResponse> GetResults(
         GetVotingRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
-        
+
         var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
         // Check for voting is finished
@@ -544,106 +643,4 @@ public class VotingService(
 
         return existingVoting;
     }
-    
-    // public override async Task<VotingStatsResponse> GetStats(
-    //     GetVotingRequest request, ServerCallContext context)
-    // {
-    //     var votingId = IdParser.ParseId(request.Id, "Voting");
-    //
-    //     var voting = await votingRepository
-    //         .GetByIdAsync(votingId, context.CancellationToken);
-    //     
-    //     if (voting is null)
-    //     {
-    //         throw IdParser.CreateNotFoundException("Voting", request.Id);
-    //     }
-    //
-    //     var votes = await voteRepository
-    //         .GetByVotingIdAsync(votingId, context.CancellationToken);
-    //     
-    //     var candidates = await candidateRepository
-    //         .GetByVotingIdAsync(votingId, context.CancellationToken);
-    //
-    //     var candidatesList = candidates.ToList();
-    //
-    //     var totalVotes = votes.Count();
-    //     var participationPercentage = candidatesList.Count != 0
-    //         ? (totalVotes * 100) / Math.Max(1, candidatesList.Count) 
-    //         : 0;
-    //
-    //     var candidateStats = new List<CandidateStats>();
-    //     var voteDistribution = new Dictionary<string, int>();
-    //
-    //     foreach (var candidate in candidatesList)
-    //     {
-    //         var candidateVoteCount = votes.Count(v => v.CandidateId == candidate.Id);
-    //         var percentage = totalVotes > 0 ? (candidateVoteCount * 100.0) / totalVotes : 0;
-    //
-    //         candidateStats.Add(new CandidateStats
-    //         {
-    //             CandidateId = candidate.Id.ToString(),
-    //             CandidateTitle = candidate.Title,
-    //             VoteCount = candidateVoteCount,
-    //             Percentage = percentage
-    //         });
-    //
-    //         voteDistribution[candidate.Id.ToString()] = candidateVoteCount;
-    //     }
-    //
-    //     var response = new VotingStatsResponse
-    //     {
-    //         VotingId = votingId.ToString(),
-    //         TotalVotes = totalVotes,
-    //         ParticipationPercentage = participationPercentage
-    //     };
-    //
-    //     response.CandidateStats.AddRange(candidateStats);
-    //     response.VoteDistribution.Add(voteDistribution);
-    //
-    //     return response;
-    // }
-    //
-    // public override async Task<VotingVerificationResponse> GetVerification(
-    //     GetVotingRequest request, ServerCallContext context)
-    // {
-    //     var votingId = IdParser.ParseId(request.Id, "Voting");
-    //
-    //     var voting = await votingRepository
-    //         .GetByIdAsync(votingId, context.CancellationToken);
-    //     
-    //     if (voting is null)
-    //     {
-    //         throw IdParser.CreateNotFoundException("Voting", request.Id);
-    //     }
-    //
-    //     var votingResult = await votingResultRepository.GetByVotingIdAsync(votingId, context.CancellationToken);
-    //     if (votingResult is null)
-    //     {
-    //         throw new RpcException(new Status(StatusCode.NotFound, "Voting results not yet calculated"));
-    //     }
-    //
-    //     var response = new VotingVerificationResponse
-    //     {
-    //         VotingId = votingId.ToString(),
-    //         ResultHash = votingResult.ResultHash,
-    //         VerifiedAt = votingResult.CalculatedAt.ToUniversalTime().ToTimestamp()
-    //     };
-    //
-    //     // Get blockchain record if exists
-    //     var blockchainRecord = await blockchainRecordRepository.GetByVotingIdAsync(votingId, context.CancellationToken);
-    //     if (blockchainRecord is not null)
-    //     {
-    //         response.Blockchain = new BlockchainVerification
-    //         {
-    //             TransactionHash = blockchainRecord.TransactionHash ?? string.Empty,
-    //             VotesHash = blockchainRecord.VotesHash ?? string.Empty,
-    //             BlockNumber = blockchainRecord.BlockNumber ?? 0,
-    //             Network = blockchainRecord.Network,
-    //             Status = blockchainRecord.Status,
-    //             ErrorMessage = blockchainRecord.ErrorMessage ?? string.Empty
-    //         };
-    //     }
-    //
-    //     return response;
-    // }
 }

@@ -1,7 +1,6 @@
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Signer;
-using Nethereum.Util;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 
@@ -43,7 +42,8 @@ public class BlockchainService
                 Gas = new HexBigInteger(100000)
             };
 
-            var txHash = await _web3.Eth.TransactionManager
+            var txHash = await _web3.Eth
+                .TransactionManager
                 .SendTransactionAsync(transactionInput);
 
             _logger.LogInformation("Transaction sent. TxHash: {TxHash}", txHash);

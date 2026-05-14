@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Calendar, ExternalLink, Hash, Lock, Shield, Unlock, Users, Vote } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Calendar, Check, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, Hash, Lock, Shield, ShieldCheck, Terminal, Unlock, Users, Vote } from 'lucide-react'
 import {
-    getVotingById, getVotingResults,
+    getVotingById, getVotingResults, getMyVote,
     type VotingResponse, type VotingResultsData,
     type SingleChoiceResult, type MultipleChoiceResult, type RatingResult,
+    type MyVoteResult,
 } from '@/api/votingApi'
 import { TYPE_LABELS } from '@/components/voting/votingConstants'
 
@@ -12,10 +13,18 @@ export default function VotingResults() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
 
-    const [voting, setVoting]   = useState<VotingResponse | null>(null)
-    const [results, setResults] = useState<VotingResultsData | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError]     = useState<string | null>(null)
+    const [voting, setVoting]         = useState<VotingResponse | null>(null)
+    const [results, setResults]       = useState<VotingResultsData | null>(null)
+    const [loading, setLoading]       = useState(true)
+    const [error, setError]           = useState<string | null>(null)
+    const [hashCopied, setHashCopied] = useState(false)
+    const [myVote, setMyVote]         = useState<MyVoteResult | null>(null)
+
+    const copyHash = (text: string) => {
+        navigator.clipboard.writeText(text)
+        setHashCopied(true)
+        setTimeout(() => setHashCopied(false), 2000)
+    }
 
     useEffect(() => {
         if (!id) return
@@ -29,6 +38,12 @@ export default function VotingResults() {
                 setError(msg ?? 'Не удалось загрузить результаты')
             })
             .finally(() => setLoading(false))
+    }, [id])
+
+    // Load user's own vote silently — 404 means they haven't voted
+    useEffect(() => {
+        if (!id) return
+        getMyVote(id).then(setMyVote).catch(() => {})
     }, [id])
 
     if (loading) return (
@@ -118,12 +133,30 @@ export default function VotingResults() {
                     label="Результат подсчитан"
                     value={fmtFull(results.calculatedAt)}
                 />
-                <StatCard
-                    icon={<Hash className="h-5 w-5 text-primary" />}
-                    label="Хэш результата"
-                    value={results.resultHash.slice(0, 12) + '…'}
-                    title={results.resultHash}
-                />
+                {/* Hash card with copy button */}
+                <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                        <Hash className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-xs text-muted-foreground">Хэш результатов голосования</p>
+                        <p
+                            className="mt-0.5 text-sm font-semibold text-foreground font-mono truncate"
+                            title={results.resultHash}
+                        >
+                            {results.resultHash.slice(0, 12)}…
+                        </p>
+                        <button
+                            onClick={() => copyHash(results.resultHash)}
+                            className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            {hashCopied
+                                ? <><Check className="h-3 w-3 text-emerald-500" /><span className="text-emerald-500">Скопировано</span></>
+                                : <><Copy className="h-3 w-3" />Копировать хэш</>
+                            }
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Blockchain */}
@@ -149,6 +182,9 @@ export default function VotingResults() {
                     </div>
                 </div>
             )}
+
+            {/* Vote verification */}
+            {myVote && <VoteVerificationBlock myVote={myVote} />}
 
             {/* Results visualization */}
             <div className="space-y-4">
@@ -306,6 +342,186 @@ function Stars({ value }: { value: number }) {
                     ★
                 </span>
             ))}
+        </div>
+    )
+}
+
+// ── Vote verification block ────────────────────────────────
+
+type VerifyStatus = 'idle' | 'ok' | 'fail'
+
+function VoteVerificationBlock({ myVote }: { myVote: MyVoteResult }) {
+    const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('idle')
+    const [verifying, setVerifying]       = useState(false)
+    const [showManual, setShowManual]     = useState(false)
+
+    const verifyInBrowser = async () => {
+        setVerifying(true)
+        try {
+            const encoded = new TextEncoder().encode(myVote.hashInput)
+            const buffer  = await crypto.subtle.digest('SHA-256', encoded)
+            const computed = Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0')).join('')
+            setVerifyStatus(computed === myVote.voteHash.toLowerCase() ? 'ok' : 'fail')
+        } finally {
+            setVerifying(false)
+        }
+    }
+
+    return (
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
+            <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Верификация голоса</h2>
+            </div>
+
+            {/* What the user voted for */}
+            <VoteDataView data={myVote.voteData} />
+
+            {/* Hash and input string */}
+            <div className="space-y-3">
+                <CopyRow label="Хэш голоса" value={myVote.voteHash} mono />
+                <CopyRow label="Строка для хэширования" value={myVote.hashInput} mono />
+            </div>
+
+            {/* Browser verification */}
+            <div className="space-y-2">
+                <button
+                    onClick={verifyInBrowser}
+                    disabled={verifying}
+                    className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 disabled:opacity-50"
+                >
+                    <ShieldCheck className="h-4 w-4" />
+                    {verifying ? 'Проверяем...' : 'Проверить в браузере'}
+                </button>
+                <p className="text-xs text-muted-foreground">
+                    SHA-256 вычисляется локально в браузере — данные никуда не отправляются.
+                </p>
+                {verifyStatus === 'ok' && (
+                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        SHA256(строка) = ваш хэш — всё верно
+                    </div>
+                )}
+                {verifyStatus === 'fail' && (
+                    <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        Хэши не совпадают
+                    </div>
+                )}
+            </div>
+
+            {/* Manual verification */}
+            <div className="space-y-3 border-t border-border pt-4">
+                <button
+                    onClick={() => setShowManual(v => !v)}
+                    className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                    <Terminal className="h-3.5 w-3.5" />
+                    Ручная проверка
+                    {showManual ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
+
+                {showManual && (
+                    <div className="space-y-4 text-sm">
+                        <p className="text-muted-foreground">
+                            Используйте любой SHA-256 инструмент. Хэш строки ниже должен совпасть с вашим хэшем голоса.
+                        </p>
+
+                        <div className="space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
+                            <CopyRow
+                                label=""
+                                value={`echo -n "${myVote.hashInput}" | sha256sum`}
+                                mono
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground">Windows (PowerShell)</p>
+                            <CopyRow
+                                label=""
+                                value={`[System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes("${myVote.hashInput}"))).Replace("-","").ToLower()`}
+                                mono
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-xs">Онлайн-инструмент:</span>
+                            <a
+                                href="https://emn178.github.io/online-tools/sha256.html"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                            >
+                                SHA-256 Online Tool
+                                <ExternalLink className="h-3 w-3" />
+                            </a>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+// ── Vote data readable view ────────────────────────────────
+
+function VoteDataView({ data }: { data: MyVoteResult['voteData'] }) {
+    return (
+        <div className="rounded-xl border border-border bg-secondary/30 px-4 py-3 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Ваш выбор</p>
+            {data.type === 'SingleChoice' && data.candidate && (
+                <p className="text-sm font-medium text-foreground">{data.candidate.name}</p>
+            )}
+            {data.type === 'MultipleChoice' && data.candidates && (
+                <ul className="space-y-1">
+                    {data.candidates.map(c => (
+                        <li key={c.id} className="text-sm text-foreground">• {c.name}</li>
+                    ))}
+                </ul>
+            )}
+            {data.type === 'Rating' && data.ratings && (
+                <ul className="space-y-1.5">
+                    {data.ratings.map(r => (
+                        <li key={r.id} className="flex items-center gap-2 text-sm text-foreground">
+                            <span className="w-28 truncate">{r.name}</span>
+                            <span className="text-amber-400">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                            <span className="text-xs text-muted-foreground">{r.rating}/5</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            {data.type === 'OpenAnswer' && (
+                <p className="text-sm text-foreground italic">«{data.textAnswer}»</p>
+            )}
+        </div>
+    )
+}
+
+// ── Copy row ───────────────────────────────────────────────
+
+function CopyRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+    const [copied, setCopied] = useState(false)
+    return (
+        <div className="space-y-1">
+            {label && <p className="text-xs text-muted-foreground">{label}</p>}
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                <code className={`flex-1 text-xs break-all select-all text-foreground ${mono ? 'font-mono' : ''}`}>
+                    {value}
+                </code>
+                <button
+                    onClick={() => {
+                        navigator.clipboard.writeText(value)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                    }}
+                    className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                    title="Копировать"
+                >
+                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+            </div>
         </div>
     )
 }

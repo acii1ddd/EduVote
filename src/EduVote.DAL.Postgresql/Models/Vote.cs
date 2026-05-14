@@ -48,7 +48,13 @@ public class Vote : IBaseEntity, ICreatedAt
     public string? TextAnswer { get; set; }
     
     /// <summary>
-    /// Hash of the vote for verification and blockchain integration
+    /// Random salt used when computing VoteHash.
+    /// </summary>
+    public string VoteSalt { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Hash of the vote for verification and blockchain integration.
+    /// SHA256(votingId:userId:votingType:voteData:salt)
     /// </summary>
     public string VoteHash { get; set; } = string.Empty;
 

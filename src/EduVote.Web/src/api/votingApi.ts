@@ -151,11 +151,42 @@ export interface CastVotePayload {
 export interface CastVoteResult {
     voteId: string
     voteHash: string
+    voteSalt: string
     createdAt: string
 }
 
 export const castVote = async (votingId: string, payload: CastVotePayload): Promise<CastVoteResult> => {
     const response = await api.post<CastVoteResult>(`/votings/${votingId}/vote`, payload)
+    return response.data
+}
+
+export interface MyVoteCandidate {
+    id: string
+    name: string
+}
+
+export interface MyVoteRating extends MyVoteCandidate {
+    rating: number
+}
+
+export interface MyVoteData {
+    type: 'SingleChoice' | 'MultipleChoice' | 'Rating' | 'OpenAnswer'
+    candidate?: MyVoteCandidate
+    candidates?: MyVoteCandidate[]
+    ratings?: MyVoteRating[]
+    textAnswer?: string
+}
+
+export interface MyVoteResult {
+    voteId: string
+    voteHash: string
+    voteSalt: string
+    hashInput: string
+    voteData: MyVoteData
+}
+
+export const getMyVote = async (votingId: string): Promise<MyVoteResult> => {
+    const response = await api.get<MyVoteResult>(`/votings/${votingId}/my-vote`)
     return response.data
 }
 

@@ -3,6 +3,7 @@ using EduVote.API.Services.Auth.PasswordHasher;
 using EduVote.API.Services.CronJobs;
 using EduVote.API.Services.Storage;
 using EduVote.API.Services.Tools;
+using EduVote.API.Services.Tools.Votings;
 using EduVote.DAL.Postgresql.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
