@@ -190,6 +190,20 @@ export const getMyVote = async (votingId: string): Promise<MyVoteResult> => {
     return response.data
 }
 
+export interface VotingVerificationData {
+    votingId: string
+    resultHash: string
+    voteHashes: string[]
+    hashAlgorithm: string
+    combineMethod: string
+    totalVotes: number
+}
+
+export const getVerificationData = async (id: string): Promise<VotingVerificationData> => {
+    const response = await api.get<VotingVerificationData>(`/votings/${id}/results/verification`)
+    return response.data
+}
+
 export const getVotedVotingIds = async (): Promise<Set<string>> => {
     const response = await api.get<{ votingIds: string[] }>('/votings/voted', {
         headers: { 'Cache-Control': 'no-cache' },

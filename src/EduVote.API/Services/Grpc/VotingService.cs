@@ -549,6 +549,47 @@ public class VotingService(
         return Struct.Parser.ParseJson(JsonSerializer.Serialize(data));
     }
 
+    public override async Task<VotingVerificationResponse> GetVerificationData(
+        GetVotingRequest request, ServerCallContext context)
+    {
+        var votingId = IdParser.ParseId(request.Id, "Voting");
+
+        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
+
+        if (voting.Status != DbVotingStatus.Finished)
+        {
+            throw new RpcException(new Status(
+                StatusCode.FailedPrecondition,
+                "Voting is not finished yet."));
+        }
+
+        var existingResult = await votingResultRepository
+            .GetByVotingIdAsync(votingId, context.CancellationToken);
+
+        if (existingResult is null)
+        {
+            throw new RpcException(new Status(
+                StatusCode.Unavailable,
+                "Results will be available in the next minute."));
+        }
+
+        var votes = (await voteRepository
+            .GetByVotingIdAsync(votingId, context.CancellationToken)).ToList();
+
+        var response = new VotingVerificationResponse
+        {
+            VotingId = votingId.ToString(),
+            ResultHash = existingResult.ResultHash,
+            HashAlgorithm = "SHA-256",
+            CombineMethod = "sort_ordinal_concat_no_separator",
+            TotalVotes = votes.Count
+        };
+
+        response.VoteHashes.AddRange(votes.Select(v => v.VoteHash));
+
+        return response;
+    }
+
     public override async Task<VotingResultsResponse> GetResults(
         GetVotingRequest request, ServerCallContext context)
     {

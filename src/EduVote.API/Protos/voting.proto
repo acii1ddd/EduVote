@@ -102,6 +102,12 @@ service Votings {
       get: "/api/votings/{id}/my-vote"
     };
   }
+
+  rpc GetVerificationData (GetVotingRequest) returns (VotingVerificationResponse) {
+    option (google.api.http) = {
+      get: "/api/votings/{id}/results/verification"
+    };
+  }
 }
 
 enum VotingType {
@@ -235,4 +241,13 @@ message VotingResultsResponse {
   int32 total_votes = 5;
   string tx_hash = 6;
   string etherscan_url = 7;
+}
+
+message VotingVerificationResponse {
+  string voting_id = 1;
+  string result_hash = 2;
+  repeated string vote_hashes = 3;
+  string hash_algorithm = 4;
+  string combine_method = 5;
+  int32 total_votes = 6;
 }

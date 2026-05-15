@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, Calendar, Check, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, Hash, Lock, Shield, ShieldCheck, Terminal, Unlock, Users, Vote } from 'lucide-react'
 import {
-    getVotingById, getVotingResults, getMyVote,
+    getVotingById, getVotingResults, getMyVote, getVerificationData,
     type VotingResponse, type VotingResultsData,
     type SingleChoiceResult, type MultipleChoiceResult, type RatingResult,
-    type MyVoteResult,
+    type MyVoteResult, type VotingVerificationData,
 } from '@/api/votingApi'
 import { TYPE_LABELS } from '@/components/voting/votingConstants'
 
@@ -182,6 +182,9 @@ export default function VotingResults() {
                     </div>
                 </div>
             )}
+
+            {/* Result verification */}
+            <ResultVerificationBlock votingId={id!} myVoteHash={myVote?.voteHash} />
 
             {/* Vote verification */}
             {myVote && <VoteVerificationBlock myVote={myVote} />}
@@ -522,6 +525,183 @@ function CopyRow({ label, value, mono }: { label: string; value: string; mono?: 
                     {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
             </div>
+        </div>
+    )
+}
+
+// ── Result verification block ──────────────────────────────
+
+function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; myVoteHash?: string }) {
+    const [data, setData]             = useState<VotingVerificationData | null>(null)
+    const [loading, setLoading]       = useState(false)
+    const [verifyStatus, setVerify]   = useState<'idle' | 'ok' | 'fail'>('idle')
+    const [showHashes, setShowHashes] = useState(false)
+    const [showManual, setShowManual] = useState(false)
+
+    const load = async () => {
+        setLoading(true)
+        try {
+            setData(await getVerificationData(votingId))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const verifyInBrowser = async () => {
+        if (!data) return
+        const sorted = [...data.voteHashes].sort()
+        const combined = sorted.join('')
+        const encoded = new TextEncoder().encode(combined)
+        const buffer = await crypto.subtle.digest('SHA-256', encoded)
+        const computed = Array.from(new Uint8Array(buffer))
+            .map(b => b.toString(16).padStart(2, '0')).join('')
+        setVerify(computed === data.resultHash ? 'ok' : 'fail')
+    }
+
+    const downloadJson = () => {
+        if (!data) return
+        const payload = {
+            votingId: data.votingId,
+            resultHash: data.resultHash,
+            hashAlgorithm: data.hashAlgorithm,
+            combineMethod: data.combineMethod,
+            totalVotes: data.totalVotes,
+            voteHashes: [...data.voteHashes].sort(),
+        }
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `verification-${data.votingId}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+    }
+
+    return (
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+            <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Верификация результатов</h2>
+            </div>
+
+            {!data && (
+                <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                        Загрузите список всех хэшей голосов, чтобы самостоятельно проверить ResultHash.
+                    </p>
+                    <button
+                        onClick={load}
+                        disabled={loading}
+                        className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 disabled:opacity-50"
+                    >
+                        <ShieldCheck className="h-4 w-4" />
+                        {loading ? 'Загружаем...' : 'Загрузить данные верификации'}
+                    </button>
+                </div>
+            )}
+
+            {data && (
+                <div className="space-y-4">
+                    {/* Summary */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground">Алгоритм</p>
+                            <p className="font-mono text-xs font-medium text-foreground">{data.hashAlgorithm}</p>
+                        </div>
+                        <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground">Метод объединения</p>
+                            <p className="font-mono text-xs font-medium text-foreground">{data.combineMethod}</p>
+                        </div>
+                    </div>
+
+                    <CopyRow label="ResultHash" value={data.resultHash} mono />
+
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={verifyInBrowser}
+                            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90"
+                        >
+                            <ShieldCheck className="h-4 w-4" />
+                            Проверить в браузере
+                        </button>
+                        <button
+                            onClick={downloadJson}
+                            className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                        >
+                            <Hash className="h-4 w-4" />
+                            Скачать JSON
+                        </button>
+                    </div>
+
+                    {verifyStatus === 'ok' && (
+                        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            <CheckCircle2 className="h-4 w-4 shrink-0" />
+                            SHA256(sorted hashes) = ResultHash — результат не изменён
+                        </div>
+                    )}
+                    {verifyStatus === 'fail' && (
+                        <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
+                            Хэши не совпадают
+                        </div>
+                    )}
+
+                    {/* Manual verification */}
+                    <div className="space-y-3 border-t border-border pt-4">
+                        <button
+                            onClick={() => setShowManual(v => !v)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            <Terminal className="h-3.5 w-3.5" />
+                            Ручная проверка
+                            {showManual ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+                        {showManual && (
+                            <div className="space-y-3 text-sm">
+                                <p className="text-xs text-muted-foreground">
+                                    Скачайте JSON, затем выполните команду — результат должен совпасть с ResultHash.
+                                </p>
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
+                                    <CopyRow label="" value={`cat verification-${data.votingId}.json | jq -r '.voteHashes[]' | sort | tr -d '\\n' | sha256sum`} mono />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Hash list */}
+                    <div className="space-y-2 border-t border-border pt-4">
+                        <button
+                            onClick={() => setShowHashes(v => !v)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            {showHashes ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                            {showHashes ? 'Скрыть' : 'Показать'} все хэши голосов ({data.totalVotes})
+                        </button>
+                        {showHashes && (
+                            <div className="max-h-64 overflow-y-auto rounded-xl border border-border bg-muted/30 p-3 space-y-1.5">
+                                {[...data.voteHashes].sort().map((hash, i) => (
+                                    <div
+                                        key={i}
+                                        className={`flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-mono ${
+                                            hash === myVoteHash
+                                                ? 'bg-primary/10 text-primary font-semibold'
+                                                : 'text-foreground'
+                                        }`}
+                                    >
+                                        <span className="shrink-0 text-muted-foreground w-5 text-right">{i + 1}</span>
+                                        <span className="break-all">{hash}</span>
+                                        {hash === myVoteHash && (
+                                            <span className="shrink-0 ml-auto rounded bg-primary/20 px-1.5 py-0.5 text-xs font-semibold text-primary">вы</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
