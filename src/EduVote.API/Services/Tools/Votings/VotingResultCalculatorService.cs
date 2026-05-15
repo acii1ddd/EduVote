@@ -165,20 +165,20 @@ public class VotingResultCalculatorService(
     /// </summary>
     private Dictionary<string, object> CalculateOpenAnswer(List<Vote> votes)
     {
-        var result = new Dictionary<string, object>();
-        var answers = new List<string>();
+        var answers = votes
+            .Where(v => !string.IsNullOrEmpty(v.TextAnswer))
+            .Select(v => v.TextAnswer!)
+            .ToList();
 
-        foreach (var vote in votes)
+        // Wrapped under a single object key so Struct.Parser.ParseJson gets a JSON object,
+        // not a raw number/array, which would throw and produce empty results.
+        return new Dictionary<string, object>
         {
-            if (!string.IsNullOrEmpty(vote.TextAnswer))
+            ["openAnswer"] = new Dictionary<string, object>
             {
-                answers.Add(vote.TextAnswer);
+                ["totalAnswers"] = answers.Count,
+                ["answers"] = answers
             }
-        }
-
-        result["totalAnswers"] = answers.Count;
-        result["answers"] = answers;
-
-        return result;
+        };
     }
 }

@@ -159,11 +159,17 @@ export default function VotingResults() {
                 </div>
             </div>
 
+            {/* Vote verification */}
+            {myVote && <VoteVerificationBlock myVote={myVote} />}
+
+            {/* Result verification */}
+            <ResultVerificationBlock votingId={id!} myVoteHash={myVote?.voteHash} />
+
             {/* Blockchain */}
             {results.txHash && (
                 <div className="rounded-2xl border border-border bg-card p-5 space-y-2">
                     <h2 className="text-sm font-semibold text-foreground">Блокчейн-верификация</h2>
-                    <p className="text-xs text-muted-foreground">Результаты голосования записаны в сеть Ethereum Sepolia.</p>
+                    <p className="text-xs text-muted-foreground">Результаты голосования записаны в сеть Ethereum Sepolia и не могут быть изменены задним числом.</p>
                     <div className="flex flex-wrap items-center gap-2">
                         <code className="rounded bg-muted px-2 py-1 text-xs text-foreground font-mono break-all">
                             {results.txHash}
@@ -182,12 +188,6 @@ export default function VotingResults() {
                     </div>
                 </div>
             )}
-
-            {/* Result verification */}
-            <ResultVerificationBlock votingId={id!} myVoteHash={myVote?.voteHash} />
-
-            {/* Vote verification */}
-            {myVote && <VoteVerificationBlock myVote={myVote} />}
 
             {/* Results visualization */}
             <div className="space-y-4">
@@ -354,6 +354,7 @@ function Stars({ value }: { value: number }) {
 type VerifyStatus = 'idle' | 'ok' | 'fail'
 
 function VoteVerificationBlock({ myVote }: { myVote: MyVoteResult }) {
+    const [isOpen, setIsOpen]             = useState(true)
     const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('idle')
     const [verifying, setVerifying]       = useState(false)
     const [showManual, setShowManual]     = useState(false)
@@ -373,97 +374,105 @@ function VoteVerificationBlock({ myVote }: { myVote: MyVoteResult }) {
 
     return (
         <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
-            <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-semibold text-foreground">Верификация голоса</h2>
-            </div>
+            <button
+                onClick={() => setIsOpen(v => !v)}
+                className="flex w-full items-center gap-2 text-left"
+            >
+                <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                <h2 className="flex-1 text-sm font-semibold text-foreground">Верификация голоса</h2>
+                {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
 
-            {/* What the user voted for */}
-            <VoteDataView data={myVote.voteData} />
+            {isOpen && (
+                <>
+                    {/* What the user voted for */}
+                    <VoteDataView data={myVote.voteData} />
 
-            {/* Hash and input string */}
-            <div className="space-y-3">
-                <CopyRow label="Хэш голоса" value={myVote.voteHash} mono />
-                <CopyRow label="Строка для хэширования" value={myVote.hashInput} mono />
-            </div>
-
-            {/* Browser verification */}
-            <div className="space-y-2">
-                <button
-                    onClick={verifyInBrowser}
-                    disabled={verifying}
-                    className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 disabled:opacity-50"
-                >
-                    <ShieldCheck className="h-4 w-4" />
-                    {verifying ? 'Проверяем...' : 'Проверить в браузере'}
-                </button>
-                <p className="text-xs text-muted-foreground">
-                    SHA-256 вычисляется локально в браузере — данные никуда не отправляются.
-                </p>
-                {verifyStatus === 'ok' && (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        SHA256(строка) = ваш хэш — всё верно
+                    {/* Hash and input string */}
+                    <div className="space-y-3">
+                        <CopyRow label="Хэш голоса" value={myVote.voteHash} mono />
+                        <CopyRow label="Строка для хэширования" value={myVote.hashInput} mono />
                     </div>
-                )}
-                {verifyStatus === 'fail' && (
-                    <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        Хэши не совпадают
-                    </div>
-                )}
-            </div>
 
-            {/* Manual verification */}
-            <div className="space-y-3 border-t border-border pt-4">
-                <button
-                    onClick={() => setShowManual(v => !v)}
-                    className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                    <Terminal className="h-3.5 w-3.5" />
-                    Ручная проверка
-                    {showManual ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                </button>
-
-                {showManual && (
-                    <div className="space-y-4 text-sm">
-                        <p className="text-muted-foreground">
-                            Используйте любой SHA-256 инструмент. Хэш строки ниже должен совпасть с вашим хэшем голоса.
+                    {/* Browser verification */}
+                    <div className="space-y-2">
+                        <button
+                            onClick={verifyInBrowser}
+                            disabled={verifying}
+                            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 disabled:opacity-50"
+                        >
+                            <ShieldCheck className="h-4 w-4" />
+                            {verifying ? 'Проверяем...' : 'Проверить в браузере'}
+                        </button>
+                        <p className="text-xs text-muted-foreground">
+                            SHA-256 вычисляется локально в браузере — данные никуда не отправляются.
                         </p>
-
-                        <div className="space-y-1.5">
-                            <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
-                            <CopyRow
-                                label=""
-                                value={`echo -n "${myVote.hashInput}" | sha256sum`}
-                                mono
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <p className="text-xs font-medium text-muted-foreground">Windows (PowerShell)</p>
-                            <CopyRow
-                                label=""
-                                value={`[System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes("${myVote.hashInput}"))).Replace("-","").ToLower()`}
-                                mono
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground text-xs">Онлайн-инструмент:</span>
-                            <a
-                                href="https://emn178.github.io/online-tools/sha256.html"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                            >
-                                SHA-256 Online Tool
-                                <ExternalLink className="h-3 w-3" />
-                            </a>
-                        </div>
+                        {verifyStatus === 'ok' && (
+                            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                                SHA256(строка) = ваш хэш — всё верно
+                            </div>
+                        )}
+                        {verifyStatus === 'fail' && (
+                            <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                Хэши не совпадают
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
+
+                    {/* Manual verification */}
+                    <div className="space-y-3 border-t border-border pt-4">
+                        <button
+                            onClick={() => setShowManual(v => !v)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            <Terminal className="h-3.5 w-3.5" />
+                            Ручная проверка
+                            {showManual ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        </button>
+
+                        {showManual && (
+                            <div className="space-y-4 text-sm">
+                                <p className="text-muted-foreground">
+                                    Используйте любой SHA-256 инструмент. Хэш строки ниже должен совпасть с вашим хэшем голоса.
+                                </p>
+
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
+                                    <CopyRow
+                                        label=""
+                                        value={`echo -n "${myVote.hashInput}" | sha256sum`}
+                                        mono
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <p className="text-xs font-medium text-muted-foreground">Windows (PowerShell)</p>
+                                    <CopyRow
+                                        label=""
+                                        value={`[System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes("${myVote.hashInput}"))).Replace("-","").ToLower()`}
+                                        mono
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground text-xs">Онлайн-инструмент:</span>
+                                    <a
+                                        href="https://emn178.github.io/online-tools/sha256.html"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                    >
+                                        SHA-256 Online Tool
+                                        <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     )
 }
@@ -532,6 +541,7 @@ function CopyRow({ label, value, mono }: { label: string; value: string; mono?: 
 // ── Result verification block ──────────────────────────────
 
 function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; myVoteHash?: string }) {
+    const [isOpen, setIsOpen]         = useState(true)
     const [data, setData]             = useState<VotingVerificationData | null>(null)
     const [loading, setLoading]       = useState(false)
     const [verifyStatus, setVerify]   = useState<'idle' | 'ok' | 'fail'>('idle')
@@ -579,12 +589,16 @@ function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; m
 
     return (
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-            <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-semibold text-foreground">Верификация результатов</h2>
-            </div>
+            <button
+                onClick={() => setIsOpen(v => !v)}
+                className="flex w-full items-center gap-2 text-left"
+            >
+                <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                <h2 className="flex-1 text-sm font-semibold text-foreground">Верификация результатов</h2>
+                {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
 
-            {!data && (
+            {isOpen && !data && (
                 <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
                         Загрузите список всех хэшей голосов, чтобы самостоятельно проверить ResultHash.
@@ -600,18 +614,12 @@ function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; m
                 </div>
             )}
 
-            {data && (
+            {isOpen && data && (
                 <div className="space-y-4">
                     {/* Summary */}
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="space-y-0.5">
-                            <p className="text-xs text-muted-foreground">Алгоритм</p>
-                            <p className="font-mono text-xs font-medium text-foreground">{data.hashAlgorithm}</p>
-                        </div>
-                        <div className="space-y-0.5">
-                            <p className="text-xs text-muted-foreground">Метод объединения</p>
-                            <p className="font-mono text-xs font-medium text-foreground">{data.combineMethod}</p>
-                        </div>
+                    <div className="space-y-0.5">
+                        <p className="text-xs text-muted-foreground">Алгоритм</p>
+                        <p className="font-mono text-xs font-medium text-foreground">{data.hashAlgorithm}</p>
                     </div>
 
                     <CopyRow label="ResultHash" value={data.resultHash} mono />
@@ -660,7 +668,7 @@ function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; m
                         {showManual && (
                             <div className="space-y-3 text-sm">
                                 <p className="text-xs text-muted-foreground">
-                                    Скачайте JSON, затем выполните команду — результат должен совпасть с ResultHash.
+                                    Скачайте JSON и проверьте локально — он содержит хеши голосов всех участников, включая ваш, затем выполните команду — результат должен совпасть с ResultHash, подтверждая что ваш голос учтён.
                                 </p>
                                 <div className="space-y-1.5">
                                     <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
@@ -709,7 +717,7 @@ function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; m
 // ── Open answer results ────────────────────────────────────
 
 function OpenAnswerResults({ results }: { results: VotingResultsData }) {
-    const raw = results.results as Record<string, unknown>
+    const raw = (results.results['openAnswer'] ?? {}) as Record<string, unknown>
     const answers = Array.isArray(raw['answers']) ? (raw['answers'] as string[]) : []
     const total = typeof raw['totalAnswers'] === 'number' ? raw['totalAnswers'] : answers.length
 
