@@ -1,0 +1,133 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+
+/* Use media-query based dark mode so dark: prefix works without JS class toggling */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+:root {
+  /* --- EduVote light palette --- */
+  --background:        #F4F6FF;   /* soft indigo-tinted page bg */
+  --foreground:        #0E1020;   /* near-black, readable everywhere */
+
+  --card:              #FFFFFF;
+  --card-foreground:   #0E1020;
+
+  --popover:           #FFFFFF;
+  --popover-foreground: #0E1020;
+
+  --primary:           #4F46E5;   /* indigo-600 */
+  --primary-foreground: #FFFFFF;
+
+  --secondary:         #EEF0FF;   /* very light indigo tint */
+  --secondary-foreground: #312E81; /* indigo-900 */
+
+  --muted:             #EEF0FF;
+  --muted-foreground:  #6366A8;   /* indigo-toned medium gray */
+
+  --accent:            #EEF0FF;
+  --accent-foreground: #312E81;
+
+  --destructive:       #DC2626;   /* red-600 */
+  --destructive-foreground: #FFFFFF;
+
+  --border:            #DDE1F5;   /* light indigo border */
+  --input:             #DDE1F5;
+  --ring:              #6366F1;   /* indigo-500 focus ring */
+
+  --radius: 0.75rem;
+
+  font-family: 'Inter Variable', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background:        #0D0E1A;   /* deep navy */
+    --foreground:        #E8EAFF;   /* near-white, indigo-tinted */
+
+    --card:              #13152A;   /* dark navy card */
+    --card-foreground:   #E8EAFF;
+
+    --popover:           #13152A;
+    --popover-foreground: #E8EAFF;
+
+    --primary:           #818CF8;   /* indigo-400 (lighter for dark bg) */
+    --primary-foreground: #0D0E1A;
+
+    --secondary:         #1E2140;
+    --secondary-foreground: #A5B4FC; /* indigo-300 */
+
+    --muted:             #1E2140;
+    --muted-foreground:  #9395C8;
+
+    --accent:            #1E2140;
+    --accent-foreground: #A5B4FC;
+
+    --destructive:       #F87171;   /* red-400 */
+    --destructive-foreground: #0D0E1A;
+
+    --border:            #252850;
+    --input:             #252850;
+    --ring:              #818CF8;
+  }
+}
+
+@theme inline {
+  --font-sans:                      'Inter Variable', system-ui, sans-serif;
+  --color-background:               var(--background);
+  --color-foreground:               var(--foreground);
+  --color-card:                     var(--card);
+  --color-card-foreground:          var(--card-foreground);
+  --color-popover:                  var(--popover);
+  --color-popover-foreground:       var(--popover-foreground);
+  --color-primary:                  var(--primary);
+  --color-primary-foreground:       var(--primary-foreground);
+  --color-secondary:                var(--secondary);
+  --color-secondary-foreground:     var(--secondary-foreground);
+  --color-muted:                    var(--muted);
+  --color-muted-foreground:         var(--muted-foreground);
+  --color-accent:                   var(--accent);
+  --color-accent-foreground:        var(--accent-foreground);
+  --color-destructive:              var(--destructive);
+  --color-destructive-foreground:   var(--destructive-foreground);
+  --color-border:                   var(--border);
+  --color-input:                    var(--input);
+  --color-ring:                     var(--ring);
+  --radius-sm:  calc(var(--radius) * 0.5);
+  --radius-md:  calc(var(--radius) * 0.75);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "EduVote.API";
+
+package edu_vote.v1.roles;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+service RolesService {
+  rpc GetRoles (google.protobuf.Empty) returns (GetRolesResponse)
+  {
+    option (google.api.http) = {
+      get: "/api/roles"
+    };
+  }
+}
+
+message GetRolesResponse {
+  repeated RoleResponse roles = 1;
+}
+
+message RoleResponse {
+  string name = 1;
+}
