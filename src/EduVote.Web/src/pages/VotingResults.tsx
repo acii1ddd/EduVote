@@ -439,19 +439,10 @@ function VoteVerificationBlock({ myVote }: { myVote: MyVoteResult }) {
                                 </p>
 
                                 <div className="space-y-1.5">
-                                    <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Linux / macOS / WSL</p>
                                     <CopyRow
                                         label=""
-                                        value={`echo -n "${myVote.hashInput}" | sha256sum`}
-                                        mono
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <p className="text-xs font-medium text-muted-foreground">Windows (PowerShell)</p>
-                                    <CopyRow
-                                        label=""
-                                        value={`[System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes("${myVote.hashInput}"))).Replace("-","").ToLower()`}
+                                        value={`echo -n '${myVote.hashInput}' | sha256sum`}
                                         mono
                                     />
                                 </div>
@@ -671,7 +662,7 @@ function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; m
                                     Скачайте JSON и проверьте локально — он содержит хеши голосов всех участников, включая ваш, затем выполните команду — результат должен совпасть с ResultHash, подтверждая что ваш голос учтён.
                                 </p>
                                 <div className="space-y-1.5">
-                                    <p className="text-xs font-medium text-muted-foreground">Linux / macOS</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Linux / macOS / WSL</p>
                                     <CopyRow label="" value={`cat verification-${data.votingId}.json | jq -r '.voteHashes[]' | sort | tr -d '\\n' | sha256sum`} mono />
                                 </div>
                             </div>

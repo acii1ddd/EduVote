@@ -389,7 +389,7 @@ public class VotingService(
         return createdVote.MapToResponse();
     }
     
-    private static void UpdateExistingVote(
+    private void UpdateExistingVote(
         Vote vote,
         CastVoteRequest request,
         string voteHash,
@@ -402,7 +402,7 @@ public class VotingService(
         PopulateVoteData(vote, request, votingType);
     }
 
-    private static Vote CreateNewVote(
+    private Vote CreateNewVote(
         Guid votingId,
         Guid userId,
         CastVoteRequest request,
@@ -423,7 +423,7 @@ public class VotingService(
         return vote;
     }
     
-    private static void PopulateVoteData(
+    private void PopulateVoteData(
         Vote vote, 
         CastVoteRequest request, 
         DbVotingType votingType)
@@ -439,14 +439,12 @@ public class VotingService(
                 vote.CandidateId = Guid.Parse(request.SelectedCandidateId);
                 break;
             case DbVotingType.MultipleChoice:
-                vote.SelectedCandidateIds = JsonSerializer.Serialize(
-                    request.SelectedCandidateIds
-                );
+                vote.SelectedCandidateIds = voteHashService
+                    .GetCanonicalVoteDataJson(votingType, request);
                 break;
             case DbVotingType.Rating:
-                vote.RatingAnswers = JsonSerializer.Serialize(
-                    request.RatingAnswers
-                );
+                vote.RatingAnswers = voteHashService
+                    .GetCanonicalVoteDataJson(votingType, request);
                 break;
             case DbVotingType.OpenAnswer:
                 vote.TextAnswer = request.TextAnswer;
@@ -493,7 +491,7 @@ public class VotingService(
         var hashInput = voteHashService
             .BuildHashInput(vote, voting.Type);
         
-        var voteData  = BuildVoteDataStruct(vote, voting.Type, candidates);
+        var voteData = BuildVoteDataStruct(vote, voting.Type, candidates);
 
         return new MyVoteResponse
         {

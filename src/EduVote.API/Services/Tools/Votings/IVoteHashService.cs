@@ -19,5 +19,11 @@ public interface IVoteHashService
     /// </summary>
     string BuildHashInput(Vote vote, DbVotingType votingType);
 
+    /// <summary>
+    /// Canonical JSON fragment used inside the hash input string.
+    /// Store this exact value in the database so GetMyVote can reconstruct the same hash input.
+    /// </summary>
+    string GetCanonicalVoteDataJson(DbVotingType votingType, CastVoteRequest voteData);
+
     string GenerateResultHash(List<Vote> votes);
 }

@@ -10,5 +10,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/EduVote.Tests/EduVote.Tests.csproj" />
+    <Project Path="tmp/HashTest/HashTest.csproj" />
+    <Project Path="tmp/JsonProtoTest/JsonProtoTest.csproj" />
   </Folder>
 </Solution>
