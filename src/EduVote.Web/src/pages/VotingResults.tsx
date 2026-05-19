@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, Calendar, Check, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, Hash, Lock, Shield, ShieldCheck, Terminal, Unlock, Users, Vote } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Calendar, Check, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, FileDown, Hash, Lock, Shield, ShieldCheck, Terminal, Unlock, Users, Vote } from 'lucide-react'
+import { downloadVotingReportPdf } from '@/api/analyticsApi'
 import {
     getVotingById, getVotingResults, getMyVote, getVerificationData,
     type VotingResponse, type VotingResultsData,
@@ -8,10 +9,12 @@ import {
     type MyVoteResult, type VotingVerificationData,
 } from '@/api/votingApi'
 import { TYPE_LABELS } from '@/components/voting/votingConstants'
+import { useAuth } from '@/context/AuthContext'
 
 export default function VotingResults() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { claims } = useAuth()
 
     const [voting, setVoting]         = useState<VotingResponse | null>(null)
     const [results, setResults]       = useState<VotingResultsData | null>(null)
@@ -19,6 +22,22 @@ export default function VotingResults() {
     const [error, setError]           = useState<string | null>(null)
     const [hashCopied, setHashCopied] = useState(false)
     const [myVote, setMyVote]         = useState<MyVoteResult | null>(null)
+    const [pdfDownloading, setPdfDownloading] = useState(false)
+    const [pdfError, setPdfError]     = useState<string | null>(null)
+
+    const handleDownloadPdf = async () => {
+        if (!id || pdfDownloading) return
+        setPdfError(null)
+        setPdfDownloading(true)
+        try {
+            await downloadVotingReportPdf(id)
+        } catch (err) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+            setPdfError(msg ?? 'Не удалось скачать отчёт')
+        } finally {
+            setPdfDownloading(false)
+        }
+    }
 
     const copyHash = (text: string) => {
         navigator.clipboard.writeText(text)
@@ -68,6 +87,8 @@ export default function VotingResults() {
     const fmt = (iso: string) => iso ? new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
     const fmtFull = (iso: string) => iso ? new Date(iso).toLocaleString('ru-RU') : '—'
 
+    const canDownloadPdf = claims?.role === 'Administrator' && voting.status === 'Finished'
+
     return (
         <div className="space-y-8">
 
@@ -82,14 +103,33 @@ export default function VotingResults() {
 
             {/* Header */}
             <div className="space-y-3">
-                <div className="flex flex-wrap items-start gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                     <h1 className="flex-1 text-2xl font-bold tracking-tight text-foreground min-w-0">
                         {voting.title}
                     </h1>
-                    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">
-                        Результаты
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {canDownloadPdf && (
+                            <button
+                                type="button"
+                                onClick={handleDownloadPdf}
+                                disabled={pdfDownloading}
+                                className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-all hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <FileDown className={`h-4 w-4 ${pdfDownloading ? 'animate-pulse' : ''}`} />
+                                {pdfDownloading ? 'Скачивание…' : 'Скачать PDF'}
+                            </button>
+                        )}
+                        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">
+                            Результаты
+                        </span>
+                    </div>
                 </div>
+
+                {pdfError && (
+                    <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+                        {pdfError}
+                    </div>
+                )}
 
                 {voting.description && (
                     <p className="text-sm leading-relaxed text-muted-foreground">
