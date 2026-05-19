@@ -58,8 +58,7 @@ public class VotingReportPdfGenerator : IVotingReportPdfGenerator
                 row.RelativeItem().Text($"Статус: {StatusLabel(data.Status)}");
             });
             col.Item().Text(
-                $"Период: {FmtDate(data.StartTime)} — {FmtDate(data.EndTime)} · " +
-                (data.IsAnonymous ? "Анонимное" : "Именное"));
+                $"Период: {FmtDate(data.StartTime)} — {FmtDate(data.EndTime)} · " + ("Анонимное"));
         });
     }
 
@@ -80,27 +79,38 @@ public class VotingReportPdfGenerator : IVotingReportPdfGenerator
                 AddRow(table, "Явка", $"{data.TurnoutPercent.ToString("F1", CultureInfo.InvariantCulture)} %");
             });
 
+            col.Item().PaddingTop(8).Text("По подразделениям").SemiBold();
+
             if (data.UnitBreakdown.Count > 0)
             {
-                col.Item().PaddingTop(8).Text("По подразделениям").SemiBold();
                 col.Item().Table(table =>
                 {
                     table.ColumnsDefinition(c =>
                     {
                         c.RelativeColumn(3);
                         c.RelativeColumn();
+                        c.RelativeColumn();
                     });
                     table.Header(h =>
                     {
                         h.Cell().Element(CellHeader).Text("Подразделение");
                         h.Cell().Element(CellHeader).Text("Допущено");
+                        h.Cell().Element(CellHeader).Text("Голосов");
                     });
                     foreach (var row in data.UnitBreakdown)
                     {
                         table.Cell().Element(CellBody).Text(row.EducationUnitName);
                         table.Cell().Element(CellBody).Text(row.EligibleCount.ToString(CultureInfo.InvariantCulture));
+                        table.Cell().Element(CellBody).Text(row.VotesCount.ToString(CultureInfo.InvariantCulture));
                     }
                 });
+            }
+            else
+            {
+                col.Item().PaddingTop(4).Text(
+                    "Ограничения по подразделениям не заданы. Голосование доступно всем пользователям системы.")
+                    .FontSize(9)
+                    .FontColor(Colors.Grey.Darken1);
             }
         });
     }
