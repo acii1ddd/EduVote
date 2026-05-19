@@ -89,22 +89,16 @@ public class VotingReportPdfGenerator : IVotingReportPdfGenerator
                     {
                         c.RelativeColumn(3);
                         c.RelativeColumn();
-                        c.RelativeColumn();
                     });
                     table.Header(h =>
                     {
                         h.Cell().Element(CellHeader).Text("Подразделение");
                         h.Cell().Element(CellHeader).Text("Допущено");
-                        h.Cell().Element(CellHeader).Text(data.IsAnonymous ? "—" : "Голосов");
                     });
                     foreach (var row in data.UnitBreakdown)
                     {
                         table.Cell().Element(CellBody).Text(row.EducationUnitName);
                         table.Cell().Element(CellBody).Text(row.EligibleCount.ToString(CultureInfo.InvariantCulture));
-                        table.Cell().Element(CellBody).Text(
-                            data.IsAnonymous
-                                ? "—"
-                                : row.VotesCount.ToString(CultureInfo.InvariantCulture));
                     }
                 });
             }
@@ -243,7 +237,7 @@ public class VotingReportPdfGenerator : IVotingReportPdfGenerator
     {
         container.Column(col =>
         {
-            col.Item().Text("Протокол верификации").Bold().FontSize(12);
+            col.Item().Text("Верификация голосования").Bold().FontSize(12);
             col.Item().PaddingTop(4).Table(table =>
             {
                 table.ColumnsDefinition(c =>
@@ -251,13 +245,12 @@ public class VotingReportPdfGenerator : IVotingReportPdfGenerator
                     c.RelativeColumn();
                     c.RelativeColumn(3);
                 });
-                AddRow(table, "Алгоритм хеша", "SHA-256");
-                AddRow(table, "Хеш результата", data.ResultHash ?? "—");
-                AddRow(table, "Число бюллетеней (хешей)", data.VoteHashesCount.ToString(CultureInfo.InvariantCulture));
+                AddRow(table, "Алгоритм хеширования", "SHA-256");
+                AddRow(table, "Хеш результатов голосования", data.ResultHash ?? "—");
                 if (!string.IsNullOrEmpty(data.TxHash))
-                    AddRow(table, "Транзакция", data.TxHash);
+                    AddRow(table, "Хеш блокчейн транзакции", data.TxHash);
                 if (!string.IsNullOrEmpty(data.EtherscanUrl))
-                    AddRow(table, "Etherscan", data.EtherscanUrl);
+                    AddHyperlinkRow(table, "Etherscan", data.EtherscanUrl);
             });
             col.Item().PaddingTop(4).Text(
                 "Полный список vote_hashes доступен через API верификации; в PDF не включается.")
@@ -269,6 +262,17 @@ public class VotingReportPdfGenerator : IVotingReportPdfGenerator
     {
         table.Cell().Element(CellBody).Text(label).SemiBold();
         table.Cell().Element(CellBody).Text(value);
+    }
+
+    private static void AddHyperlinkRow(TableDescriptor table, string label, string url)
+    {
+        table.Cell().Element(CellBody).Text(label).SemiBold();
+        table.Cell().Element(CellBody).Text(text =>
+        {
+            text.Hyperlink("Посмотреть на Etherscan", url)
+                .Underline()
+                .FontColor(Colors.Blue.Darken2);
+        });
     }
 
     private static IContainer CellHeader(IContainer c) =>
