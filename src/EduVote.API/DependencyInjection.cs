@@ -1,3 +1,4 @@
+using EduVote.API.Services.Analytics;
 using EduVote.API.Services.Auth;
 using EduVote.API.Services.Auth.PasswordHasher;
 using EduVote.API.Services.CronJobs;
@@ -34,6 +35,9 @@ public static class DependencyInjection
 
             services.AddScoped<RegisterUserService>();
             services.AddScoped<LoginUserService>();
+
+            services.AddSingleton<IVotingReportPdfGenerator, VotingReportPdfGenerator>();
+            services.AddSingleton<IOverviewReportPdfGenerator, OverviewReportPdfGenerator>();
             
             return services;
         }

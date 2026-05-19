@@ -79,6 +79,7 @@ public static class WebAppExtensions
         app.MapGrpcService<AuthService>();
         app.MapGrpcService<UserEducationUnitsService>();
         app.MapGrpcService<RoleService>();
+        app.MapGrpcService<AnalyticsService>();
 
         app.UseFileServer();
     }
