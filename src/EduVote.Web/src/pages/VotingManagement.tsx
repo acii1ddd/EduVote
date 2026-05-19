@@ -133,7 +133,7 @@ export default function VotingManagement() {
     }
 
     // ── Lifecycle ────────────────────────────────────────────
-    const runAction = async (voting: VotingResponse, action: (id: string) => Promise<void>) => {
+    const runAction = async (voting: VotingResponse, action: (id: string) => Promise<unknown>) => {
         setBusyId(voting.id)
         try {
             await action(voting.id)

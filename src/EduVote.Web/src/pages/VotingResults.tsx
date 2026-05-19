@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, Calendar, Check, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, Hash, Lock, Shield, ShieldCheck, Terminal, Unlock, Users, Vote } from 'lucide-react'
 import {
     getVotingById, getVotingResults, getMyVote, getVerificationData,

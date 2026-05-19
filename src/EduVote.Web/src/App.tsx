@@ -12,6 +12,7 @@ import TeacherDashboard from './pages/TeacherDashboard'
 import VotingManagement from './pages/VotingManagement'
 import VotingDetail from './pages/VotingDetail'
 import VotingResults from './pages/VotingResults'
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 
@@ -58,6 +59,11 @@ function Navbar() {
                             {claims.role === 'Administrator' && (
                                 <NavLink to="/votings" className={navLinkClass}>
                                     Голосования
+                                </NavLink>
+                            )}
+                            {claims.role === 'Administrator' && (
+                                <NavLink to="/admin/analytics" className={navLinkClass}>
+                                    Аналитика
                                 </NavLink>
                             )}
                             {claims.role === 'Administrator' && (
@@ -109,6 +115,14 @@ function App() {
                         element={
                             <ProtectedRoute allowedRoles={['Administrator']}>
                                 <AdminPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin/analytics"
+                        element={
+                            <ProtectedRoute allowedRoles={['Administrator']}>
+                                <AdminAnalyticsPage />
                             </ProtectedRoute>
                         }
                     />
