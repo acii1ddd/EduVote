@@ -68,5 +68,5 @@ public class Voting : IBaseEntity, ICreatedAt
 
     public User CreatedBy { get; set; } = null!;
 
-    public DateTime CreatedAt { get; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

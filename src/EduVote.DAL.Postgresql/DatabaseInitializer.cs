@@ -1,3 +1,4 @@
+using System.Globalization;
 using EduVote.DAL.Postgresql.Context;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Enums;
@@ -287,8 +288,6 @@ public class DatabaseInitializer(
                 Type = VotingType.SingleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = false,
-                StartTime = now.AddDays(-2),
-                EndTime = now.AddDays(5),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -335,8 +334,6 @@ public class DatabaseInitializer(
                 Type = VotingType.SingleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = false,
-                StartTime = now.AddDays(-10),
-                EndTime = now.AddDays(5),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -383,8 +380,6 @@ public class DatabaseInitializer(
                 Type = VotingType.MultipleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(-1),
-                EndTime = now.AddDays(14),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -439,8 +434,6 @@ public class DatabaseInitializer(
                 Type = VotingType.MultipleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(3),
-                EndTime = now.AddDays(21),
                 Status = VotingStatus.Draft,
                 Candidates =
                 [
@@ -495,8 +488,6 @@ public class DatabaseInitializer(
                 Type = VotingType.Rating,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(-7),
-                EndTime = now.AddDays(7),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -543,8 +534,6 @@ public class DatabaseInitializer(
                 Type = VotingType.Rating,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(-20),
-                EndTime = now.AddDays(7),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -591,8 +580,6 @@ public class DatabaseInitializer(
                 Type = VotingType.OpenAnswer,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now,
-                EndTime = now.AddDays(30),
                 Status = VotingStatus.Active,
                 Candidates = [],
                 CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
@@ -605,16 +592,48 @@ public class DatabaseInitializer(
                 Type = VotingType.OpenAnswer,
                 IsAnonymous = false,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(1),
-                EndTime = now.AddDays(40),
                 Status = VotingStatus.Draft,
                 Candidates = [],
                 CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             }
         };
 
+        ApplyYearlyVotingSchedule(votings, now);
+
         return votings;
     }
+
+    private static void ApplyYearlyVotingSchedule(List<Voting> votings, DateTime now)
+    {
+        var year = now.Year;
+        var schedules = new Dictionary<string, (int IsoWeek, int StartOffsetDays, int EndOffsetDays, VotingStatus Status)>
+        {
+            ["Принцесса университета"] = (8, -2, 5, VotingStatus.Active),
+            ["Лучший преподаватель года"] = (8, -10, 5, VotingStatus.Active),
+            ["Студенческие мероприятия на следующий семестр"] = (16, -1, 14, VotingStatus.Active),
+            ["Какие сервисы нужны университету"] = (16, 3, 21, VotingStatus.Draft),
+            ["Оценка столовой университета"] = (16, -7, 7, VotingStatus.Active),
+            ["Оценка курсов семестра"] = (24, -20, 7, VotingStatus.Active),
+            ["Предложения по улучшению университета"] = (24, 0, 30, VotingStatus.Active),
+            ["Почему вы выбрали наш университет?"] = (36, 1, 40, VotingStatus.Draft),
+        };
+
+        foreach (var voting in votings)
+        {
+            if (!schedules.TryGetValue(voting.Title, out var schedule))
+                continue;
+
+            voting.CreatedAt = CreatedAtForIsoWeek(year, schedule.IsoWeek);
+            voting.StartTime = now.AddDays(schedule.StartOffsetDays);
+            voting.EndTime = now.AddDays(schedule.EndOffsetDays);
+            voting.Status = schedule.Status;
+        }
+    }
+
+    private static DateTime CreatedAtForIsoWeek(int year, int isoWeek) =>
+        DateTime.SpecifyKind(
+            ISOWeek.ToDateTime(year, isoWeek, DayOfWeek.Wednesday).AddHours(12),
+            DateTimeKind.Utc);
 
     #endregion
 
