@@ -297,7 +297,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "Алина Ковальчук",
-                        Description = "Организатор научного клуба, победительница университетской олимпиады по математике.",
+                        Description = "Обаятельная и прекрасная, с тёплой улыбкой и уверенной манерой держаться.",
                         PhotoObjectName = "https://picsum.photos/200?random=101"
                     },
                     new Candidate
@@ -305,7 +305,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "Мария Шевченко",
-                        Description = "Староста потока, координировала волонтерские проекты факультета в этом году.",
+                        Description = "Изящная и светлая, умеет очаровать вниманием к деталям и доброжелательностью.",
                         PhotoObjectName = "https://picsum.photos/200?random=102"
                     },
                     new Candidate
@@ -313,7 +313,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "Екатерина Левченко",
-                        Description = "Капитан команды дебатов, автор серии образовательных подкастов для первокурсников.",
+                        Description = "Грациозная и жизнерадостная, с яркой энергией и искренним обаянием.",
                         PhotoObjectName = "https://picsum.photos/200?random=103"
                     },
                     new Candidate
@@ -321,7 +321,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "София Дорошенко",
-                        Description = "Лидер студенческого театра, инициировала благотворительный фестиваль в кампусе.",
+                        Description = "Изящная и вдохновляющая, с мягким характером и по-настоящему королевской осанкой.",
                         PhotoObjectName = "https://picsum.photos/200?random=104"
                     }
                 ],
@@ -336,8 +336,8 @@ public class DatabaseInitializer(
                 IsAnonymous = true,
                 AllowVoteChange = false,
                 StartTime = now.AddDays(-10),
-                EndTime = now.AddDays(-1),
-                Status = VotingStatus.Finished,
+                EndTime = now.AddDays(5),
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
@@ -353,7 +353,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = bestTeacherVotingId,
                         Name = "Доц. Алексей Ткаченко",
-                        Description = "Кафедра экономики, внедрил кейс-метод и еженедельные карьерные воркшопы.",
+                        Description = "Кафедра экономики, ведёт лекции и практические занятия.",
                         PhotoObjectName = "https://picsum.photos/200?random=106"
                     },
                     new Candidate
@@ -416,8 +416,8 @@ public class DatabaseInitializer(
                     {
                         Id = Guid.NewGuid(),
                         VotingId = eventsVotingId,
-                        Name = "Ночь кино в кампусе",
-                        Description = "Открытый кинопоказ и дискуссия о фильмах с приглашенными спикерами.",
+                        Name = "Кинопоказ для студентов",
+                        Description = "Просмотр фильма в общежитии или актовом зале.",
                         PhotoObjectName = "https://picsum.photos/200?random=112"
                     },
                     new Candidate
@@ -464,8 +464,8 @@ public class DatabaseInitializer(
                     {
                         Id = Guid.NewGuid(),
                         VotingId = servicesVotingId,
-                        Name = "Мобильный пропуск в кампус",
-                        Description = "Доступ в корпуса и общежития через приложение вместо пластиковых карт.",
+                        Name = "Электронный пропуск",
+                        Description = "Вход в здания по телефону вместо студенческого билета.",
                         PhotoObjectName = "https://picsum.photos/200?random=116"
                     },
                     new Candidate
@@ -544,8 +544,8 @@ public class DatabaseInitializer(
                 IsAnonymous = true,
                 AllowVoteChange = true,
                 StartTime = now.AddDays(-20),
-                EndTime = now.AddDays(-2),
-                Status = VotingStatus.Finished,
+                EndTime = now.AddDays(7),
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
