@@ -379,7 +379,7 @@ public class DatabaseInitializer(
             {
                 Id = eventsVotingId,
                 Title = "Студенческие мероприятия на следующий семестр",
-                Description = "Выберите несколько активностей, которые вы хотите видеть в календаре кампуса.",
+                Description = "Выберите несколько активностей, которые вы хотите видеть в календаре университета.",
                 Type = VotingType.MultipleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = true,
@@ -491,7 +491,7 @@ public class DatabaseInitializer(
             {
                 Id = cafeteriaRatingVotingId,
                 Title = "Оценка столовой университета",
-                Description = "Поставьте оценку ключевым аспектам работы столовой, чтобы улучшить питание в кампусе.",
+                Description = "Поставьте оценку ключевым аспектам работы столовой, чтобы улучшить питание в университете.",
                 Type = VotingType.Rating,
                 IsAnonymous = true,
                 AllowVoteChange = true,
@@ -587,7 +587,7 @@ public class DatabaseInitializer(
             {
                 Id = improvementsOpenVotingId,
                 Title = "Предложения по улучшению университета",
-                Description = "Открытый вопрос: какие изменения помогут сделать обучение и жизнь в кампусе лучше?",
+                Description = "Открытый вопрос: какие изменения помогут сделать обучение и жизнь в университете лучше?",
                 Type = VotingType.OpenAnswer,
                 IsAnonymous = true,
                 AllowVoteChange = true,
