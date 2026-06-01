@@ -1,3 +1,4 @@
+using System.Globalization;
 using EduVote.DAL.Postgresql.Context;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Enums;
@@ -287,8 +288,6 @@ public class DatabaseInitializer(
                 Type = VotingType.SingleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = false,
-                StartTime = now.AddDays(-2),
-                EndTime = now.AddDays(5),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -297,7 +296,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "Алина Ковальчук",
-                        Description = "Организатор научного клуба, победительница университетской олимпиады по математике.",
+                        Description = "Обаятельная и прекрасная, с тёплой улыбкой и уверенной манерой держаться.",
                         PhotoObjectName = "https://picsum.photos/200?random=101"
                     },
                     new Candidate
@@ -305,7 +304,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "Мария Шевченко",
-                        Description = "Староста потока, координировала волонтерские проекты факультета в этом году.",
+                        Description = "Изящная и светлая, умеет очаровать вниманием к деталям и доброжелательностью.",
                         PhotoObjectName = "https://picsum.photos/200?random=102"
                     },
                     new Candidate
@@ -313,7 +312,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "Екатерина Левченко",
-                        Description = "Капитан команды дебатов, автор серии образовательных подкастов для первокурсников.",
+                        Description = "Грациозная и жизнерадостная, с яркой энергией и искренним обаянием.",
                         PhotoObjectName = "https://picsum.photos/200?random=103"
                     },
                     new Candidate
@@ -321,7 +320,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = princessVotingId,
                         Name = "София Дорошенко",
-                        Description = "Лидер студенческого театра, инициировала благотворительный фестиваль в кампусе.",
+                        Description = "Изящная и вдохновляющая, с мягким характером и по-настоящему королевской осанкой.",
                         PhotoObjectName = "https://picsum.photos/200?random=104"
                     }
                 ],
@@ -335,9 +334,7 @@ public class DatabaseInitializer(
                 Type = VotingType.SingleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = false,
-                StartTime = now.AddDays(-10),
-                EndTime = now.AddDays(-1),
-                Status = VotingStatus.Finished,
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
@@ -353,7 +350,7 @@ public class DatabaseInitializer(
                         Id = Guid.NewGuid(),
                         VotingId = bestTeacherVotingId,
                         Name = "Доц. Алексей Ткаченко",
-                        Description = "Кафедра экономики, внедрил кейс-метод и еженедельные карьерные воркшопы.",
+                        Description = "Кафедра экономики, ведёт лекции и практические занятия.",
                         PhotoObjectName = "https://picsum.photos/200?random=106"
                     },
                     new Candidate
@@ -379,12 +376,10 @@ public class DatabaseInitializer(
             {
                 Id = eventsVotingId,
                 Title = "Студенческие мероприятия на следующий семестр",
-                Description = "Выберите несколько активностей, которые вы хотите видеть в календаре кампуса.",
+                Description = "Выберите несколько активностей, которые вы хотите видеть в календаре университета.",
                 Type = VotingType.MultipleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(-1),
-                EndTime = now.AddDays(14),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -416,8 +411,8 @@ public class DatabaseInitializer(
                     {
                         Id = Guid.NewGuid(),
                         VotingId = eventsVotingId,
-                        Name = "Ночь кино в кампусе",
-                        Description = "Открытый кинопоказ и дискуссия о фильмах с приглашенными спикерами.",
+                        Name = "Кинопоказ для студентов",
+                        Description = "Просмотр фильма в общежитии или актовом зале.",
                         PhotoObjectName = "https://picsum.photos/200?random=112"
                     },
                     new Candidate
@@ -439,8 +434,6 @@ public class DatabaseInitializer(
                 Type = VotingType.MultipleChoice,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(3),
-                EndTime = now.AddDays(21),
                 Status = VotingStatus.Draft,
                 Candidates =
                 [
@@ -464,8 +457,8 @@ public class DatabaseInitializer(
                     {
                         Id = Guid.NewGuid(),
                         VotingId = servicesVotingId,
-                        Name = "Мобильный пропуск в кампус",
-                        Description = "Доступ в корпуса и общежития через приложение вместо пластиковых карт.",
+                        Name = "Электронный пропуск",
+                        Description = "Вход в здания по телефону вместо студенческого билета.",
                         PhotoObjectName = "https://picsum.photos/200?random=116"
                     },
                     new Candidate
@@ -491,12 +484,10 @@ public class DatabaseInitializer(
             {
                 Id = cafeteriaRatingVotingId,
                 Title = "Оценка столовой университета",
-                Description = "Поставьте оценку ключевым аспектам работы столовой, чтобы улучшить питание в кампусе.",
+                Description = "Поставьте оценку ключевым аспектам работы столовой, чтобы улучшить питание в университете.",
                 Type = VotingType.Rating,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(-7),
-                EndTime = now.AddDays(7),
                 Status = VotingStatus.Active,
                 Candidates =
                 [
@@ -543,9 +534,7 @@ public class DatabaseInitializer(
                 Type = VotingType.Rating,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(-20),
-                EndTime = now.AddDays(-2),
-                Status = VotingStatus.Finished,
+                Status = VotingStatus.Active,
                 Candidates =
                 [
                     new Candidate
@@ -587,12 +576,10 @@ public class DatabaseInitializer(
             {
                 Id = improvementsOpenVotingId,
                 Title = "Предложения по улучшению университета",
-                Description = "Открытый вопрос: какие изменения помогут сделать обучение и жизнь в кампусе лучше?",
+                Description = "Открытый вопрос: какие изменения помогут сделать обучение и жизнь в университете лучше?",
                 Type = VotingType.OpenAnswer,
                 IsAnonymous = true,
                 AllowVoteChange = true,
-                StartTime = now,
-                EndTime = now.AddDays(30),
                 Status = VotingStatus.Active,
                 Candidates = [],
                 CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
@@ -605,16 +592,48 @@ public class DatabaseInitializer(
                 Type = VotingType.OpenAnswer,
                 IsAnonymous = false,
                 AllowVoteChange = true,
-                StartTime = now.AddDays(1),
-                EndTime = now.AddDays(40),
                 Status = VotingStatus.Draft,
                 Candidates = [],
                 CreatedById = Guid.Parse("3c0f622e-6476-4b3f-8727-bcf8a960ce11")
             }
         };
 
+        ApplyYearlyVotingSchedule(votings, now);
+
         return votings;
     }
+
+    private static void ApplyYearlyVotingSchedule(List<Voting> votings, DateTime now)
+    {
+        var year = now.Year;
+        var schedules = new Dictionary<string, (int IsoWeek, int StartOffsetDays, int EndOffsetDays, VotingStatus Status)>
+        {
+            ["Принцесса университета"] = (8, -2, 5, VotingStatus.Active),
+            ["Лучший преподаватель года"] = (8, -10, 5, VotingStatus.Active),
+            ["Студенческие мероприятия на следующий семестр"] = (16, -1, 14, VotingStatus.Active),
+            ["Какие сервисы нужны университету"] = (16, 3, 21, VotingStatus.Draft),
+            ["Оценка столовой университета"] = (16, -7, 7, VotingStatus.Active),
+            ["Оценка курсов семестра"] = (24, -20, 7, VotingStatus.Active),
+            ["Предложения по улучшению университета"] = (24, 0, 30, VotingStatus.Active),
+            ["Почему вы выбрали наш университет?"] = (36, 1, 40, VotingStatus.Draft),
+        };
+
+        foreach (var voting in votings)
+        {
+            if (!schedules.TryGetValue(voting.Title, out var schedule))
+                continue;
+
+            voting.CreatedAt = CreatedAtForIsoWeek(year, schedule.IsoWeek);
+            voting.StartTime = now.AddDays(schedule.StartOffsetDays);
+            voting.EndTime = now.AddDays(schedule.EndOffsetDays);
+            voting.Status = schedule.Status;
+        }
+    }
+
+    private static DateTime CreatedAtForIsoWeek(int year, int isoWeek) =>
+        DateTime.SpecifyKind(
+            ISOWeek.ToDateTime(year, isoWeek, DayOfWeek.Wednesday).AddHours(12),
+            DateTimeKind.Utc);
 
     #endregion
 

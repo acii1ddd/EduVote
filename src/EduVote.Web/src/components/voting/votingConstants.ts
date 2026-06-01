@@ -23,6 +23,14 @@ export const TYPE_LABELS: Record<VotingType, string> = {
     OpenAnswer:     'Открытый ответ',
 }
 
+/** Short labels for charts (axis); full names in TYPE_LABELS / tooltips. */
+export const TYPE_AXIS_LABELS: Record<VotingType, string> = {
+    SingleChoice:   'Один',
+    MultipleChoice: 'Несколько',
+    Rating:         'Оценка',
+    OpenAnswer:     'Открытый',
+}
+
 export const STATUS_CONFIG: Record<VotingStatus, {
     label: string
     cardClass: string

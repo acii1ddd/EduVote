@@ -22,6 +22,13 @@ public interface IEducationUnitRepository
         CancellationToken cancellationToken = default
     );
 
+    /// <summary>
+    /// Get the given units and all descendants in the hierarchy (traverses down the tree).
+    /// </summary>
+    Task<IEnumerable<Guid>> GetAllDescendantIdsAsync(
+        IEnumerable<Guid> educationUnitIds,
+        CancellationToken cancellationToken = default);
+
     Task<EducationUnit?> UpdateAsync(EducationUnit educationUnit, CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);

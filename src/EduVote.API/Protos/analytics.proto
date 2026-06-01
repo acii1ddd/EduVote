@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+option csharp_namespace = "EduVote.API";
+
+import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
+import "google/protobuf/timestamp.proto";
+
+package edu_vote.v1.analytics;
+
+service Analytics {
+  rpc GetOverview (GetOverviewRequest) returns (AnalyticsOverviewResponse) {
+    option (google.api.http) = {
+      get: "/api/analytics/overview"
+    };
+  }
+
+  rpc GetVotings (GetAnalyticsVotingsRequest) returns (AnalyticsVotingsResponse) {
+    option (google.api.http) = {
+      get: "/api/analytics/votings"
+    };
+  }
+
+  rpc DownloadVotingReport (DownloadVotingReportRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/api/analytics/votings/{voting_id}/report.pdf"
+    };
+  }
+
+  rpc DownloadOverviewReport (DownloadOverviewReportRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/api/analytics/overview/report.pdf"
+    };
+  }
+}
+
+message GetOverviewRequest {
+  google.protobuf.Timestamp date_from = 1;
+  google.protobuf.Timestamp date_to = 2;
+  string education_unit_id = 3;
+}
+
+message AnalyticsOverviewResponse {
+  int32 total_votings = 1;
+  int32 active_votings = 2;
+  int32 pending_approval_votings = 3;
+  int32 finished_votings = 4;
+  int32 draft_votings = 5;
+  int32 paused_votings = 6;
+  int32 total_votes_cast = 7;
+  repeated StatusCount status_counts = 8;
+  repeated TypeCount type_counts = 9;
+  repeated TimeSeriesPoint votings_created_series = 10;
+  repeated TimeSeriesPoint votes_cast_series = 11;
+  repeated PendingApprovalRow pending_approval_queue = 12;
+}
+
+message StatusCount {
+  string status = 1;
+  int32 count = 2;
+}
+
+message TypeCount {
+  string type = 1;
+  int32 count = 2;
+}
+
+message TimeSeriesPoint {
+  string period = 1;
+  int32 count = 2;
+}
+
+message PendingApprovalRow {
+  string voting_id = 1;
+  string title = 2;
+  string created_by_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message GetAnalyticsVotingsRequest {
+  google.protobuf.Timestamp date_from = 1;
+  google.protobuf.Timestamp date_to = 2;
+  string education_unit_id = 3;
+  string type = 4;
+  string status = 5;
+  string created_by_id = 6;
+  int32 page = 7;
+  int32 page_size = 8;
+}
+
+message AnalyticsVotingsResponse {
+  repeated AnalyticsVotingRow items = 1;
+  int32 total_count = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+
+message AnalyticsVotingRow {
+  string id = 1;
+  string title = 2;
+  string type = 3;
+  string status = 4;
+  google.protobuf.Timestamp start_time = 5;
+  google.protobuf.Timestamp end_time = 6;
+  google.protobuf.Timestamp created_at = 7;
+  int32 total_votes = 8;
+  int32 eligible_count = 9;
+  double turnout_percent = 10;
+  string created_by_id = 11;
+}
+
+message DownloadVotingReportRequest {
+  string voting_id = 1;
+}
+
+message DownloadOverviewReportRequest {
+  google.protobuf.Timestamp date_from = 1;
+  google.protobuf.Timestamp date_to = 2;
+  string education_unit_id = 3;
+}

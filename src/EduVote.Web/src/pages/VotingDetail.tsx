@@ -67,7 +67,7 @@ export default function VotingDetail() {
         setSubmitting(true)
         setVoteError(null)
         try {
-            let receipt: { voteId: string; voteHash: string } | undefined
+            let receipt: Awaited<ReturnType<typeof castVote>> | undefined
             switch (voting.type) {
                 case 'SingleChoice':
                     receipt = await castVote(voting.id, { selectedCandidateId: singleId! })
