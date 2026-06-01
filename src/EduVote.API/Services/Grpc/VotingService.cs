@@ -1,9 +1,14 @@
 using System.Security.Claims;
 using EduVote.Application.Common;
+using EduVote.Application.Votings.ApproveVoting;
 using EduVote.Application.Votings.CastVote;
 using EduVote.Application.Votings.CreateVoting;
 using EduVote.Application.Votings.DeleteVoting;
 using EduVote.Application.Votings.FinishVoting;
+using EduVote.Application.Votings.GetVoting;
+using EduVote.Application.Votings.GetVotings;
+using EduVote.Application.Votings.GetVotingsCreatedByUser;
+using EduVote.Application.Votings.GetVotingsForUser;
 using EduVote.Application.Votings.PauseVoting;
 using EduVote.Application.Votings.StartVoting;
 using EduVote.Application.Votings.UpdateVoting;
@@ -22,10 +27,8 @@ namespace EduVote.API.Services.Grpc;
 public class VotingService(
     IVotingRepository votingRepository,
     IVoteRepository voteRepository,
-    IUserRepository userRepository,
     ICandidateRepository candidateRepository,
     IVoteHashService voteHashService,
-    IEducationUnitRepository educationUnitRepository,
     IVotingResultRepository votingResultRepository,
     IBlockchainRecordRepository blockchainRecordRepository,
     ISender sender,
@@ -76,18 +79,14 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
-
-        if (voting.Status != DbVotingStatus.PendingApproval)
+        try
         {
-            throw new RpcException(new Status(
-                StatusCode.FailedPrecondition,
-                $"Voting {votingId} is not pending approval (current status: {voting.Status})."));
+            await sender.Send(new ApproveVotingCommand(votingId), context.CancellationToken);
         }
-
-        voting.Status = DbVotingStatus.Draft;
-
-        await votingRepository.SaveChangesAsync(context.CancellationToken);
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
 
         logger.LogInformation("[ApproveVoting] Voting '{VotingId}' approved, moved to Draft", votingId);
 
@@ -200,20 +199,24 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
-        
-        return voting.MapToResponse();
+        try
+        {
+            var voting = await sender.Send(new GetVotingQuery(votingId), context.CancellationToken);
+            return voting.MapToResponse();
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
 
-    // todo пагинация
     public override async Task<GetVotingsResponse> GetVotings(
         Empty request, ServerCallContext context)
     {
-        var existingVotings = await votingRepository
-            .GetAllAsync(context.CancellationToken);
+        var votings = await sender.Send(new GetVotingsQuery(), context.CancellationToken);
 
         var response = new GetVotingsResponse();
-        response.Votings.AddRange(existingVotings.MapToResponseList());
+        response.Votings.AddRange(votings.MapToResponseList());
 
         return response;
     }
@@ -224,29 +227,20 @@ public class VotingService(
     {
         var userId = IdParser.ParseId(request.UserId, "User");
 
-        var user = await userRepository
-            .GetByIdWithEducationUnitsAsync(userId, context.CancellationToken);
+        try
+        {
+            var votings = await sender.Send(
+                new GetVotingsForUserQuery(userId),
+                context.CancellationToken);
 
-        if (user is null)
-            throw IdParser.CreateNotFoundException("User", request.UserId);
-
-        var userUnitIds = user.UserEducationUnits
-            .Select(ueu => ueu.EducationUnitId)
-            .ToList();
-
-        var allUnitIds = userUnitIds.Count > 0
-            ? (await educationUnitRepository
-                .GetAllParentIdsAsync(userUnitIds, context.CancellationToken))
-                .ToList()
-            : [];
-
-        var votings = await votingRepository
-            .GetVotingsForEducationUnitsAsync(allUnitIds, context.CancellationToken);
-
-        var response = new GetVotingsResponse();
-        response.Votings.AddRange(votings.MapToResponseList());
-
-        return response;
+            var response = new GetVotingsResponse();
+            response.Votings.AddRange(votings.MapToResponseList());
+            return response;
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
 
     public override async Task<GetVotingsResponse> GetVotingsCreatedByUser(
@@ -258,11 +252,12 @@ public class VotingService(
         if (!Guid.TryParse(userIdStr, out var userId))
             throw new RpcException(new Status(StatusCode.Unauthenticated, "User identity not found in token."));
 
-        var createdVotings = await votingRepository
-            .GetByCreatedByAsync(userId, context.CancellationToken);
+        var votings = await sender.Send(
+            new GetVotingsCreatedByUserQuery(userId),
+            context.CancellationToken);
 
         var createdResponse = new GetVotingsResponse();
-        createdResponse.Votings.AddRange(createdVotings.MapToResponseList());
+        createdResponse.Votings.AddRange(votings.MapToResponseList());
 
         return createdResponse;
     }

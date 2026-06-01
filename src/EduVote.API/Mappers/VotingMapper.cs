@@ -1,3 +1,4 @@
+using EduVote.Application.Votings;
 using DbVotingStatus  = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
@@ -121,6 +122,25 @@ public static class VotingMapper
     {
         return source.Adapt<IEnumerable<VotingResponse>>(Config);
     }
+
+    public static VotingResponse MapToResponse(this VotingDetails source) =>
+        new()
+        {
+            Id = source.Id.ToString(),
+            Title = source.Title,
+            Description = source.Description,
+            Type = MapToGrpcType(source.Type),
+            IsAnonymous = source.IsAnonymous,
+            AllowVoteChange = source.AllowVoteChange,
+            StartTime = Timestamp.FromDateTime(source.StartTime.ToUniversalTime()),
+            EndTime = Timestamp.FromDateTime(source.EndTime.ToUniversalTime()),
+            Status = MapToGrpcStatus(source.Status),
+            CreatedAt = Timestamp.FromDateTime(source.CreatedAt.ToUniversalTime()),
+            CreatedById = source.CreatedById.ToString()
+        };
+
+    public static IEnumerable<VotingResponse> MapToResponseList(this IEnumerable<VotingDetails> source) =>
+        source.Select(MapToResponse);
     
     public static IEnumerable<DbVoting> MapToEntityList(this IEnumerable<VotingResponse> source)
     {
