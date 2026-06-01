@@ -1,4 +1,9 @@
 using System.Security.Claims;
+using EduVote.Application.Common;
+using EduVote.Application.Votings.CastVote;
+using EduVote.Application.Votings.FinishVoting;
+using EduVote.Application.Votings.PauseVoting;
+using EduVote.Application.Votings.StartVoting;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
 using EduVote.API.Services.Tools.Votings;
@@ -6,6 +11,7 @@ using EduVote.API.Validators;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
@@ -17,12 +23,11 @@ public class VotingService(
     IVoteRepository voteRepository,
     IUserRepository userRepository,
     ICandidateRepository candidateRepository,
-    IVotingTargetRepository votingTargetRepository,
     IVoteHashService voteHashService,
     IEducationUnitRepository educationUnitRepository,
     IVotingResultRepository votingResultRepository,
     IBlockchainRecordRepository blockchainRecordRepository,
-    VotingLifecycleService votingLifecycleService,
+    ISender sender,
     ILogger<VotingService> logger)
     : Votings.VotingsBase
 {
@@ -121,13 +126,15 @@ public class VotingService(
         VotingActionRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
-        
-        await votingLifecycleService.ChangeStatusAsync(
-            votingId,
-            DbVotingStatus.Active,
-            [DbVotingStatus.Draft, DbVotingStatus.Paused],
-            context.CancellationToken
-        );
+
+        try
+        {
+            await sender.Send(new StartVotingCommand(votingId), context.CancellationToken);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
 
         return new Empty();
     }
@@ -137,12 +144,14 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        await votingLifecycleService.ChangeStatusAsync(
-            votingId,
-            DbVotingStatus.Paused,
-            [DbVotingStatus.Active],
-            context.CancellationToken
-        );
+        try
+        {
+            await sender.Send(new PauseVotingCommand(votingId), context.CancellationToken);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
 
         return new Empty();
     }
@@ -152,15 +161,22 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var (txHash, etherscanUrl) = await votingLifecycleService
-            .FinalizeVotingAsync(votingId, context.CancellationToken);
+        FinishVotingResult result;
+        try
+        {
+            result = await sender.Send(new FinishVotingCommand(votingId), context.CancellationToken);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
 
         return new FinishVotingResponse
         {
             VotingId = request.Id,
             Status = VotingStatus.Finished,
-            TxHash = txHash ?? string.Empty,
-            EtherscanUrl = etherscanUrl ?? string.Empty
+            TxHash = result.TxHash ?? string.Empty,
+            EtherscanUrl = result.EtherscanUrl ?? string.Empty
         };
     }
 
@@ -266,191 +282,33 @@ public class VotingService(
 
         logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' attempting to " +
             "cast vote in voting {VotingId}", DateTime.UtcNow, userId, votingId);
-        
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
-        if (voting.Status == DbVotingStatus.Finished)
+        var command = new CastVoteCommand(
+            votingId,
+            userId,
+            request.SelectedCandidateId,
+            request.SelectedCandidateIds.ToList(),
+            request.RatingAnswers.ToDictionary(x => x.Key, x => x.Value),
+            request.TextAnswer);
+
+        try
         {
-            logger.LogWarning(
-                "[CastVote] [{Timestamp}] User '{UserId}' attempted to vote in finished voting '{VotingId}'",
-                DateTime.UtcNow,
-                userId,
-                votingId
-            );
+            var result = await sender.Send(command, context.CancellationToken);
 
-            throw new RpcException(new Status(
-                StatusCode.FailedPrecondition,
-                "Voting is already finished."));
-        }
-        
-        var user = await userRepository
-            .GetByIdWithEducationUnitsAsync(userId, context.CancellationToken);
-        
-        if (user is null)
-        {
-            throw IdParser.CreateNotFoundException("User", userId.ToString());
-        }
-
-        // Get voting targets (education units where this voting is restricted to)
-        var votingTargets = await votingTargetRepository
-            .GetByVotingIdAsync(votingId, context.CancellationToken);
-
-        var targetEducationUnitIds = votingTargets
-            .Select(vt => vt.EducationUnitId)
-            .ToList();
-
-        // If voting has no targets -> it's public (all users can vote)
-        var isPublicVoting = targetEducationUnitIds.Count == 0;
-
-        if (isPublicVoting)
-        {
-            logger.LogInformation("[CastVote] [{Timestamp}] Voting '{VotingId}' is public, " +
-                "access allowed", DateTime.UtcNow, votingId);
-        }
-        else
-        {
-            // Voting has restrictions - check if user has access
-            var userEducationUnitIds = user.UserEducationUnits
-                .Select(ueu => ueu.EducationUnitId)
-                .ToList();
-
-            // Get all parents for user's education units
-            // E.g., Group 1-SO-1 -> Course 2 -> Speciality IS -> Faculty IT -> University
-            var userAllUnitsWithAncestorIds = (
-                    await educationUnitRepository
-                        .GetAllParentIdsAsync(userEducationUnitIds, context.CancellationToken)
-            )
-            .ToList();
-            
-            // Check if user has access: 
-            // User must have at least one matching unit with voting target
-            var hasAccess = targetEducationUnitIds
-                .Any(targetId => userAllUnitsWithAncestorIds.Contains(targetId));
-
-            if (!hasAccess)
-            {
-                logger.LogWarning("[CastVote] [{Timestamp}] User '{UserId}' does not " +
-                    "have access to voting {VotingId}", DateTime.UtcNow, userId, votingId);
-                
-                throw new RpcException(new Status(
-                    StatusCode.PermissionDenied,
-                    "User does not have access to vote in this voting."));
-            }
-            
-            logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' has access " +
-                "to restricted voting {VotingId}", DateTime.UtcNow, userId, votingId);
-        }
-        
-        var existingVote = await voteRepository
-            .GetUserVoteAsync(votingId, userId, context.CancellationToken);
-
-        if (existingVote is not null && !voting.AllowVoteChange)
-        {
-            logger.LogWarning("[CastVote] [{Timestamp}] User '{UserId}' already voted in voting '{VotingId}' " +
-                "and vote change not allowed", DateTime.UtcNow, userId, votingId);
-            
-            throw new RpcException(new Status(
-                StatusCode.AlreadyExists,
-                "User has already voted in this voting and vote change is not allowed."));
-        }
-
-        var candidates = (
-            await candidateRepository.GetByVotingIdAsync(votingId, context.CancellationToken)
-        ).ToList();
-
-        VoteValidator.ValidateVote(request, voting, candidates);
-
-        var salt = Guid.NewGuid().ToString("N");
-        var voteHash = voteHashService
-            .GenerateVoteHash(votingId, userId, voting.Type, salt, request);
-
-        // Update existing vote way
-        if (existingVote is not null)
-        {
-            UpdateExistingVote(existingVote, request, voteHash, salt, voting.Type);
-            
-            await voteRepository.SaveChangesAsync(context.CancellationToken);
-            
-            logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' vote updated " +
+            logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' vote saved " +
                 "successfully in voting '{VotingId}'", DateTime.UtcNow, userId, votingId);
-            
-            return existingVote.MapToResponse();
+
+            return new CastVoteResponse
+            {
+                VoteId = result.VoteId.ToString(),
+                VoteHash = result.VoteHash,
+                VoteSalt = result.VoteSalt,
+                CreatedAt = result.CreatedAt.ToUniversalTime().ToTimestamp()
+            };
         }
-
-        // Create new vote way
-        var newVote = CreateNewVote(votingId, userId, request, voteHash, salt, voting.Type);
-        
-        var createdVote = await voteRepository
-            .CreateAsync(newVote, context.CancellationToken);
-
-        logger.LogInformation("[CastVote] [{Timestamp}] User '{UserId}' vote created " +
-            "successfully in voting '{VotingId}'", DateTime.UtcNow, userId, votingId);
-        
-        return createdVote.MapToResponse();
-    }
-    
-    private void UpdateExistingVote(
-        Vote vote,
-        CastVoteRequest request,
-        string voteHash,
-        string salt,
-        DbVotingType votingType)
-    {
-        vote.VoteHash = voteHash;
-        vote.VoteSalt = salt;
-
-        PopulateVoteData(vote, request, votingType);
-    }
-
-    private Vote CreateNewVote(
-        Guid votingId,
-        Guid userId,
-        CastVoteRequest request,
-        string voteHash,
-        string salt,
-        DbVotingType votingType)
-    {
-        var vote = new Vote
+        catch (ApplicationErrorException ex)
         {
-            Id = Guid.NewGuid(),
-            VotingId = votingId,
-            UserId = userId,
-            VoteHash = voteHash,
-            VoteSalt = salt,
-        };
-
-        PopulateVoteData(vote, request, votingType);
-        return vote;
-    }
-    
-    private void PopulateVoteData(
-        Vote vote, 
-        CastVoteRequest request, 
-        DbVotingType votingType)
-    {
-        vote.CandidateId = null;
-        vote.SelectedCandidateIds = null;
-        vote.RatingAnswers = null;
-        vote.TextAnswer = null;
-
-        switch (votingType)
-        {
-            case DbVotingType.SingleChoice:
-                vote.CandidateId = Guid.Parse(request.SelectedCandidateId);
-                break;
-            case DbVotingType.MultipleChoice:
-                vote.SelectedCandidateIds = voteHashService
-                    .GetCanonicalVoteDataJson(votingType, request);
-                break;
-            case DbVotingType.Rating:
-                vote.RatingAnswers = voteHashService
-                    .GetCanonicalVoteDataJson(votingType, request);
-                break;
-            case DbVotingType.OpenAnswer:
-                vote.TextAnswer = request.TextAnswer;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(votingType), votingType, "Unknown vote type");
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
     }
 
@@ -667,6 +525,18 @@ public class VotingService(
 
         return response;
     }
+
+    private static StatusCode MapStatusCode(ApplicationErrorType errorType) =>
+        errorType switch
+        {
+            ApplicationErrorType.InvalidArgument => StatusCode.InvalidArgument,
+            ApplicationErrorType.NotFound => StatusCode.NotFound,
+            ApplicationErrorType.PermissionDenied => StatusCode.PermissionDenied,
+            ApplicationErrorType.FailedPrecondition => StatusCode.FailedPrecondition,
+            ApplicationErrorType.AlreadyExists => StatusCode.AlreadyExists,
+            ApplicationErrorType.Unauthenticated => StatusCode.Unauthenticated,
+            _ => StatusCode.Unknown
+        };
     
     private async Task<DbVoting> GetVotingOrThrowAsync(
         Guid votingId,

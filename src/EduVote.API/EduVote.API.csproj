@@ -24,14 +24,14 @@
           <OutputDir>obj\Debug/net10.0/</OutputDir>
           <Generator>MSBuild:Compile</Generator>
         </Protobuf>
-        <Protobuf Include="Protos\voting.proto" GrpcServices="Server"/>
-        <Protobuf Include="Protos\voting_targets.proto" GrpcServices="Server"/>
-        <Protobuf Include="Protos\auth.proto" GrpcServices="Server"/>
-        <Protobuf Include="Protos\user_education_units.proto" GrpcServices="Server"/>
-        <Protobuf Include="Protos\roles.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\voting.proto" GrpcServices="Server" />
+        <Protobuf Include="Protos\voting_targets.proto" GrpcServices="Server" />
+        <Protobuf Include="Protos\auth.proto" GrpcServices="Server" />
+        <Protobuf Include="Protos\user_education_units.proto" GrpcServices="Server" />
+        <Protobuf Include="Protos\roles.proto" GrpcServices="Server" />
         <Protobuf Include="Protos\analytics.proto" GrpcServices="Server">
             <AdditionalImportDirs>
-                $(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos
+                $(NuGetPackageRoot)/google.api.commonprotos/2.17.0/content/protos
             </AdditionalImportDirs>
         </Protobuf>
     </ItemGroup>
@@ -49,6 +49,7 @@
         <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
         <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.80.0-pre1" />
         <PackageReference Include="Mapster" Version="10.0.7" />
+        <PackageReference Include="MediatR" Version="14.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
         <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="10.0.6" />
         <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.10.6" />
@@ -63,6 +64,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\EduVote.DAL.Postgresql\EduVote.DAL.Postgresql.csproj" />
+      <ProjectReference Include="..\EduVote.Application\EduVote.Application.csproj" />
     </ItemGroup>
 
 </Project>

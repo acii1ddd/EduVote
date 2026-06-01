@@ -1,3 +1,4 @@
+using EduVote.Application;
 using EduVote.API.Services.Analytics;
 using EduVote.API.Services.Auth;
 using EduVote.API.Services.Auth.PasswordHasher;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Minio;
+using IBlockchainResultWriter = EduVote.Application.Votings.Services.IBlockchainResultWriter;
 
 namespace EduVote.API;
 
@@ -19,9 +21,11 @@ public static class DependencyInjection
     {
         public IServiceCollection AddApiServices()
         {
+            services.AddApplicationServices();
             services.AddScoped<IVoteHashService, VoteHashService>();
             services.AddScoped<VotingResultCalculatorService>();
             services.AddScoped<BlockchainService>();
+            services.AddScoped<IBlockchainResultWriter, BlockchainResultWriter>();
             services.AddScoped<VotingLifecycleService>();
 
             // singleton
