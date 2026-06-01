@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IncludeHttpRuleProtos>true</IncludeHttpRuleProtos>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Protobuf Include="Protos\candidate.proto">
+          <GrpcServices>Server</GrpcServices>
+          <Access>Public</Access>
+          <ProtoCompile>True</ProtoCompile>
+          <CompileOutputs>True</CompileOutputs>
+          <OutputDir>obj\Debug/net10.0/</OutputDir>
+          <Generator>MSBuild:Compile</Generator>
+        </Protobuf>
+        <Protobuf Include="Protos\user.proto">
+          <GrpcServices>Server</GrpcServices>
+          <Access>Public</Access>
+          <ProtoCompile>True</ProtoCompile>
+          <CompileOutputs>True</CompileOutputs>
+          <OutputDir>obj\Debug/net10.0/</OutputDir>
+          <Generator>MSBuild:Compile</Generator>
+        </Protobuf>
+        <Protobuf Include="Protos\voting.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\voting_targets.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\auth.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\user_education_units.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\roles.proto" GrpcServices="Server"/>
+        <Protobuf Include="Protos\analytics.proto" GrpcServices="Server">
+            <AdditionalImportDirs>
+                $(NuGetPackageRoot)google.api.commonprotos\2.17.0\content\protos
+            </AdditionalImportDirs>
+        </Protobuf>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Assets\Fonts\DejaVuSans.ttf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+        <PackageReference Include="CommunityToolkit.Aspire.Minio.Client" Version="13.1.1" />
+        <PackageReference Include="Google.Api.CommonProtos" Version="2.17.0" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
+        <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.80.0-pre1" />
+        <PackageReference Include="Mapster" Version="10.0.7" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+        <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="10.0.6" />
+        <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.10.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Nethereum.Web3" Version="6.1.0" />
+        <PackageReference Include="QuestPDF" Version="2024.12.3" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\EduVote.DAL.Postgresql\EduVote.DAL.Postgresql.csproj" />
+    </ItemGroup>
+
+</Project>

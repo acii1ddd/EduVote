@@ -5,6 +5,10 @@
 
 # dotenv files
 .env
+CLAUDE.md
+EndpointsSpec.md
+src/EduVote.API/appsettings.Development.json
+src/EduVote.API/appsettings.json
 
 # User-specific files
 *.rsuser
@@ -31,6 +35,8 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+# Windows-style bin\Debug paths (backslash as part of directory name, * matches \)
+**/bin*Debug/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

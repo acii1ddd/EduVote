@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option csharp_namespace = "EduVote.API";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+package edu_vote.v1.users;
+
+service Users {
+  rpc GetUsers (google.protobuf.Empty) returns (GetUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/users"
+    };
+  }
+
+  rpc CreateUser (CreateUserRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/api/users"
+      body: "*"
+    };
+  }
+
+  rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/api/users/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/users/{id}"
+    };
+  }
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+  string role = 4;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+  string name = 4;
+}
+
+message GetUsersResponse {
+  repeated UserResponse users = 1; // массив/список
+}
+
+message UserResponse {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+  string name = 4;
+  string education_unit_id = 5;
+  string education_unit_name = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
