@@ -2,4 +2,7 @@ using MediatR;
 
 namespace EduVote.Application.Votings.GetResults;
 
-public sealed record GetResultsQuery(Guid VotingId) : IRequest<GetResultsResult>;
+public sealed record GetResultsQuery(
+    Guid VotingId,
+    Guid? CallerUserId,
+    string? CallerRole) : IRequest<GetResultsResult>;

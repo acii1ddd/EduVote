@@ -72,6 +72,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
     public async Task GetResults_Should_Return_Results_For_Finished_Voting()
     {
         var scenario = await SeedFinishedVotingWithResultAsync(includeBlockchain: true);
+        AuthorizeAs(scenario.AdminUserId, Roles.Administrator);
 
         var response = await _client.GetAsync($"/api/votings/{scenario.VotingId}/results");
 
@@ -86,6 +87,94 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.True(body.Results.ContainsKey(scenario.CandidateId.ToString()));
         Assert.Equal("blockchain-tx-hash", body.TxHash);
         Assert.Contains("sepolia.etherscan.io", body.EtherscanUrl ?? string.Empty);
+        Assert.True(body.OpenAnswerTextsVisible);
+    }
+
+    [Fact]
+    public async Task GetResults_OpenAnswer_Student_Should_Redact_Answer_Texts()
+    {
+        var scenario = await SeedFinishedOpenAnswerWithResultAsync();
+        AuthorizeAs(scenario.StudentUserId, Roles.Student);
+
+        var response = await _client.GetAsync($"/api/votings/{scenario.VotingId}/results");
+
+        await EnsureSuccessAsync(response);
+
+        var body = await response.Content.ReadFromJsonAsync<VotingResultsApiResponse>();
+        Assert.NotNull(body);
+        Assert.False(body.OpenAnswerTextsVisible);
+        Assert.NotNull(body.Results);
+        Assert.True(body.Results.TryGetValue("openAnswer", out var openAnswer));
+        var json = openAnswer.ToString();
+        Assert.Contains("totalAnswers", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("secret answer", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetResults_OpenAnswer_Organizer_Teacher_Should_Return_Full_Answers()
+    {
+        var scenario = await SeedFinishedOpenAnswerWithResultAsync();
+        AuthorizeAs(scenario.OrganizerUserId, Roles.Teacher);
+
+        var response = await _client.GetAsync($"/api/votings/{scenario.VotingId}/results");
+
+        await EnsureSuccessAsync(response);
+
+        var body = await response.Content.ReadFromJsonAsync<VotingResultsApiResponse>();
+        Assert.NotNull(body);
+        Assert.True(body.OpenAnswerTextsVisible);
+        Assert.NotNull(body.Results);
+        Assert.True(body.Results.TryGetValue("openAnswer", out var openAnswer));
+        var json = openAnswer.ToString();
+        Assert.Contains("secret answer", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetResults_OpenAnswer_NonOrganizer_Teacher_Should_Redact_Answer_Texts()
+    {
+        var scenario = await SeedFinishedOpenAnswerWithResultAsync();
+        AuthorizeAs(scenario.OtherTeacherUserId, Roles.Teacher);
+
+        var response = await _client.GetAsync($"/api/votings/{scenario.VotingId}/results");
+
+        await EnsureSuccessAsync(response);
+
+        var body = await response.Content.ReadFromJsonAsync<VotingResultsApiResponse>();
+        Assert.NotNull(body);
+        Assert.False(body.OpenAnswerTextsVisible);
+        Assert.NotNull(body.Results);
+        Assert.True(body.Results.TryGetValue("openAnswer", out var openAnswer));
+        var json = openAnswer.ToString();
+        Assert.DoesNotContain("secret answer", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetResults_OpenAnswer_Administrator_Should_Return_Full_Answers_Even_When_Not_Organizer()
+    {
+        var scenario = await SeedFinishedOpenAnswerWithResultAsync();
+        AuthorizeAs(scenario.AdminUserId, Roles.Administrator);
+
+        var response = await _client.GetAsync($"/api/votings/{scenario.VotingId}/results");
+
+        await EnsureSuccessAsync(response);
+
+        var body = await response.Content.ReadFromJsonAsync<VotingResultsApiResponse>();
+        Assert.NotNull(body);
+        Assert.True(body.OpenAnswerTextsVisible);
+        Assert.NotNull(body.Results);
+        Assert.True(body.Results.TryGetValue("openAnswer", out var openAnswer));
+        var json = openAnswer.ToString();
+        Assert.Contains("secret answer", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GetResults_OpenAnswer_Should_Return_Unauthenticated_Without_Auth_Headers()
+    {
+        var scenario = await SeedFinishedOpenAnswerWithResultAsync();
+
+        var response = await _client.GetAsync($"/api/votings/{scenario.VotingId}/results");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -302,7 +391,97 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
             await dbContext.SaveChangesAsync();
         });
 
-        return new FinishedVotingScenario(votingId, candidateId);
+        return new FinishedVotingScenario(votingId, candidateId, userId);
+    }
+
+    private async Task<OpenAnswerScenario> SeedFinishedOpenAnswerWithResultAsync()
+    {
+        var teacherRoleId = Guid.NewGuid();
+        var studentRoleId = Guid.NewGuid();
+        var adminRoleId = Guid.NewGuid();
+        var organizerUserId = Guid.NewGuid();
+        var otherTeacherUserId = Guid.NewGuid();
+        var studentUserId = Guid.NewGuid();
+        var adminUserId = Guid.NewGuid();
+        var votingId = Guid.NewGuid();
+        var resultId = Guid.NewGuid();
+        const string resultData =
+            """{"openAnswer":{"totalAnswers":1,"answers":["secret answer"]}}""";
+
+        await factory.ExecuteDbContextAsync(async dbContext =>
+        {
+            dbContext.Roles.AddRange(
+                new Role { Id = teacherRoleId, Name = Roles.Teacher },
+                new Role { Id = studentRoleId, Name = Roles.Student },
+                new Role { Id = adminRoleId, Name = Roles.Administrator });
+
+            dbContext.Users.AddRange(
+                new User
+                {
+                    Id = organizerUserId,
+                    Email = $"teacher-{organizerUserId:N}@example.com",
+                    Name = "Organizer",
+                    PasswordHash = "hash",
+                    RoleId = teacherRoleId
+                },
+                new User
+                {
+                    Id = otherTeacherUserId,
+                    Email = $"teacher-{otherTeacherUserId:N}@example.com",
+                    Name = "Other teacher",
+                    PasswordHash = "hash",
+                    RoleId = teacherRoleId
+                },
+                new User
+                {
+                    Id = studentUserId,
+                    Email = $"student-{studentUserId:N}@example.com",
+                    Name = "Student",
+                    PasswordHash = "hash",
+                    RoleId = studentRoleId
+                },
+                new User
+                {
+                    Id = adminUserId,
+                    Email = $"admin-{adminUserId:N}@example.com",
+                    Name = "Administrator",
+                    PasswordHash = "hash",
+                    RoleId = adminRoleId
+                });
+
+            dbContext.Votings.Add(new Voting
+            {
+                Id = votingId,
+                Title = "Open answer voting",
+                Description = "Description",
+                Type = DbVotingType.OpenAnswer,
+                IsAnonymous = true,
+                AllowVoteChange = false,
+                StartTime = DateTime.UtcNow.AddHours(-2),
+                EndTime = DateTime.UtcNow.AddHours(-1),
+                Status = DbVotingStatus.Finished,
+                CreatedById = organizerUserId
+            });
+
+            dbContext.VotingResults.Add(new VotingResult
+            {
+                Id = resultId,
+                VotingId = votingId,
+                ResultData = resultData,
+                ResultHash = "result-hash-open",
+                CalculatedAt = DateTime.UtcNow.AddMinutes(-30),
+                TotalVotes = 1
+            });
+
+            await dbContext.SaveChangesAsync();
+        });
+
+        return new OpenAnswerScenario(
+            votingId,
+            organizerUserId,
+            otherTeacherUserId,
+            studentUserId,
+            adminUserId);
     }
 
     private async Task<Guid> SeedVotingAsync(DbVotingStatus status)
@@ -377,7 +556,14 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
 
     private sealed record SingleChoiceScenario(Guid UserId, Guid VotingId, Guid CandidateId);
 
-    private sealed record FinishedVotingScenario(Guid VotingId, Guid CandidateId);
+    private sealed record FinishedVotingScenario(Guid VotingId, Guid CandidateId, Guid AdminUserId);
+
+    private sealed record OpenAnswerScenario(
+        Guid VotingId,
+        Guid OrganizerUserId,
+        Guid OtherTeacherUserId,
+        Guid StudentUserId,
+        Guid AdminUserId);
 
     private sealed record GetVotedVotingIdsApiResponse(
         [property: JsonPropertyName("votingIds")] List<string> VotingIds);
@@ -388,7 +574,8 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         [property: JsonPropertyName("totalVotes")] int TotalVotes,
         [property: JsonPropertyName("results")] Dictionary<string, object>? Results,
         [property: JsonPropertyName("txHash")] string? TxHash,
-        [property: JsonPropertyName("etherscanUrl")] string? EtherscanUrl);
+        [property: JsonPropertyName("etherscanUrl")] string? EtherscanUrl,
+        [property: JsonPropertyName("openAnswerTextsVisible")] bool OpenAnswerTextsVisible);
 
     private sealed record VotingVerificationApiResponse(
         [property: JsonPropertyName("votingId")] string VotingId,

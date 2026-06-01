@@ -241,6 +241,7 @@ message VotingResultsResponse {
   int32 total_votes = 5;
   string tx_hash = 6;
   string etherscan_url = 7;
+  bool open_answer_texts_visible = 8;
 }
 
 message VotingVerificationResponse {

@@ -3,6 +3,7 @@ using EduVote.Application.Votings.Services;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
+using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 
 namespace EduVote.Application.Votings.GetResults;
 
@@ -36,6 +37,27 @@ public sealed class GetResultsQueryHandler(
                 "Results will be available in the next minute.");
         }
 
+        if (voting.Type == DbVotingType.OpenAnswer && !request.CallerUserId.HasValue)
+        {
+            throw new ApplicationErrorException(
+                ApplicationErrorType.Unauthenticated,
+                "Authentication is required to view voting results.");
+        }
+
+        var openAnswerTextsVisible = voting.Type != DbVotingType.OpenAnswer
+            || OpenAnswerResultsAccess.CanViewAnswerTexts(
+                request.CallerRole,
+                request.CallerUserId,
+                voting.CreatedById);
+
+        var resultData = existingResult.ResultData;
+        if (voting.Type == DbVotingType.OpenAnswer
+            && !openAnswerTextsVisible
+            && !string.IsNullOrEmpty(resultData))
+        {
+            resultData = OpenAnswerResultDataRedactor.RedactAnswerTexts(resultData);
+        }
+
         var blockchainRecord = await blockchainRecordRepository
             .GetByVotingResultIdAsync(existingResult.Id, cancellationToken);
 
@@ -44,10 +66,11 @@ public sealed class GetResultsQueryHandler(
             existingResult.ResultHash,
             existingResult.CalculatedAt,
             existingResult.TotalVotes,
-            existingResult.ResultData,
+            resultData,
             blockchainRecord?.TransactionHash,
             blockchainRecord is null
                 ? null
-                : $"https://sepolia.etherscan.io/tx/{blockchainRecord.TransactionHash}");
+                : $"https://sepolia.etherscan.io/tx/{blockchainRecord.TransactionHash}",
+            openAnswerTextsVisible);
     }
 }

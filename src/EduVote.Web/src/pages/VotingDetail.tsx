@@ -4,10 +4,13 @@ import { ArrowLeft, BarChart2, Calendar, Check, Copy, Lock, Unlock, UserRound, V
 import { getVotingById, castVote, getVotedVotingIds, type VotingResponse } from '@/api/votingApi'
 import { getCandidates, type CandidateResponse } from '@/api/candidateApi'
 import { STATUS_CONFIG, TYPE_LABELS } from '@/components/voting/votingConstants'
+import { useAuth } from '@/context/AuthContext'
+import { canViewOpenAnswerTexts } from '@/utils/votingAccess'
 
 export default function VotingDetail() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { claims } = useAuth()
 
     const [voting, setVoting]       = useState<VotingResponse | null>(null)
     const [candidates, setCandidates] = useState<CandidateResponse[]>([])
@@ -185,21 +188,29 @@ export default function VotingDetail() {
             )}
 
             {/* Finished state */}
-            {voting.status === 'Finished' ? (
+            {voting.status === 'Finished' ? (() => {
+                const openAnswerLimited = voting.type === 'OpenAnswer'
+                    && !canViewOpenAnswerTexts(claims?.role, claims?.nameid, voting.createdById)
+                return (
                 <div className="space-y-4">
                     <div className="rounded-xl border border-border bg-secondary/50 px-5 py-4 text-sm text-muted-foreground">
                         <p className="font-semibold text-foreground">Голосование завершено</p>
-                        <p className="mt-1">Результаты подсчитаны и доступны для просмотра.</p>
+                        <p className="mt-1">
+                            {openAnswerLimited
+                                ? 'Итоги подсчитаны. Тексты ответов доступны только организатору и администратору.'
+                                : 'Результаты подсчитаны и доступны для просмотра.'}
+                        </p>
                     </div>
                     <Link
                         to={`/votings/${voting.id}/results`}
                         className="flex w-fit items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90"
                     >
                         <BarChart2 className="h-4 w-4" />
-                        Смотреть результаты
+                        {openAnswerLimited ? 'Сводка голосования' : 'Смотреть результаты'}
                     </Link>
                 </div>
-            ) : (
+                )
+            })() : (
                 <>
                     {/* Voting area */}
                     {voting.type === 'OpenAnswer' ? (

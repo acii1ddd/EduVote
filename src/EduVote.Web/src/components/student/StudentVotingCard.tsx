@@ -4,6 +4,8 @@ import { BarChart2, CheckCircle, ChevronDown, ChevronUp, Clock, FileText, Lock, 
 import type { VotingResponse, VotingStatus } from '@/api/votingApi'
 import type { EducationUnit } from '@/api/educationUnitApi'
 import { getTargets } from '@/api/votingTargetApi'
+import { useAuth } from '@/context/AuthContext'
+import { canViewOpenAnswerTexts } from '@/utils/votingAccess'
 
 // ── Status config ──────────────────────────────────────────
 
@@ -55,6 +57,7 @@ interface Props {
 
 export default function StudentVotingCard({ voting, allUnits, createdByName, hasVoted }: Props) {
     const navigate = useNavigate()
+    const { claims } = useAuth()
     const status = STATUS_CONFIG[voting.status] ?? STATUS_CONFIG.Draft
 
     const [open,    setOpen]    = useState(false)
@@ -83,6 +86,9 @@ export default function StudentVotingCard({ voting, allUnits, createdByName, has
     const fmt = (iso: string) => iso ? new Date(iso).toLocaleDateString('ru-RU') : '—'
 
     const isFinished = voting.status === 'Finished'
+    const openAnswerLimited = isFinished
+        && voting.type === 'OpenAnswer'
+        && !canViewOpenAnswerTexts(claims?.role, claims?.nameid, voting.createdById)
 
     return (
         <div className={`flex flex-col rounded-2xl border border-border bg-card shadow-sm transition-all ${isFinished ? 'opacity-80 hover:border-primary/30 hover:shadow-md hover:opacity-100' : 'hover:border-primary/30 hover:shadow-md'}`}>
@@ -105,7 +111,7 @@ export default function StudentVotingCard({ voting, allUnits, createdByName, has
                         {isFinished && (
                             <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                                 <BarChart2 className="h-3 w-3" />
-                                Результаты доступны
+                                {openAnswerLimited ? 'Сводка доступна' : 'Результаты доступны'}
                             </span>
                         )}
                         {hasVoted && !isFinished && (

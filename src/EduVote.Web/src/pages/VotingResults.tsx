@@ -288,7 +288,7 @@ function ResultsView({ voting, results }: { voting: VotingResponse; results: Vot
         case 'Rating':
             return <RatingResults results={results} />
         case 'OpenAnswer':
-            return <OpenAnswerResults results={results} />
+            return <OpenAnswerResults results={results} textsVisible={results.openAnswerTextsVisible !== false} />
         default:
             return null
     }
@@ -747,7 +747,7 @@ function ResultVerificationBlock({ votingId, myVoteHash }: { votingId: string; m
 
 // ── Open answer results ────────────────────────────────────
 
-function OpenAnswerResults({ results }: { results: VotingResultsData }) {
+function OpenAnswerResults({ results, textsVisible }: { results: VotingResultsData; textsVisible: boolean }) {
     const raw = (results.results['openAnswer'] ?? {}) as Record<string, unknown>
     const answers = Array.isArray(raw['answers']) ? (raw['answers'] as string[]) : []
     const total = typeof raw['totalAnswers'] === 'number' ? raw['totalAnswers'] : answers.length
@@ -755,7 +755,11 @@ function OpenAnswerResults({ results }: { results: VotingResultsData }) {
     return (
         <div className="space-y-3">
             <p className="text-sm text-muted-foreground">Всего ответов: {total}</p>
-            {answers.length === 0 ? (
+            {!textsVisible ? (
+                <div className="rounded-xl border border-border bg-secondary/50 px-4 py-3 text-sm text-muted-foreground">
+                    Содержимое ответов доступно только организатору голосования и администратору.
+                </div>
+            ) : answers.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
                     Ответов нет
                 </div>

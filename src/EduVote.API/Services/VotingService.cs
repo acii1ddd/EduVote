@@ -390,11 +390,17 @@ public class VotingService(
         GetVotingRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
+        var httpUser = context.GetHttpContext().User;
+        var callerRole = httpUser.FindFirst(ClaimTypes.Role)?.Value;
+        var callerIdStr = httpUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var callerId = Guid.TryParse(callerIdStr, out var parsedCallerId)
+            ? parsedCallerId
+            : (Guid?)null;
 
         try
         {
             var result = await sender.Send(
-                new GetResultsQuery(votingId),
+                new GetResultsQuery(votingId, callerId, callerRole),
                 context.CancellationToken);
 
             logger.LogInformation("Results for voting {VotingId} requested.", votingId);
@@ -416,7 +422,8 @@ public class VotingService(
             CalculatedAt = result.CalculatedAt.ToUniversalTime().ToTimestamp(),
             TotalVotes = result.TotalVotes,
             TxHash = result.TxHash ?? string.Empty,
-            EtherscanUrl = result.EtherscanUrl ?? string.Empty
+            EtherscanUrl = result.EtherscanUrl ?? string.Empty,
+            OpenAnswerTextsVisible = result.OpenAnswerTextsVisible
         };
 
         if (string.IsNullOrEmpty(result.ResultData)) return response;

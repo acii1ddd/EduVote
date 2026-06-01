@@ -7,4 +7,5 @@ public sealed record GetResultsResult(
     int TotalVotes,
     string? ResultData,
     string? TxHash,
-    string? EtherscanUrl);
+    string? EtherscanUrl,
+    bool OpenAnswerTextsVisible);

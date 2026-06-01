@@ -130,6 +130,7 @@ export interface VotingResultsData {
     totalVotes: number
     txHash: string
     etherscanUrl: string
+    openAnswerTextsVisible?: boolean
 }
 
 export const getVotingResults = async (id: string): Promise<VotingResultsData> => {
