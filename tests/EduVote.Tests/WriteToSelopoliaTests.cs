@@ -7,7 +7,7 @@ namespace EduVote.Tests;
 
 public class WriteToSepoliaTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Fact(Skip = "Live Sepolia integration test. Run manually when external Infura network access is available.")]
     public async Task WriteResultHashAsync_ShouldReturnTxHash()
     {
         // Arrange

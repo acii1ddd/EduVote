@@ -1,15 +1,16 @@
 using System.Security.Claims;
 using EduVote.Application.Common;
 using EduVote.Application.Votings.CastVote;
+using EduVote.Application.Votings.CreateVoting;
+using EduVote.Application.Votings.DeleteVoting;
 using EduVote.Application.Votings.FinishVoting;
 using EduVote.Application.Votings.PauseVoting;
 using EduVote.Application.Votings.StartVoting;
+using EduVote.Application.Votings.UpdateVoting;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
 using EduVote.API.Services.Tools.Votings;
-using EduVote.API.Validators;
 using EduVote.DAL.Postgresql.Models;
-using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
@@ -37,29 +38,37 @@ public class VotingService(
         logger.LogInformation("[CreateVoting] Creating new voting with title '{Title}', type '{Type}', " +
             "start time '{StartTime}', end time '{EndTime}'", request.Title, request.Type, request.StartTime, request.EndTime);
 
-        VotingValidator.ValidateDateRange(request.StartTime, request.EndTime);
-
-        var voting = request.MapToEntity();
-
-        // put in a separate method
         var httpUser = context.GetHttpContext().User;
         var callerRole = httpUser.FindFirst(ClaimTypes.Role)?.Value;
         var callerIdStr = httpUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var callerId = Guid.TryParse(callerIdStr, out var parsedCallerId)
+            ? parsedCallerId
+            : (Guid?)null;
 
-        if (Guid.TryParse(callerIdStr, out var callerId))
-            voting.CreatedById = callerId;
+        var command = new CreateVotingCommand(
+            request.Title,
+            request.Description,
+            MapCreateVotingType(request.Type),
+            request.IsAnonymous,
+            request.AllowVoteChange,
+            request.StartTime.ToDateTime().ToUniversalTime(),
+            request.EndTime.ToDateTime().ToUniversalTime(),
+            callerId,
+            callerRole);
 
-        // Votings created by Teacher require Administrator approval before becoming active
-        if (callerRole == Roles.Teacher)
-            voting.Status = DbVotingStatus.PendingApproval;
+        try
+        {
+            var createdVoting = await sender.Send(command, context.CancellationToken);
 
-        var createdVoting = await votingRepository
-            .CreateAsync(voting, context.CancellationToken);
+            logger.LogInformation("[CreateVoting] Voting '{VotingId}' created with status '{Status}'",
+                createdVoting.Id, createdVoting.Status);
 
-        logger.LogInformation("[CreateVoting] Voting '{VotingId}' created with status '{Status}'",
-            createdVoting.Id, createdVoting.Status);
-
-        return createdVoting.MapToResponse();
+            return MapCreateVotingResultToResponse(createdVoting);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
 
     public override async Task<Empty> ApproveVoting(
@@ -89,24 +98,26 @@ public class VotingService(
         UpdateVotingRequest request, ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
-        VotingValidator.ValidateDateRange(request.StartTime, request.EndTime);
-        
-        var existingVoting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
 
-        var updatedVoting = request.MapToEntity();
-        
-        existingVoting.Title = updatedVoting.Title;
-        existingVoting.Description = updatedVoting.Description;
-        existingVoting.Type = updatedVoting.Type;
-        existingVoting.IsAnonymous = updatedVoting.IsAnonymous;
-        existingVoting.AllowVoteChange = updatedVoting.AllowVoteChange;
-        existingVoting.StartTime = updatedVoting.StartTime;
-        existingVoting.EndTime = updatedVoting.EndTime;
+        var command = new UpdateVotingCommand(
+            votingId,
+            request.Title,
+            request.Description,
+            MapCreateVotingType(request.Type),
+            request.IsAnonymous,
+            request.AllowVoteChange,
+            request.StartTime.ToDateTime().ToUniversalTime(),
+            request.EndTime.ToDateTime().ToUniversalTime());
 
-        await votingRepository
-            .SaveChangesAsync(context.CancellationToken);
-
-        return existingVoting.MapToResponse();
+        try
+        {
+            var updatedVoting = await sender.Send(command, context.CancellationToken);
+            return MapUpdateVotingResultToResponse(updatedVoting);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
 
     public override async Task<Empty> DeleteVoting(
@@ -114,10 +125,14 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
-        
-        await votingRepository
-            .DeleteAsync(voting, context.CancellationToken);
+        try
+        {
+            await sender.Send(new DeleteVotingCommand(votingId), context.CancellationToken);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
 
         return new Empty();
     }
@@ -536,6 +551,80 @@ public class VotingService(
             ApplicationErrorType.AlreadyExists => StatusCode.AlreadyExists,
             ApplicationErrorType.Unauthenticated => StatusCode.Unauthenticated,
             _ => StatusCode.Unknown
+        };
+
+    private static DbVotingType MapCreateVotingType(VotingType type) =>
+        type switch
+        {
+            VotingType.SingleChoice => DbVotingType.SingleChoice,
+            VotingType.MultipleChoice => DbVotingType.MultipleChoice,
+            VotingType.Rating => DbVotingType.Rating,
+            VotingType.OpenAnswer => DbVotingType.OpenAnswer,
+            VotingType.Unspecified => throw new RpcException(
+                new Status(StatusCode.InvalidArgument, "Voting type must be specified.")),
+            _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting type is not valid."))
+        };
+
+    private static VotingResponse MapCreateVotingResultToResponse(CreateVotingResult result) =>
+        new()
+        {
+            Id = result.Id.ToString(),
+            Title = result.Title,
+            Description = result.Description,
+            Type = result.Type switch
+            {
+                DbVotingType.SingleChoice => VotingType.SingleChoice,
+                DbVotingType.MultipleChoice => VotingType.MultipleChoice,
+                DbVotingType.Rating => VotingType.Rating,
+                DbVotingType.OpenAnswer => VotingType.OpenAnswer,
+                _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting type is not valid."))
+            },
+            IsAnonymous = result.IsAnonymous,
+            AllowVoteChange = result.AllowVoteChange,
+            StartTime = result.StartTime.ToUniversalTime().ToTimestamp(),
+            EndTime = result.EndTime.ToUniversalTime().ToTimestamp(),
+            Status = result.Status switch
+            {
+                DbVotingStatus.Draft => VotingStatus.Draft,
+                DbVotingStatus.Active => VotingStatus.Active,
+                DbVotingStatus.Paused => VotingStatus.Paused,
+                DbVotingStatus.Finished => VotingStatus.Finished,
+                DbVotingStatus.PendingApproval => VotingStatus.PendingApproval,
+                _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting status is not valid."))
+            },
+            CreatedAt = result.CreatedAt.ToUniversalTime().ToTimestamp(),
+            CreatedById = result.CreatedById.ToString()
+        };
+
+    private static VotingResponse MapUpdateVotingResultToResponse(UpdateVotingResult result) =>
+        new()
+        {
+            Id = result.Id.ToString(),
+            Title = result.Title,
+            Description = result.Description,
+            Type = result.Type switch
+            {
+                DbVotingType.SingleChoice => VotingType.SingleChoice,
+                DbVotingType.MultipleChoice => VotingType.MultipleChoice,
+                DbVotingType.Rating => VotingType.Rating,
+                DbVotingType.OpenAnswer => VotingType.OpenAnswer,
+                _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting type is not valid."))
+            },
+            IsAnonymous = result.IsAnonymous,
+            AllowVoteChange = result.AllowVoteChange,
+            StartTime = result.StartTime.ToUniversalTime().ToTimestamp(),
+            EndTime = result.EndTime.ToUniversalTime().ToTimestamp(),
+            Status = result.Status switch
+            {
+                DbVotingStatus.Draft => VotingStatus.Draft,
+                DbVotingStatus.Active => VotingStatus.Active,
+                DbVotingStatus.Paused => VotingStatus.Paused,
+                DbVotingStatus.Finished => VotingStatus.Finished,
+                DbVotingStatus.PendingApproval => VotingStatus.PendingApproval,
+                _ => throw new RpcException(new Status(StatusCode.InvalidArgument, "Voting status is not valid."))
+            },
+            CreatedAt = result.CreatedAt.ToUniversalTime().ToTimestamp(),
+            CreatedById = result.CreatedById.ToString()
         };
     
     private async Task<DbVoting> GetVotingOrThrowAsync(
