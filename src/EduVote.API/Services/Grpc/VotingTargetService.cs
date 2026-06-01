@@ -1,108 +1,90 @@
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
-using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using EduVote.Application.Common;
+using EduVote.Application.VotingTargets.AddVotingTarget;
+using EduVote.Application.VotingTargets.DeleteVotingTarget;
+using EduVote.Application.VotingTargets.GetVotingTargets;
+using MediatR;
 
 namespace EduVote.API.Services.Grpc;
 
-public class VotingTargetService(
-    IVotingRepository votingRepository,
-    IEducationUnitRepository educationUnitRepository,
-    IVotingTargetRepository votingTargetRepository)
-    : VotingTargets.VotingTargetsBase
+public class VotingTargetService(ISender sender) : VotingTargets.VotingTargetsBase
 {
     public override async Task<VotingTargetResponse> AddTarget(
         AddVotingTargetRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "EducationUnit");
-    
-        var voting = await votingRepository.GetByIdAsync(votingId, context.CancellationToken);
-        if (voting is null)
-        {
-            throw IdParser.CreateNotFoundException("Voting", request.VotingId);
-        }
-    
-        var educationUnit = await educationUnitRepository.GetByIdAsync(
-            educationUnitId,
-            context.CancellationToken
-        );
-        
-        if (educationUnit is null)
-        {
-            throw IdParser.CreateNotFoundException("EducationUnit", request.EducationUnitId);
-        }
-    
-        var existingTarget = await votingTargetRepository.GetByVotingAndEducationUnitAsync(
-            votingId,
-            educationUnitId,
-            context.CancellationToken
-        );
-    
-        if (existingTarget is not null)
-        {
-            throw new RpcException(new Status(
-                StatusCode.AlreadyExists,
-                $"Target for voting '{votingId}' and education unit '{educationUnitId}' already exists."));
-        }
+        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "Education unit");
 
-        var createdTarget = await votingTargetRepository
-            .CreateAsync(request.MapToEntity(), context.CancellationToken);
+        try
+        {
+            var target = await sender.Send(
+                new AddVotingTargetCommand(votingId, educationUnitId),
+                context.CancellationToken);
 
-        return createdTarget.MapToResponse();
+            return target.MapToResponse();
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
-    
+
     public override async Task<Empty> DeleteTarget(
         DeleteVotingTargetRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "EducationUnit");
-    
-        var voting = await votingRepository
-            .GetByIdAsync(votingId, context.CancellationToken);
-        
-        if (voting is null)
+        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "Education unit");
+
+        try
         {
-            throw IdParser.CreateNotFoundException("Voting", request.VotingId);
+            await sender.Send(
+                new DeleteVotingTargetCommand(votingId, educationUnitId),
+                context.CancellationToken);
         }
-        
-        var target = await votingTargetRepository
-            .GetByVotingAndEducationUnitAsync(votingId, educationUnitId, context.CancellationToken);
-        
-        // noting to delete
-        if (target is null)
+        catch (ApplicationErrorException ex)
         {
-            throw IdParser.CreateNotFoundException("VotingTarget", $"({votingId}, {educationUnitId})");
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
-        
-        await votingTargetRepository
-            .DeleteAsync(target, context.CancellationToken);
-        
+
         return new Empty();
     }
 
     public override async Task<GetVotingTargetsResponse> GetTargets(
-        GetVotingTargetsRequest request, 
+        GetVotingTargetsRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        
-        var voting = await votingRepository
-            .GetByIdAsync(votingId, context.CancellationToken);
-        
-        if (voting is null)
+
+        try
         {
-            throw IdParser.CreateNotFoundException("Voting", request.VotingId);
+            var targets = await sender.Send(
+                new GetVotingTargetsQuery(votingId),
+                context.CancellationToken);
+
+            var response = new GetVotingTargetsResponse();
+            response.Targets.AddRange(targets.MapToResponseList());
+
+            return response;
         }
-        
-        var votingTargets = await votingTargetRepository.GetByVotingIdAsync(
-            votingId, context.CancellationToken
-        );
-
-        var response = new GetVotingTargetsResponse();
-        response.Targets.AddRange(votingTargets.MapToResponseList());
-
-        return response;
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
+
+    private static StatusCode MapStatusCode(ApplicationErrorType errorType) =>
+        errorType switch
+        {
+            ApplicationErrorType.InvalidArgument => StatusCode.InvalidArgument,
+            ApplicationErrorType.NotFound => StatusCode.NotFound,
+            ApplicationErrorType.PermissionDenied => StatusCode.PermissionDenied,
+            ApplicationErrorType.FailedPrecondition => StatusCode.FailedPrecondition,
+            ApplicationErrorType.AlreadyExists => StatusCode.AlreadyExists,
+            ApplicationErrorType.Unauthenticated => StatusCode.Unauthenticated,
+            ApplicationErrorType.Unavailable => StatusCode.Unavailable,
+            _ => StatusCode.Unknown
+        };
 }

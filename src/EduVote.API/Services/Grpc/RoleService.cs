@@ -1,19 +1,21 @@
 using EduVote.API.Mappers;
-using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using EduVote.Application.RolesCatalog.GetRoles;
+using MediatR;
 
 namespace EduVote.API.Services.Grpc;
 
-public class RoleService(IRoleRepository roleRepository) 
-    : RolesService.RolesServiceBase
+public class RoleService(ISender sender) : RolesService.RolesServiceBase
 {
     public override async Task<GetRolesResponse> GetRoles(
-        Empty request, ServerCallContext context)
+        Empty request,
+        ServerCallContext context)
     {
-        var roles = await roleRepository.GetAllAsync();
+        var roles = await sender
+            .Send(new GetRolesQuery(), context.CancellationToken);
 
         var response = new GetRolesResponse();
         response.Roles.AddRange(roles.MapToResponseList());
-        
+
         return response;
     }
 }

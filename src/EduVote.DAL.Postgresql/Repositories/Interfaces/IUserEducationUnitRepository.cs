@@ -4,6 +4,11 @@ namespace EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 public interface IUserEducationUnitRepository
 {
+    Task ReplaceForUserAsync(
+        Guid userId,
+        Guid educationUnitId,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(
         UserEducationUnit entity,
         CancellationToken cancellationToken = default);

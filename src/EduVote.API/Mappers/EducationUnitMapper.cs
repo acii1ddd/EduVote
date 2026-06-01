@@ -1,25 +1,19 @@
-using EduVote.DAL.Postgresql.Models;
+using EduVote.Application.EducationUnits;
 
 namespace EduVote.API.Mappers;
 
 public static class EducationUnitMapper
 {
-    public static EducationUnitResponse MapToResponse(
-        this EducationUnit entity)
-    {
-        return new EducationUnitResponse
+    public static EducationUnitResponse MapToResponse(this EducationUnitDetails source) =>
+        new()
         {
-            Id = entity.Id.ToString(),
-            Name = entity.Name,
-            Type = entity.Type.ToString(),
-            ParentId = entity.ParentId?.ToString() ?? string.Empty
+            Id = source.Id.ToString(),
+            Name = source.Name,
+            Type = source.Type,
+            ParentId = source.ParentId?.ToString() ?? string.Empty
         };
-    }
 
-    public static IEnumerable<EducationUnitResponse>
-        MapToResponseList(
-            this IEnumerable<EducationUnit> entities)
-    {
-        return entities.Select(x => x.MapToResponse());
-    }
+    public static IEnumerable<EducationUnitResponse> MapToResponseList(
+        this IEnumerable<EducationUnitDetails> source) =>
+        source.Select(MapToResponse);
 }

@@ -94,7 +94,7 @@ export default function AdminPage() {
     // ── Edit ───────────────────────────────────────────────
     const openEdit = (user: UserResponse) => {
         setEditingUser(user)
-        setSelectedEducationUnitId('')
+        setSelectedEducationUnitId(user.educationUnitId ?? '')
         setIsEditOpen(true)
     }
 
