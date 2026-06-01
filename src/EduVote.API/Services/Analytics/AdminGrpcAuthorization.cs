@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using EduVote.DAL.Postgresql.Models.Roles;
-using Grpc.Core;
 
 namespace EduVote.API.Services.Analytics;
 

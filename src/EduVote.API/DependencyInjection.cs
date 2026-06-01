@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Minio;
+using EduVote.Application.Analytics.Services;
 using IBlockchainResultWriter = EduVote.Application.Votings.Services.IBlockchainResultWriter;
 
 namespace EduVote.API;
@@ -37,8 +38,8 @@ public static class DependencyInjection
             services.AddScoped<IAccessTokenGenerator, JwtAccessTokenGenerator>();
             services.AddScoped<AppIPasswordHasher, PasswordHasher>();
 
-            services.AddSingleton<IVotingReportPdfGenerator, VotingReportPdfGenerator>();
-            services.AddSingleton<IOverviewReportPdfGenerator, OverviewReportPdfGenerator>();
+            services.AddSingleton<IAnalyticsVotingReportPdfGenerator, VotingReportPdfGenerator>();
+            services.AddSingleton<IAnalyticsOverviewReportPdfGenerator, OverviewReportPdfGenerator>();
             
             return services;
         }

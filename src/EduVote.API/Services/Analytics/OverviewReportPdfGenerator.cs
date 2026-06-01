@@ -1,12 +1,12 @@
 using System.Globalization;
+using EduVote.Application.Analytics.Services;
 using EduVote.DAL.Postgresql.Models.Analytics;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 namespace EduVote.API.Services.Analytics;
 
-public class OverviewReportPdfGenerator : IOverviewReportPdfGenerator
+public class OverviewReportPdfGenerator : IAnalyticsOverviewReportPdfGenerator
 {
     public byte[] Generate(AnalyticsOverviewData overview, AnalyticsFilters filters)
     {

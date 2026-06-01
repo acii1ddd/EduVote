@@ -1,6 +1,5 @@
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
-using EduVote.DAL.Postgresql.Repositories;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 
 namespace EduVote.API.Services.Grpc;
