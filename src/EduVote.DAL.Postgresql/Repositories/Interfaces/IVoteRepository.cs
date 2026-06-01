@@ -22,6 +22,10 @@ public interface IVoteRepository
     /// Get all votes for a specific voting
     /// </summary>
     Task<IEnumerable<Vote>> GetByVotingIdAsync(Guid votingId, CancellationToken cancellationToken = default);
+
+    Task DeleteByVotingIdAsync(Guid votingId, CancellationToken cancellationToken = default);
+
+    Task AddRangeAsync(IEnumerable<Vote> votes, CancellationToken cancellationToken = default);
     
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

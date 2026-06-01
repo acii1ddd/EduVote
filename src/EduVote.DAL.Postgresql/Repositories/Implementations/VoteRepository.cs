@@ -54,6 +54,19 @@ public class VoteRepository(EduVoteDbContext dbContext) : IVoteRepository
             .ToListAsync(cancellationToken);
     }
 
+    public Task DeleteByVotingIdAsync(Guid votingId, CancellationToken cancellationToken = default) =>
+        dbContext.Votes
+            .Where(x => x.VotingId == votingId)
+            .ExecuteDeleteAsync(cancellationToken);
+
+    public async Task AddRangeAsync(
+        IEnumerable<Vote> votes,
+        CancellationToken cancellationToken = default)
+    {
+        await dbContext.Votes.AddRangeAsync(votes, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.SaveChangesAsync(cancellationToken);

@@ -21,4 +21,6 @@ public interface IUserRepository
         Guid userId,
         CancellationToken cancellationToken = default
     );
+
+    Task DeleteByEmailPrefixAsync(string emailPrefix, CancellationToken cancellationToken = default);
 }

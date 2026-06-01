@@ -23,6 +23,17 @@ public class VotingRepository(EduVoteDbContext dbContext)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<Voting?> FindByTitleContainingAsync(
+        string titleSubstring,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Votings
+            .AsNoTracking()
+            .Where(v => v.Title.Contains(titleSubstring))
+            .OrderBy(v => v.Title)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<Voting?> UpdateAsync(Voting votingModel, CancellationToken cancellationToken = default)
     {
         await dbContext.SaveChangesAsync(cancellationToken);

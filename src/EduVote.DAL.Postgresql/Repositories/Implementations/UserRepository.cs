@@ -74,4 +74,27 @@ public class UserRepository(EduVoteDbContext dbContext)
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteByEmailPrefixAsync(
+        string emailPrefix,
+        CancellationToken cancellationToken = default)
+    {
+        var userIds = await dbContext.Users
+            .Where(u => u.Email.StartsWith(emailPrefix))
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+
+        if (userIds.Count == 0)
+        {
+            return;
+        }
+
+        await dbContext.UserEducationUnits
+            .Where(ueu => userIds.Contains(ueu.UserId))
+            .ExecuteDeleteAsync(cancellationToken);
+
+        await dbContext.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ExecuteDeleteAsync(cancellationToken);
+    }
 }

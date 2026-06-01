@@ -43,6 +43,12 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 });
 
+var seedExitCode = await SeedDemoVotesRunner.TryRunAsync(builder, args);
+if (seedExitCode >= 0)
+{
+    Environment.Exit(seedExitCode);
+}
+
 var app = builder.Build();
 
 await app.MapServicesAsync();

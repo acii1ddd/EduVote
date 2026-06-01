@@ -25,6 +25,14 @@ public class VotingResultRepository(EduVoteDbContext dbContext) : IVotingResultR
             .FirstOrDefaultAsync(x => x.VotingId == votingId, cancellationToken);
     }
 
+    public async Task<VotingResult?> GetByVotingIdForUpdateAsync(
+        Guid votingId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.VotingResults
+            .FirstOrDefaultAsync(x => x.VotingId == votingId, cancellationToken);
+    }
+
     public async Task<VotingResult?> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)

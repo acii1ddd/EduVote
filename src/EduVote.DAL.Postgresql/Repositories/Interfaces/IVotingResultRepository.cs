@@ -8,6 +8,10 @@ public interface IVotingResultRepository
 
     Task<VotingResult?> GetByVotingIdAsync(Guid votingId, CancellationToken cancellationToken = default);
 
+    Task<VotingResult?> GetByVotingIdForUpdateAsync(
+        Guid votingId,
+        CancellationToken cancellationToken = default);
+
     Task<VotingResult?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<VotingResult?> UpdateAsync(VotingResult votingResult, CancellationToken cancellationToken = default);

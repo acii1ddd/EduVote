@@ -7,6 +7,10 @@ public interface IVotingRepository
     Task<Voting> CreateAsync(Voting voting, CancellationToken cancellationToken = default);
     
     Task<Voting?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<Voting?> FindByTitleContainingAsync(
+        string titleSubstring,
+        CancellationToken cancellationToken = default);
     
     Task<Voting?> UpdateAsync(Voting voting, CancellationToken cancellationToken = default);
 
