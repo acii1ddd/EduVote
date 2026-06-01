@@ -1,32 +1,63 @@
-using EduVote.API.Services.Auth;
+using EduVote.Application.Auth.Login;
+using EduVote.Application.Auth.Register;
+using EduVote.Application.Common;
+using MediatR;
 
 namespace EduVote.API.Services.Grpc;
 
-public class AuthService(
-    RegisterUserService registerUserService, 
-    LoginUserService loginUserService) 
-    : Authentication.AuthenticationBase
+public class AuthService(ISender sender) : Authentication.AuthenticationBase
 {
     public override async Task<RegisterResponse> Register(
-        RegisterRequest request, ServerCallContext context)
+        RegisterRequest request,
+        ServerCallContext context)
     {
-        var result = await registerUserService
-            .Handle(request.Email, request.Password, request.Name, context.CancellationToken);
-        
-        return new RegisterResponse { UserId = result.UserId.ToString() };
+        try
+        {
+            var result = await sender.Send(
+                new RegisterCommand(request.Email, request.Password, request.Name),
+                context.CancellationToken);
+
+            return new RegisterResponse { UserId = result.UserId.ToString() };
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
 
     public override async Task<LoginResponse> Login(
-        LoginRequest request, ServerCallContext context)
+        LoginRequest request,
+        ServerCallContext context)
     {
-        var result = await loginUserService
-            .Handle(request.Email, request.Password, context.CancellationToken);
-
-        return new LoginResponse
+        try
         {
-            UserId = result.User.Id.ToString(),
-            Role = result.User.Role,
-            AccessToken = result.User.AccessToken
-        };
+            var result = await sender.Send(
+                new LoginCommand(request.Email, request.Password),
+                context.CancellationToken);
+
+            return new LoginResponse
+            {
+                UserId = result.UserId.ToString(),
+                Role = result.Role,
+                AccessToken = result.AccessToken
+            };
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
+
+    private static StatusCode MapStatusCode(ApplicationErrorType errorType) =>
+        errorType switch
+        {
+            ApplicationErrorType.InvalidArgument => StatusCode.InvalidArgument,
+            ApplicationErrorType.NotFound => StatusCode.NotFound,
+            ApplicationErrorType.PermissionDenied => StatusCode.PermissionDenied,
+            ApplicationErrorType.FailedPrecondition => StatusCode.FailedPrecondition,
+            ApplicationErrorType.AlreadyExists => StatusCode.AlreadyExists,
+            ApplicationErrorType.Unauthenticated => StatusCode.Unauthenticated,
+            ApplicationErrorType.Unavailable => StatusCode.Unavailable,
+            _ => StatusCode.Unknown
+        };
 }

@@ -2,6 +2,7 @@ using EduVote.Application;
 using EduVote.API.Services.Analytics;
 using EduVote.API.Services.Auth;
 using EduVote.API.Services.Auth.PasswordHasher;
+using EduVote.Application.Auth.Services;
 using EduVote.Application.Users.Services;
 using AppIPasswordHasher = EduVote.Application.Users.Services.IPasswordHasher;
 using EduVote.API.Services.CronJobs;
@@ -32,11 +33,8 @@ public static class DependencyInjection
             services.AddScoped<IFileStorageService, MinioFileStorageService>();
 
             // auth
-            services.AddScoped<ITokenGenerator, JwtAccessTokenGenerator>();
+            services.AddScoped<IAccessTokenGenerator, JwtAccessTokenGenerator>();
             services.AddScoped<AppIPasswordHasher, PasswordHasher>();
-
-            services.AddScoped<RegisterUserService>();
-            services.AddScoped<LoginUserService>();
 
             services.AddSingleton<IVotingReportPdfGenerator, VotingReportPdfGenerator>();
             services.AddSingleton<IOverviewReportPdfGenerator, OverviewReportPdfGenerator>();
