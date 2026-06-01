@@ -1,28 +1,28 @@
 using System.Security.Claims;
+using EduVote.API.Mappers;
+using EduVote.API.Validators;
 using EduVote.Application.Common;
 using EduVote.Application.Votings.ApproveVoting;
 using EduVote.Application.Votings.CastVote;
 using EduVote.Application.Votings.CreateVoting;
 using EduVote.Application.Votings.DeleteVoting;
 using EduVote.Application.Votings.FinishVoting;
-using EduVote.Application.Votings.GetVoting;
-using EduVote.Application.Votings.GetVotings;
+using EduVote.Application.Votings.GetMyVote;
 using EduVote.Application.Votings.GetResults;
 using EduVote.Application.Votings.GetVerificationData;
-using EduVote.Application.Votings.GetMyVote;
 using EduVote.Application.Votings.GetVotedVotingIds;
+using EduVote.Application.Votings.GetVoting;
+using EduVote.Application.Votings.GetVotings;
 using EduVote.Application.Votings.GetVotingsCreatedByUser;
 using EduVote.Application.Votings.GetVotingsForUser;
 using EduVote.Application.Votings.PauseVoting;
 using EduVote.Application.Votings.StartVoting;
 using EduVote.Application.Votings.UpdateVoting;
-using EduVote.API.Mappers;
-using EduVote.API.Services.Tools;
 using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
 public class VotingService(
     ISender sender,

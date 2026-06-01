@@ -1,38 +1,41 @@
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Signer;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 
-namespace EduVote.API.Services.Tools;
+namespace EduVote.Infrastructure.Blockchain;
 
-public class BlockchainService
+public sealed class BlockchainService
 {
     private readonly Web3 _web3;
     private readonly string _accountAddress;
     private readonly ILogger<BlockchainService> _logger;
 
     public BlockchainService(
-        IConfiguration configuration, 
+        IConfiguration configuration,
         ILogger<BlockchainService> logger)
     {
         var metamaskPrivateKey = configuration["Blockchain:MetaMaskPrivateKey"];
-        var infuraUrl  = configuration["Blockchain:InfuraUrl"];
-        
+        var infuraUrl = configuration["Blockchain:InfuraUrl"];
+
         var account = new Account(metamaskPrivateKey, Chain.Sepolia);
         _web3 = new Web3(account, infuraUrl);
         _accountAddress = account.Address;
         _logger = logger;
     }
 
-    public async Task<(string, HexBigInteger)> WriteResultHashAsync(string resultHash)
+    public async Task<(string TxHash, HexBigInteger BlockNumber)> WriteResultHashAsync(string resultHash)
     {
         try
         {
             var data = "0x" + Convert.ToHexString(Encoding.UTF8.GetBytes(resultHash));
 
             _logger.LogInformation("Sending transaction with data: {Data}", data);
-        
+
             var transactionInput = new TransactionInput
             {
                 From = _accountAddress,
@@ -48,23 +51,23 @@ public class BlockchainService
 
             _logger.LogInformation("Transaction sent. TxHash: {TxHash}", txHash);
             _logger.LogInformation("Waiting for receipt...");
-        
-            // wait for transaction receipt to confirm the transaction
+
             var receipt = await _web3.Eth.TransactionManager.TransactionReceiptService
                 .PollForReceiptAsync(txHash);
-        
+
             if (receipt == null || receipt.Status.Value == 0)
-                throw new Exception($"Blockchain transaction failed. TxHash: {txHash}");
-        
+            {
+                throw new InvalidOperationException($"Blockchain transaction failed. TxHash: {txHash}");
+            }
+
             _logger.LogInformation("Transaction confirmed! Block: {Block}", receipt.BlockNumber);
             _logger.LogInformation("Etherscan: https://sepolia.etherscan.io/tx/{TxHash}", txHash);
-        
-            
+
             return (txHash, receipt.BlockNumber);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogCritical(e, "Error with blockchain operation");
+            _logger.LogCritical(ex, "Error with blockchain operation");
             throw;
         }
     }

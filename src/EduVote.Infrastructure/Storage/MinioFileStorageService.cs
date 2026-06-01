@@ -1,17 +1,18 @@
 using EduVote.Application.Storage;
 using Minio;
 using Minio.DataModel.Args;
+using Microsoft.Extensions.Logging;
 
-namespace EduVote.API.Services.Storage;
+namespace EduVote.Infrastructure.Storage;
 
-public class MinioFileStorageService(
+public sealed class MinioFileStorageService(
     IMinioClient minioClient,
-    ILogger<MinioFileStorageService> logger) 
+    ILogger<MinioFileStorageService> logger)
     : IFileStorageService
 {
     private const string BucketName = "candidates";
-    private const int ExpirationSeconds = 604800; // 7 days
-    
+    private const int ExpirationSeconds = 604800;
+
     public async Task<string> UploadFileAsync(
         Stream stream,
         string contentType,
@@ -21,9 +22,8 @@ public class MinioFileStorageService(
     {
         await EnsureBucketExistsAsync(cancellationToken);
 
-        // Create object name with objectId as prefix to avoid name collisions
         var objectPath = GetObjectPath(objectId, objectName);
-        
+
         var args = new PutObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectPath)
@@ -42,7 +42,7 @@ public class MinioFileStorageService(
         CancellationToken cancellationToken = default)
     {
         var objectPath = GetObjectPath(objectId, objectName);
-        
+
         var args = new RemoveObjectArgs()
             .WithBucket(BucketName)
             .WithObject(objectPath);
@@ -50,22 +50,7 @@ public class MinioFileStorageService(
         await minioClient.RemoveObjectAsync(args, cancellationToken);
     }
 
-    private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
-    {
-        var exists = await minioClient.BucketExistsAsync(
-            new BucketExistsArgs().WithBucket(BucketName),
-            cancellationToken);
-
-        if (exists) return;
-
-        await minioClient.MakeBucketAsync(
-            new MakeBucketArgs().WithBucket(BucketName),
-            cancellationToken);
-    }
-
-    public async Task<string> GetPresignedUrlAsync(
-        Guid objectId,
-        string objectName)
+    public async Task<string> GetPresignedUrlAsync(Guid objectId, string objectName)
     {
         try
         {
@@ -77,15 +62,34 @@ public class MinioFileStorageService(
                     .WithObject(fullObjectName)
                     .WithExpiry(ExpirationSeconds));
 
-            logger.LogInformation("Generated presigned URL for object '{ObjectName}': {Url}", fullObjectName, url);
-            
+            logger.LogInformation(
+                "Generated presigned URL for object '{ObjectName}': {Url}",
+                fullObjectName,
+                url);
+
             return url;
         }
         catch (Exception ex)
         {
-            logger.LogError("Error generating presigned URL: {ExMessage}", ex.Message);
+            logger.LogError(ex, "Error generating presigned URL");
             throw;
         }
+    }
+
+    private async Task EnsureBucketExistsAsync(CancellationToken cancellationToken)
+    {
+        var exists = await minioClient.BucketExistsAsync(
+            new BucketExistsArgs().WithBucket(BucketName),
+            cancellationToken);
+
+        if (exists)
+        {
+            return;
+        }
+
+        await minioClient.MakeBucketAsync(
+            new MakeBucketArgs().WithBucket(BucketName),
+            cancellationToken);
     }
 
     private static string GetObjectPath(Guid objectId, string objectName) =>

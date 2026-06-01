@@ -1,4 +1,4 @@
-using EduVote.API.Services.Grpc;
+using EduVote.API.Services;
 using EduVote.Application.Candidates.UploadCandidatePhoto;
 using EduVote.Application.Common;
 using EduVote.DAL.Postgresql;

@@ -3,7 +3,7 @@ using EduVote.Application.Auth.Register;
 using EduVote.Application.Common;
 using MediatR;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
 public class AuthService(ISender sender) : Authentication.AuthenticationBase
 {

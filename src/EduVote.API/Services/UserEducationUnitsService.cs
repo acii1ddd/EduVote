@@ -1,15 +1,15 @@
 using EduVote.API.Mappers;
-using EduVote.API.Services.Tools;
+using EduVote.API.Validators;
 using EduVote.Application.Common;
 using EduVote.Application.EducationUnits.AssignUserToEducationUnit;
 using EduVote.Application.EducationUnits.GetEducationUnits;
 using EduVote.Application.EducationUnits.RemoveUserFromEducationUnit;
 using MediatR;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
-// [Authorize(Roles = Roles.Administrator)]
-public class UserEducationUnitsService(ISender sender) : UserEducationUnits.UserEducationUnitsBase
+public class UserEducationUnitsService(ISender sender) 
+    : UserEducationUnits.UserEducationUnitsBase
 {
     public override async Task<GetEducationUnitsResponse> GetEducationUnits(
         Empty request,

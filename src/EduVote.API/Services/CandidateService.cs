@@ -1,29 +1,29 @@
 using EduVote.API.Mappers;
-using EduVote.API.Services.Tools;
+using EduVote.API.Validators;
+using EduVote.Application.Candidates.CreateCandidate;
+using EduVote.Application.Candidates.DeleteCandidate;
+using EduVote.Application.Candidates.DeleteCandidatePhoto;
+using EduVote.Application.Candidates.GetCandidates;
 using EduVote.Application.Common;
-using EduVote.Application.VotingTargets.AddVotingTarget;
-using EduVote.Application.VotingTargets.DeleteVotingTarget;
-using EduVote.Application.VotingTargets.GetVotingTargets;
 using MediatR;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
-public class VotingTargetService(ISender sender) : VotingTargets.VotingTargetsBase
+public class CandidateService(ISender sender) : Candidates.CandidatesBase
 {
-    public override async Task<VotingTargetResponse> AddTarget(
-        AddVotingTargetRequest request,
+    public override async Task<CandidateResponse> CreateCandidate(
+        AddCandidateRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "Education unit");
 
         try
         {
-            var target = await sender.Send(
-                new AddVotingTargetCommand(votingId, educationUnitId),
+            var candidate = await sender.Send(
+                new CreateCandidateCommand(votingId, request.Name, request.Description),
                 context.CancellationToken);
 
-            return target.MapToResponse();
+            return candidate.MapToResponse();
         }
         catch (ApplicationErrorException ex)
         {
@@ -31,17 +31,17 @@ public class VotingTargetService(ISender sender) : VotingTargets.VotingTargetsBa
         }
     }
 
-    public override async Task<Empty> DeleteTarget(
-        DeleteVotingTargetRequest request,
+    public override async Task<Empty> DeleteCandidate(
+        DeleteCandidateRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
-        var educationUnitId = IdParser.ParseId(request.EducationUnitId, "Education unit");
+        var candidateId = IdParser.ParseId(request.CandidateId, "Candidate");
 
         try
         {
             await sender.Send(
-                new DeleteVotingTargetCommand(votingId, educationUnitId),
+                new DeleteCandidateCommand(votingId, candidateId),
                 context.CancellationToken);
         }
         catch (ApplicationErrorException ex)
@@ -52,27 +52,46 @@ public class VotingTargetService(ISender sender) : VotingTargets.VotingTargetsBa
         return new Empty();
     }
 
-    public override async Task<GetVotingTargetsResponse> GetTargets(
-        GetVotingTargetsRequest request,
+    public override async Task<GetCandidatesResponse> GetCandidates(
+        GetCandidatesRequest request,
         ServerCallContext context)
     {
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
 
         try
         {
-            var targets = await sender.Send(
-                new GetVotingTargetsQuery(votingId),
+            var candidates = await sender.Send(
+                new GetCandidatesQuery(votingId),
                 context.CancellationToken);
 
-            var response = new GetVotingTargetsResponse();
-            response.Targets.AddRange(targets.MapToResponseList());
-
+            var response = new GetCandidatesResponse();
+            response.Candidates.AddRange(candidates.MapToResponseList());
             return response;
         }
         catch (ApplicationErrorException ex)
         {
             throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
+    }
+
+    public override async Task<Empty> DeleteCandidatePhoto(
+        DeleteCandidatePhotoRequest request,
+        ServerCallContext context)
+    {
+        var candidateId = IdParser.ParseId(request.CandidateId, "Candidate");
+
+        try
+        {
+            await sender.Send(
+                new DeleteCandidatePhotoCommand(candidateId),
+                context.CancellationToken);
+        }
+        catch (ApplicationErrorException ex)
+        {
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
+
+        return new Empty();
     }
 
     private static StatusCode MapStatusCode(ApplicationErrorType errorType) =>

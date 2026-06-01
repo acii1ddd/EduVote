@@ -4,9 +4,10 @@ using EduVote.DAL.Postgresql.Models.Analytics;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 
-namespace EduVote.API.Services.Analytics;
+namespace EduVote.Infrastructure.Analytics;
 
-public class OverviewReportPdfGenerator : IAnalyticsOverviewReportPdfGenerator
+public class OverviewReportPdfGenerator 
+    : IAnalyticsOverviewReportPdfGenerator
 {
     public byte[] Generate(AnalyticsOverviewData overview, AnalyticsFilters filters)
     {

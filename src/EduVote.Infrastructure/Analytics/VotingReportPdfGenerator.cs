@@ -6,7 +6,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
-namespace EduVote.API.Services.Analytics;
+namespace EduVote.Infrastructure.Analytics;
 
 public class VotingReportPdfGenerator : IAnalyticsVotingReportPdfGenerator
 {

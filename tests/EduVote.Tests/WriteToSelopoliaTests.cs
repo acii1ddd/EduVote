@@ -1,4 +1,4 @@
-using EduVote.API.Services.Tools;
+using EduVote.Infrastructure.Blockchain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;

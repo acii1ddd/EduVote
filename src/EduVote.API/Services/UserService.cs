@@ -1,5 +1,5 @@
 using EduVote.API.Mappers;
-using EduVote.API.Services.Tools;
+using EduVote.API.Validators;
 using EduVote.Application.Common;
 using EduVote.Application.Users.CreateUser;
 using EduVote.Application.Users.DeleteUser;
@@ -7,9 +7,8 @@ using EduVote.Application.Users.GetUsers;
 using EduVote.Application.Users.UpdateUser;
 using MediatR;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
-// [Authorize(Roles = Roles.Administrator)]
 public class UserService(ISender sender) : Users.UsersBase
 {
     public override async Task<GetUsersResponse> GetUsers(

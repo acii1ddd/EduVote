@@ -1,11 +1,13 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using EduVote.Application.Auth.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace EduVote.API.Services.Auth;
+namespace EduVote.Infrastructure.Auth;
 
-public class JwtAccessTokenGenerator(IConfiguration config) : IAccessTokenGenerator
+public sealed class JwtAccessTokenGenerator(IConfiguration config) : IAccessTokenGenerator
 {
     public string GenerateAccessToken(Guid userId, string roleName)
     {

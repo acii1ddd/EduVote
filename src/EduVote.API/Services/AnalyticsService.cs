@@ -1,6 +1,6 @@
 using EduVote.API.Mappers;
 using EduVote.API.Services.Analytics;
-using EduVote.API.Services.Tools;
+using EduVote.API.Validators;
 using EduVote.Application.Analytics.DownloadOverviewReport;
 using EduVote.Application.Analytics.DownloadVotingReport;
 using EduVote.Application.Analytics.GetOverview;
@@ -10,7 +10,7 @@ using Google.Api;
 using Google.Protobuf;
 using MediatR;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
 public class AnalyticsService(ISender sender) : API.Analytics.AnalyticsBase
 {
@@ -18,7 +18,7 @@ public class AnalyticsService(ISender sender) : API.Analytics.AnalyticsBase
         GetOverviewRequest request,
         ServerCallContext context)
     {
-        // AdminGrpcAuthorization.EnsureAdministrator(context);
+        AdminAuthorization.EnsureAdministrator(context);
 
         try
         {
@@ -39,7 +39,7 @@ public class AnalyticsService(ISender sender) : API.Analytics.AnalyticsBase
         GetAnalyticsVotingsRequest request,
         ServerCallContext context)
     {
-        // AdminGrpcAuthorization.EnsureAdministrator(context);
+        AdminAuthorization.EnsureAdministrator(context);
 
         try
         {
@@ -60,7 +60,7 @@ public class AnalyticsService(ISender sender) : API.Analytics.AnalyticsBase
         DownloadVotingReportRequest request,
         ServerCallContext context)
     {
-        // AdminGrpcAuthorization.EnsureAdministrator(context);
+        AdminAuthorization.EnsureAdministrator(context);
 
         var votingId = IdParser.ParseId(request.VotingId, "Voting");
 
@@ -88,7 +88,7 @@ public class AnalyticsService(ISender sender) : API.Analytics.AnalyticsBase
         DownloadOverviewReportRequest request,
         ServerCallContext context)
     {
-        // AdminGrpcAuthorization.EnsureAdministrator(context);
+        AdminAuthorization.EnsureAdministrator(context);
 
         try
         {

@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using EduVote.DAL.Postgresql.Models.Roles;
 
-namespace EduVote.API.Services.Analytics;
+namespace EduVote.API.Validators;
 
-internal static class AdminGrpcAuthorization
+internal static class AdminAuthorization
 {
     public static void EnsureAdministrator(ServerCallContext context)
     {

@@ -2,7 +2,7 @@ using EduVote.API.Mappers;
 using EduVote.Application.RolesCatalog.GetRoles;
 using MediatR;
 
-namespace EduVote.API.Services.Grpc;
+namespace EduVote.API.Services;
 
 public class RoleService(ISender sender) : RolesService.RolesServiceBase
 {
