@@ -2,10 +2,11 @@ using EduVote.Application;
 using EduVote.API.Services.Analytics;
 using EduVote.API.Services.Auth;
 using EduVote.API.Services.Auth.PasswordHasher;
+using EduVote.Application.Users.Services;
+using AppIPasswordHasher = EduVote.Application.Users.Services.IPasswordHasher;
 using EduVote.API.Services.CronJobs;
 using EduVote.API.Services.Storage;
 using EduVote.API.Services.Tools;
-using EduVote.API.Services.Tools.Votings;
 using EduVote.DAL.Postgresql.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -22,11 +23,8 @@ public static class DependencyInjection
         public IServiceCollection AddApiServices()
         {
             services.AddApplicationServices();
-            services.AddScoped<IVoteHashService, VoteHashService>();
-            services.AddScoped<VotingResultCalculatorService>();
             services.AddScoped<BlockchainService>();
             services.AddScoped<IBlockchainResultWriter, BlockchainResultWriter>();
-            services.AddScoped<VotingLifecycleService>();
 
             // singleton
             services.AddHostedService<VotingExpirationBgService>();
@@ -35,7 +33,7 @@ public static class DependencyInjection
 
             // auth
             services.AddScoped<ITokenGenerator, JwtAccessTokenGenerator>();
-            services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<AppIPasswordHasher, PasswordHasher>();
 
             services.AddScoped<RegisterUserService>();
             services.AddScoped<LoginUserService>();

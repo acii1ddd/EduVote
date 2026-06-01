@@ -1,6 +1,5 @@
 using EduVote.API.Dto.Register;
-using EduVote.DAL.Postgresql.Repositories;
-using EduVote.API.Services.Auth.PasswordHasher;
+using EduVote.Application.Users.Services;
 using EduVote.DAL.Postgresql.Models;
 using EduVote.DAL.Postgresql.Models.Roles;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;

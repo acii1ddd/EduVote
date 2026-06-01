@@ -1,27 +1,26 @@
 using EduVote.API.Mappers;
-using EduVote.API.Services.Auth.PasswordHasher;
-using EduVote.DAL.Postgresql.Models;
-using EduVote.DAL.Postgresql.Models.Roles;
-using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using EduVote.API.Services.Tools;
+using EduVote.Application.Common;
+using EduVote.Application.Users.CreateUser;
+using EduVote.Application.Users.DeleteUser;
+using EduVote.Application.Users.GetUsers;
+using EduVote.Application.Users.UpdateUser;
+using MediatR;
 
 namespace EduVote.API.Services.Grpc;
 
 // [Authorize(Roles = Roles.Administrator)]
-public class UserService(
-    IUserRepository userRepository,
-    IRoleRepository roleRepository,
-    IPasswordHasher passwordHasher)
-    : Users.UsersBase
+public class UserService(ISender sender) : Users.UsersBase
 {
-    public override async Task<GetUsersResponse> GetUsers(Empty request,
+    public override async Task<GetUsersResponse> GetUsers(
+        Empty request,
         ServerCallContext context)
     {
-        var users = await userRepository
-            .GetUsersWithRolesAndEducationUnitsAsync(context.CancellationToken);
+        var users = await sender
+            .Send(new GetUsersQuery(), context.CancellationToken);
 
         var response = new GetUsersResponse();
         response.Users.AddRange(users.MapToResponseList());
-
         return response;
     }
 
@@ -29,80 +28,40 @@ public class UserService(
         CreateUserRequest request,
         ServerCallContext context)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password) ||
-            string.IsNullOrWhiteSpace(request.Name))
+        try
         {
-            throw new RpcException(new Status(
-                StatusCode.InvalidArgument, "Email, password and name are required."));
+            var user = await sender.Send(
+                new CreateUserCommand(
+                    request.Email,
+                    request.Password,
+                    request.Name,
+                    string.IsNullOrWhiteSpace(request.Role) ? null : request.Role),
+                context.CancellationToken);
+
+            return user.MapToResponse();
         }
-
-        var existing = await userRepository
-            .GetByEmailAsync(request.Email, context.CancellationToken);
-
-        if (existing is not null)
+        catch (ApplicationErrorException ex)
         {
-            throw new RpcException(new Status(
-                StatusCode.AlreadyExists, "User with this email already exists."));
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
-
-        var roleName = string.IsNullOrWhiteSpace(request.Role) ? Roles.Student : request.Role;
-
-        var role = await roleRepository
-            .GetByNameAsync(roleName, context.CancellationToken);
-
-        if (role is null)
-        {
-            throw new RpcException(new Status(
-                StatusCode.NotFound, $"Role '{roleName}' was not found."));
-        }
-
-        var newUser = new User
-        {
-            Id = Guid.NewGuid(),
-            Email = request.Email,
-            Name = request.Name,
-            RoleId = role.Id,
-            PasswordHash = passwordHasher.Hash(request.Password),
-        };
-
-        await userRepository.AddAsync(newUser, context.CancellationToken);
-
-        // Reload with role navigation so MapToResponse has all data
-        var created = await userRepository
-            .GetByIdWithEducationUnitsAsync(newUser.Id, context.CancellationToken);
-
-        return created!.MapToResponse();
     }
 
     public override async Task<Empty> UpdateUser(
         UpdateUserRequest request,
         ServerCallContext context)
     {
-        var user = await userRepository
-            .GetByIdWithEducationUnitsAsync(
-                Guid.Parse(request.Id),
-                context.CancellationToken
-            );
+        var userId = IdParser.ParseId(request.Id, "User");
 
-        if (user is null)
+        try
         {
-            throw new RpcException(new Status(StatusCode.NotFound, "User not found."));
+            await sender.Send(
+                new UpdateUserCommand(userId, request.Email, request.Name, request.Role),
+                context.CancellationToken);
         }
-
-        var role = await roleRepository
-            .GetByNameAsync(request.Role, context.CancellationToken);
-
-        if (role is null)
+        catch (ApplicationErrorException ex)
         {
-            throw new RpcException(new Status(StatusCode.NotFound, "Role not found."));
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
-
-        user.Name = request.Name;
-        user.Email = request.Email;
-        user.RoleId = role.Id;
-
-        await userRepository.UpdateAsync(user, context.CancellationToken);
 
         return new Empty();
     }
@@ -111,10 +70,23 @@ public class UserService(
         DeleteUserRequest request,
         ServerCallContext context)
     {
-        var userId = Guid.Parse(request.Id);
+        var userId = IdParser.ParseId(request.Id, "User");
 
-        await userRepository.DeleteAsync(userId, context.CancellationToken);
+        await sender.Send(new DeleteUserCommand(userId), context.CancellationToken);
 
         return new Empty();
     }
+
+    private static StatusCode MapStatusCode(ApplicationErrorType errorType) =>
+        errorType switch
+        {
+            ApplicationErrorType.InvalidArgument => StatusCode.InvalidArgument,
+            ApplicationErrorType.NotFound => StatusCode.NotFound,
+            ApplicationErrorType.PermissionDenied => StatusCode.PermissionDenied,
+            ApplicationErrorType.FailedPrecondition => StatusCode.FailedPrecondition,
+            ApplicationErrorType.AlreadyExists => StatusCode.AlreadyExists,
+            ApplicationErrorType.Unauthenticated => StatusCode.Unauthenticated,
+            ApplicationErrorType.Unavailable => StatusCode.Unavailable,
+            _ => StatusCode.Unknown
+        };
 }

@@ -1,3 +1,4 @@
+using EduVote.Application.Users;
 using EduVote.DAL.Postgresql.Models;
 
 namespace EduVote.API.Mappers;
@@ -36,4 +37,19 @@ public static class UserMapper
     {
         return source.Adapt<IEnumerable<UserResponse>>(Config);
     }
+
+    public static UserResponse MapToResponse(this UserDetails source) =>
+        new()
+        {
+            Id = source.Id.ToString(),
+            Email = source.Email,
+            Name = source.Name,
+            Role = source.RoleName,
+            EducationUnitId = source.EducationUnitId?.ToString() ?? string.Empty,
+            EducationUnitName = source.EducationUnitName ?? string.Empty,
+            CreatedAt = Timestamp.FromDateTime(source.CreatedAt.ToUniversalTime())
+        };
+
+    public static IEnumerable<UserResponse> MapToResponseList(this IEnumerable<UserDetails> source) =>
+        source.Select(MapToResponse);
 }

@@ -1,7 +1,8 @@
+using EduVote.Application.Users.Services;
+
 namespace EduVote.API.Services.Auth.PasswordHasher;
 
-public class PasswordHasher
-    : IPasswordHasher
+public class PasswordHasher : IPasswordHasher
 {
     public bool Verify(string password, string passwordHash)
     {

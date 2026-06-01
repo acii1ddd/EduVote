@@ -21,7 +21,6 @@ using EduVote.API.Services.Tools;
 using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
-using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 
 namespace EduVote.API.Services.Grpc;
 
@@ -106,6 +105,7 @@ public class VotingService(
         try
         {
             var updatedVoting = await sender.Send(command, context.CancellationToken);
+            
             return MapUpdateVotingResultToResponse(updatedVoting);
         }
         catch (ApplicationErrorException ex)
@@ -197,6 +197,7 @@ public class VotingService(
         try
         {
             var voting = await sender.Send(new GetVotingQuery(votingId), context.CancellationToken);
+            
             return voting.MapToResponse();
         }
         catch (ApplicationErrorException ex)
@@ -208,7 +209,8 @@ public class VotingService(
     public override async Task<GetVotingsResponse> GetVotings(
         Empty request, ServerCallContext context)
     {
-        var votings = await sender.Send(new GetVotingsQuery(), context.CancellationToken);
+        var votings = await sender
+            .Send(new GetVotingsQuery(), context.CancellationToken);
 
         var response = new GetVotingsResponse();
         response.Votings.AddRange(votings.MapToResponseList());
@@ -230,6 +232,7 @@ public class VotingService(
 
             var response = new GetVotingsResponse();
             response.Votings.AddRange(votings.MapToResponseList());
+            
             return response;
         }
         catch (ApplicationErrorException ex)

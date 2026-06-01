@@ -1,4 +1,5 @@
 ﻿using EduVote.API.Services.Auth.PasswordHasher;
+using EduVote.Application.Users.Services;
 using Xunit.Abstractions;
 
 namespace EduVote.Tests;

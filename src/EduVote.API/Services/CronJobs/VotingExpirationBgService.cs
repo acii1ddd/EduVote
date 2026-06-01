@@ -1,13 +1,12 @@
-using EduVote.API.Services.Tools;
-using EduVote.API.Services.Tools.Votings;
-using EduVote.DAL.Postgresql.Repositories;
+using EduVote.Application.Votings.FinishVoting;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 
 namespace EduVote.API.Services.CronJobs;
 
 public class VotingExpirationBgService(
-    IServiceScopeFactory scopeFactory, 
+    IServiceScopeFactory scopeFactory,
     ILogger<VotingExpirationBgService> logger)
     : BackgroundService
 {
@@ -24,13 +23,13 @@ public class VotingExpirationBgService(
     private async Task ProcessExpiredVotingsAsync(CancellationToken stoppingToken)
     {
         using var scope = scopeFactory.CreateScope();
-            
+
         var votingRepository = scope.ServiceProvider
             .GetRequiredService<IVotingRepository>();
-            
-        var votingLyfecycleService = scope.ServiceProvider
-            .GetRequiredService<VotingLifecycleService>();
-            
+
+        var sender = scope.ServiceProvider
+            .GetRequiredService<ISender>();
+
         var now = DateTime.UtcNow;
 
         var votings = await votingRepository
@@ -38,19 +37,22 @@ public class VotingExpirationBgService(
 
         foreach (var voting in votings)
         {
-            var isExpirable = voting.Status is DbVotingStatus.Active or DbVotingStatus.Paused 
-                or DbVotingStatus.PendingApproval;
-            
-            var isExpired   = now >= voting.EndTime;
+            var canFinish = voting.Status is DbVotingStatus.Active or DbVotingStatus.Paused;
+            var isExpired = now >= voting.EndTime;
 
-            if (!isExpirable || !isExpired)
+            if (!canFinish || !isExpired)
                 continue;
 
             try
             {
-                await votingLyfecycleService.FinalizeVotingAsync(voting.Id, stoppingToken);
+                var result = await sender.Send(
+                    new FinishVotingCommand(voting.Id),
+                    stoppingToken);
 
-                logger.LogInformation("Voting {VotingId} expired and was finalized", voting.Id);
+                logger.LogInformation(
+                    "Voting {VotingId} expired and was finalized. TxHash: {TxHash}",
+                    voting.Id,
+                    result.TxHash ?? "(none)");
             }
             catch (Exception ex)
             {

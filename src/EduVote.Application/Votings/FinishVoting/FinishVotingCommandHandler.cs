@@ -1,5 +1,6 @@
 using EduVote.Application.Votings.Services;
 using EduVote.DAL.Postgresql.Models;
+using Microsoft.Extensions.Logging;
 using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
@@ -7,12 +8,14 @@ using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 namespace EduVote.Application.Votings.FinishVoting;
 
 public sealed class FinishVotingCommandHandler(
+    IVotingRepository votingRepository,
     ICandidateRepository candidateRepository,
     IVotingResultRepository votingResultRepository,
     IBlockchainRecordRepository blockchainRecordRepository,
     IBlockchainResultWriter blockchainResultWriter,
     VotingResultCalculatorService votingResultCalculatorService,
-    VotingStatusService votingStatusService)
+    VotingStatusService votingStatusService,
+    ILogger<FinishVotingCommandHandler> logger)
     : IRequestHandler<FinishVotingCommand, FinishVotingResult>
 {
     public async Task<FinishVotingResult> Handle(
@@ -21,6 +24,7 @@ public sealed class FinishVotingCommandHandler(
     {
         var voting = await votingStatusService.GetVotingOrThrowAsync(request.VotingId, cancellationToken);
 
+        // Skip votings that cannot be finalized
         if (voting.Status is DbVotingStatus.Finished or DbVotingStatus.Draft or DbVotingStatus.PendingApproval)
             return new FinishVotingResult(request.VotingId, null, null);
 
@@ -29,7 +33,7 @@ public sealed class FinishVotingCommandHandler(
             DbVotingStatus.Finished,
             [DbVotingStatus.Active, DbVotingStatus.Paused]);
 
-        await votingResultRepository.SaveChangesAsync(cancellationToken);
+        await votingRepository.SaveChangesAsync(cancellationToken);
 
         var existingResult = await votingResultRepository
             .GetByVotingIdAsync(request.VotingId, cancellationToken);
@@ -81,8 +85,9 @@ public sealed class FinishVotingCommandHandler(
                 txHash,
                 $"https://sepolia.etherscan.io/tx/{txHash}");
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Blockchain write failed for voting {VotingId}", request.VotingId);
             return new FinishVotingResult(request.VotingId, null, null);
         }
     }
