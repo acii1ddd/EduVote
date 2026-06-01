@@ -9,6 +9,7 @@ using EduVote.Application.Votings.GetVoting;
 using EduVote.Application.Votings.GetVotings;
 using EduVote.Application.Votings.GetResults;
 using EduVote.Application.Votings.GetVerificationData;
+using EduVote.Application.Votings.GetMyVote;
 using EduVote.Application.Votings.GetVotedVotingIds;
 using EduVote.Application.Votings.GetVotingsCreatedByUser;
 using EduVote.Application.Votings.GetVotingsForUser;
@@ -17,9 +18,6 @@ using EduVote.Application.Votings.StartVoting;
 using EduVote.Application.Votings.UpdateVoting;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Tools;
-using EduVote.API.Services.Tools.Votings;
-using EduVote.DAL.Postgresql.Models;
-using EduVote.DAL.Postgresql.Repositories.Interfaces;
 using MediatR;
 using DbVotingStatus = EduVote.DAL.Postgresql.Models.Enums.VotingStatus;
 using DbVotingType = EduVote.DAL.Postgresql.Models.Enums.VotingType;
@@ -28,10 +26,6 @@ using DbVoting = EduVote.DAL.Postgresql.Models.Voting;
 namespace EduVote.API.Services.Grpc;
 
 public class VotingService(
-    IVotingRepository votingRepository,
-    IVoteRepository voteRepository,
-    ICandidateRepository candidateRepository,
-    IVoteHashService voteHashService,
     ISender sender,
     ILogger<VotingService> logger)
     : Votings.VotingsBase
@@ -327,94 +321,37 @@ public class VotingService(
     public override async Task<MyVoteResponse> GetMyVote(
         GetVotingRequest request, ServerCallContext context)
     {
-        var votingId  = IdParser.ParseId(request.Id, "Voting");
-        
+        var votingId = IdParser.ParseId(request.Id, "Voting");
+
         var userIdStr = context.GetHttpContext()
             .User.FindFirst(ClaimTypes.NameIdentifier)?
             .Value;
-        
+
         if (!Guid.TryParse(userIdStr, out var userId))
+        {
             throw new RpcException(new Status(
                 StatusCode.Unauthenticated, "Invalid user identity."));
-
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
-
-        var vote = await voteRepository
-            .GetUserVoteAsync(votingId, userId, context.CancellationToken);
-        
-        if (vote is null)
-            throw new RpcException(new Status(
-                StatusCode.NotFound, "You have not voted in this voting.")
-            );
-
-        if (vote.UserId != userId)
-        {
-            throw new RpcException(new Status(
-                StatusCode.PermissionDenied,
-                "This vote does not belong to the current user."
-            ));
         }
-        
-        var candidates = (await candidateRepository
-            .GetByVotingIdAsync(votingId, context.CancellationToken)).ToList();
 
-        var hashInput = voteHashService
-            .BuildHashInput(vote, voting.Type);
-        
-        var voteData = BuildVoteDataStruct(vote, voting.Type, candidates);
-
-        return new MyVoteResponse
+        try
         {
-            VoteId = vote.Id.ToString(),
-            VoteHash = vote.VoteHash,
-            VoteSalt = vote.VoteSalt,
-            HashInput = hashInput,
-            VoteData = voteData
-        };
-    }
+            var result = await sender.Send(
+                new GetMyVoteQuery(votingId, userId),
+                context.CancellationToken);
 
-    private static Struct BuildVoteDataStruct(Vote vote, DbVotingType votingType, 
-        List<Candidate> candidates)
-    {
-        object data = votingType switch
+            return new MyVoteResponse
+            {
+                VoteId = result.VoteId.ToString(),
+                VoteHash = result.VoteHash,
+                VoteSalt = result.VoteSalt,
+                HashInput = result.HashInput,
+                VoteData = Struct.Parser.ParseJson(result.VoteDataJson)
+            };
+        }
+        catch (ApplicationErrorException ex)
         {
-            DbVotingType.SingleChoice => new
-            {
-                type = "SingleChoice",
-                candidate = candidates
-                    .Where(c => c.Id == vote.CandidateId)
-                    .Select(c => new { id = c.Id.ToString(), name = c.Name })
-                    .FirstOrDefault()
-            },
-            DbVotingType.MultipleChoice => new
-            {
-                type = "MultipleChoice",
-                candidates = vote.GetSelectedCandidateIds()
-                    .Select(id => candidates.FirstOrDefault(c => c.Id == id))
-                    .Where(c => c is not null)
-                    .Select(c => new { id = c!.Id.ToString(), name = c.Name })
-                    .ToList()
-            },
-            DbVotingType.Rating => new
-            {
-                type = "Rating",
-                ratings = vote.GetRatingAnswers()
-                    .Select(kvp =>
-                    {
-                        var candidate = candidates.FirstOrDefault(c => c.Id == kvp.Key);
-                        return new { id = kvp.Key.ToString(), name = candidate?.Name ?? "Unknown", rating = kvp.Value };
-                    })
-                    .ToList()
-            },
-            DbVotingType.OpenAnswer => new
-            {
-                type = "OpenAnswer",
-                textAnswer = vote.TextAnswer ?? string.Empty
-            },
-            _ => new { type = "Unknown" }
-        };
-
-        return Struct.Parser.ParseJson(JsonSerializer.Serialize(data));
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
+        }
     }
 
     public override async Task<VotingVerificationResponse> GetVerificationData(
@@ -592,19 +529,4 @@ public class VotingService(
             CreatedAt = result.CreatedAt.ToUniversalTime().ToTimestamp(),
             CreatedById = result.CreatedById.ToString()
         };
-    
-    private async Task<DbVoting> GetVotingOrThrowAsync(
-        Guid votingId,
-        CancellationToken cancellationToken)
-    {
-        var existingVoting = await votingRepository
-            .GetByIdAsync(votingId, cancellationToken);
-
-        if (existingVoting is null)
-        {
-            throw IdParser.CreateNotFoundException("Voting", votingId.ToString());
-        }
-
-        return existingVoting;
-    }
 }

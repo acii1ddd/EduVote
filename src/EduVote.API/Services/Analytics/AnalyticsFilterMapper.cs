@@ -1,5 +1,4 @@
 using EduVote.DAL.Postgresql.Models.Analytics;
-using Google.Protobuf.WellKnownTypes;
 
 namespace EduVote.API.Services.Analytics;
 
