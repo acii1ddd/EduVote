@@ -1,3 +1,4 @@
+using EduVote.Application.Storage;
 using EduVote.DAL.Postgresql.Context;
 using Grpc.AspNetCore.Server;
 using Microsoft.AspNetCore.Authentication;
@@ -63,6 +64,9 @@ public sealed class EduVoteApiFactory : WebApplicationFactory<Program>, IAsyncLi
 
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IFileStorageService>();
+            services.AddScoped<IFileStorageService, FakeFileStorageService>();
+
             services
                 .AddAuthentication(options =>
                 {

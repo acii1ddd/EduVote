@@ -2,7 +2,8 @@ using EduVote.Application.Votings.Services;
 
 namespace EduVote.API.Services.Tools;
 
-public sealed class BlockchainResultWriter(BlockchainService blockchainService) : IBlockchainResultWriter
+public sealed class BlockchainResultWriter(BlockchainService blockchainService) 
+    : IBlockchainResultWriter
 {
     public async Task<(string TxHash, string BlockNumber)> WriteResultHashAsync(string resultHash)
     {

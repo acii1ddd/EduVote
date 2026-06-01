@@ -1,8 +1,9 @@
 using EduVote.API.Services.Grpc;
-using EduVote.API.Services.Storage;
+using EduVote.Application.Candidates.UploadCandidatePhoto;
+using EduVote.Application.Common;
 using EduVote.DAL.Postgresql;
 using EduVote.DAL.Postgresql.Repositories;
-using EduVote.DAL.Postgresql.Repositories.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EduVote.API.WebAppExtensions;
@@ -44,31 +45,32 @@ public static class WebAppExtensions
         app.MapPost("/api/candidates/{candidateId}/photo", async (
             string candidateId,
             IFormFile photo,
-            ICandidateRepository candidateRepository,
-            IFileStorageService fileStorageService,
+            ISender sender,
             CancellationToken cancellationToken) =>
         {
             if (!Guid.TryParse(candidateId, out var id))
                 return Results.BadRequest("Candidate id must be a valid GUID.");
 
-            var candidate = await candidateRepository.GetByIdAsync(id, cancellationToken);
-            if (candidate is null)
-                return Results.NotFound($"Candidate '{candidateId}' not found.");
-
             if (photo.Length == 0)
                 return Results.BadRequest("Photo file is empty.");
 
-            var extension = Path.GetExtension(photo.FileName);
-            var objectName = $"{candidate.Name}{extension}";
+            try
+            {
+                await using var stream = photo.OpenReadStream();
+                var photoUrl = await sender.Send(
+                    new UploadCandidatePhotoCommand(
+                        id,
+                        stream,
+                        photo.ContentType,
+                        photo.FileName),
+                    cancellationToken);
 
-            await using var stream = photo.OpenReadStream();
-            var photoUrl = await fileStorageService.UploadFileAsync(
-                stream, photo.ContentType, objectName, candidate.Id, cancellationToken);
-
-            candidate.PhotoObjectName = objectName;
-            await candidateRepository.SaveChangesAsync(cancellationToken);
-
-            return Results.Ok(new { photo_url = photoUrl });
+                return Results.Ok(new { photo_url = photoUrl });
+            }
+            catch (ApplicationErrorException ex)
+            {
+                return MapApplicationError(ex);
+            }
         }).DisableAntiforgery();
 
         // gRPC services
@@ -83,4 +85,17 @@ public static class WebAppExtensions
 
         app.UseFileServer();
     }
+
+    private static IResult MapApplicationError(ApplicationErrorException ex) =>
+        ex.ErrorType switch
+        {
+            ApplicationErrorType.NotFound => Results.NotFound(ex.Message),
+            ApplicationErrorType.InvalidArgument => Results.BadRequest(ex.Message),
+            ApplicationErrorType.AlreadyExists => Results.Conflict(ex.Message),
+            ApplicationErrorType.Unauthenticated => Results.Unauthorized(),
+            ApplicationErrorType.PermissionDenied => Results.Forbid(),
+            ApplicationErrorType.FailedPrecondition => Results.BadRequest(ex.Message),
+            ApplicationErrorType.Unavailable => Results.StatusCode(StatusCodes.Status503ServiceUnavailable),
+            _ => Results.Problem(ex.Message)
+        };
 }

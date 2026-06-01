@@ -1,3 +1,4 @@
+using EduVote.Application.Candidates;
 using DbCandidate = EduVote.DAL.Postgresql.Models.Candidate;
 
 namespace EduVote.API.Mappers;
@@ -43,4 +44,18 @@ public static class CandidateMapper
     {
         return source.Adapt<IEnumerable<DbCandidate> >(Config);
     }
+
+    public static CandidateResponse MapToResponse(this CandidateDetails source) =>
+        new()
+        {
+            Id = source.Id.ToString(),
+            VotingId = source.VotingId.ToString(),
+            Name = source.Name,
+            Description = source.Description,
+            PhotoUrl = source.PhotoUrl
+        };
+
+    public static IEnumerable<CandidateResponse> MapToResponseList(
+        this IEnumerable<CandidateDetails> source) =>
+        source.Select(MapToResponse);
 }

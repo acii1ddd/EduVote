@@ -3,6 +3,7 @@ using EduVote.API.Services.Analytics;
 using EduVote.API.Services.Auth;
 using EduVote.API.Services.Auth.PasswordHasher;
 using EduVote.Application.Auth.Services;
+using EduVote.Application.Storage;
 using EduVote.Application.Users.Services;
 using AppIPasswordHasher = EduVote.Application.Users.Services.IPasswordHasher;
 using EduVote.API.Services.CronJobs;
