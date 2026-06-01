@@ -7,5 +7,6 @@ public enum ApplicationErrorType
     PermissionDenied,
     FailedPrecondition,
     AlreadyExists,
-    Unauthenticated
+    Unauthenticated,
+    Unavailable
 }

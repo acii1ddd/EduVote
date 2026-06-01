@@ -7,6 +7,9 @@ using EduVote.Application.Votings.DeleteVoting;
 using EduVote.Application.Votings.FinishVoting;
 using EduVote.Application.Votings.GetVoting;
 using EduVote.Application.Votings.GetVotings;
+using EduVote.Application.Votings.GetResults;
+using EduVote.Application.Votings.GetVerificationData;
+using EduVote.Application.Votings.GetVotedVotingIds;
 using EduVote.Application.Votings.GetVotingsCreatedByUser;
 using EduVote.Application.Votings.GetVotingsForUser;
 using EduVote.Application.Votings.PauseVoting;
@@ -29,8 +32,6 @@ public class VotingService(
     IVoteRepository voteRepository,
     ICandidateRepository candidateRepository,
     IVoteHashService voteHashService,
-    IVotingResultRepository votingResultRepository,
-    IBlockchainRecordRepository blockchainRecordRepository,
     ISender sender,
     ILogger<VotingService> logger)
     : Votings.VotingsBase
@@ -271,8 +272,9 @@ public class VotingService(
         if (!Guid.TryParse(userIdStr, out var userId))
             throw new RpcException(new Status(StatusCode.Unauthenticated, "User identity not found in token."));
 
-        var ids = await voteRepository
-            .GetVotedVotingIdsAsync(userId, context.CancellationToken);
+        var ids = await sender.Send(
+            new GetVotedVotingIdsQuery(userId),
+            context.CancellationToken);
 
         var response = new GetVotedVotingIdsResponse();
         response.VotingIds.AddRange(ids.Select(id => id.ToString()));
@@ -420,40 +422,28 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
-
-        if (voting.Status != DbVotingStatus.Finished)
+        try
         {
-            throw new RpcException(new Status(
-                StatusCode.FailedPrecondition,
-                "Voting is not finished yet."));
+            var result = await sender.Send(
+                new GetVerificationDataQuery(votingId),
+                context.CancellationToken);
+
+            var response = new VotingVerificationResponse
+            {
+                VotingId = result.VotingId.ToString(),
+                ResultHash = result.ResultHash,
+                HashAlgorithm = "SHA-256",
+                CombineMethod = "sort_ordinal_concat_no_separator",
+                TotalVotes = result.TotalVotes
+            };
+
+            response.VoteHashes.AddRange(result.VoteHashes);
+            return response;
         }
-
-        var existingResult = await votingResultRepository
-            .GetByVotingIdAsync(votingId, context.CancellationToken);
-
-        if (existingResult is null)
+        catch (ApplicationErrorException ex)
         {
-            throw new RpcException(new Status(
-                StatusCode.Unavailable,
-                "Results will be available in the next minute."));
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
-
-        var votes = (await voteRepository
-            .GetByVotingIdAsync(votingId, context.CancellationToken)).ToList();
-
-        var response = new VotingVerificationResponse
-        {
-            VotingId = votingId.ToString(),
-            ResultHash = existingResult.ResultHash,
-            HashAlgorithm = "SHA-256",
-            CombineMethod = "sort_ordinal_concat_no_separator",
-            TotalVotes = votes.Count
-        };
-
-        response.VoteHashes.AddRange(votes.Select(v => v.VoteHash));
-
-        return response;
     }
 
     public override async Task<VotingResultsResponse> GetResults(
@@ -461,62 +451,42 @@ public class VotingService(
     {
         var votingId = IdParser.ParseId(request.Id, "Voting");
 
-        var voting = await GetVotingOrThrowAsync(votingId, context.CancellationToken);
-
-        // Check for voting is finished
-        if (voting.Status != DbVotingStatus.Finished)
+        try
         {
-            throw new RpcException(new Status(
-                StatusCode.FailedPrecondition,
-                "Voting is not finished yet."));
+            var result = await sender.Send(
+                new GetResultsQuery(votingId),
+                context.CancellationToken);
+
+            logger.LogInformation("Results for voting {VotingId} requested.", votingId);
+
+            return MapVotingResultToResponse(result);
         }
-        
-        var existingResult = await votingResultRepository
-            .GetByVotingIdAsync(votingId, context.CancellationToken);
-        
-        // Bg job will calculate the results soon
-        if (existingResult is null)
+        catch (ApplicationErrorException ex)
         {
-            throw new RpcException(new Status(
-                StatusCode.Unavailable,
-                "Results will be available in the next minute."));
+            throw new RpcException(new Status(MapStatusCode(ex.ErrorType), ex.Message));
         }
-        
-        logger.LogInformation("Results for voting {VotingId} requested.", votingId);
-
-        var response = MapVotingResultToResponse(existingResult);
-
-        var blockchainRecord = await blockchainRecordRepository
-            .GetByVotingResultIdAsync(existingResult.Id, context.CancellationToken);
-
-        if (blockchainRecord is not null)
-        {
-            response.TxHash = blockchainRecord.TransactionHash;
-            response.EtherscanUrl = $"https://sepolia.etherscan.io/tx/{blockchainRecord.TransactionHash}";
-        }
-
-        return response;
     }
 
-    private VotingResultsResponse MapVotingResultToResponse(VotingResult votingResult)
+    private VotingResultsResponse MapVotingResultToResponse(GetResultsResult result)
     {
         var response = new VotingResultsResponse
         {
-            VotingId = votingResult.VotingId.ToString(),
-            ResultHash = votingResult.ResultHash,
-            CalculatedAt = votingResult.CalculatedAt.ToUniversalTime().ToTimestamp(),
-            TotalVotes = votingResult.TotalVotes
+            VotingId = result.VotingId.ToString(),
+            ResultHash = result.ResultHash,
+            CalculatedAt = result.CalculatedAt.ToUniversalTime().ToTimestamp(),
+            TotalVotes = result.TotalVotes,
+            TxHash = result.TxHash ?? string.Empty,
+            EtherscanUrl = result.EtherscanUrl ?? string.Empty
         };
 
-        // Deserialize result data
-        if (string.IsNullOrEmpty(votingResult.ResultData)) return response;
+        if (string.IsNullOrEmpty(result.ResultData)) return response;
         
         logger.LogInformation("[MapVotingResultToResponse] ResultData " +
-            "for voting is {Result}. ", votingResult.ResultData);
+            "for voting is {Result}. ", result.ResultData);
         
         try
         {
-            var jsonDoc = JsonDocument.Parse(votingResult.ResultData);
+            var jsonDoc = JsonDocument.Parse(result.ResultData);
             
             foreach (var property in jsonDoc.RootElement.EnumerateObject())
             {
@@ -545,6 +515,7 @@ public class VotingService(
             ApplicationErrorType.FailedPrecondition => StatusCode.FailedPrecondition,
             ApplicationErrorType.AlreadyExists => StatusCode.AlreadyExists,
             ApplicationErrorType.Unauthenticated => StatusCode.Unauthenticated,
+            ApplicationErrorType.Unavailable => StatusCode.Unavailable,
             _ => StatusCode.Unknown
         };
 
