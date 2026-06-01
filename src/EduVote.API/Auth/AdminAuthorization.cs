@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using EduVote.DAL.Postgresql.Models.Roles;
 
-namespace EduVote.API.Validators;
+namespace EduVote.API.Auth;
 
 internal static class AdminAuthorization
 {

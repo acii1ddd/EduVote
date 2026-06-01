@@ -1,3 +1,4 @@
+using EduVote.API.Auth;
 using EduVote.API.Mappers;
 using EduVote.API.Services.Analytics;
 using EduVote.API.Validators;
