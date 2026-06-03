@@ -24,7 +24,7 @@ public sealed class RegisterCommandHandler(
         {
             throw new ApplicationErrorException(
                 ApplicationErrorType.AlreadyExists,
-                "User with this email already exists");
+                "Пользователь с таким email уже существует");
         }
 
         var studentRole = await roleRepository

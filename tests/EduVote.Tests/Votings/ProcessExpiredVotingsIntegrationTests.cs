@@ -20,7 +20,7 @@ public class ProcessExpiredVotingsIntegrationTests(EduVoteApiFactory factory)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [Fact]
+    [Fact(DisplayName = "Истечение срока: завершает только просроченные активные голосования")]
     public async Task ProcessExpiredVotings_Should_Finish_Only_Expired_Active_Votings()
     {
         var expiredVotingId = await SeedVotingAsync(
@@ -41,7 +41,7 @@ public class ProcessExpiredVotingsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Active, await GetVotingStatusAsync(activeVotingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Истечение срока: завершает просроченное приостановленное голосование")]
     public async Task ProcessExpiredVotings_Should_Finish_Expired_Paused_Voting()
     {
         var votingId = await SeedVotingAsync(

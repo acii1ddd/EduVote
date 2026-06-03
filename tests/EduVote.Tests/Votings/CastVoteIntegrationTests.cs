@@ -25,7 +25,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: создаётся голос single choice")]
     public async Task CastVote_Should_Create_SingleChoice_Vote()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(allowVoteChange: false);
@@ -43,7 +43,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.False(string.IsNullOrWhiteSpace(vote.VoteSalt));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: повторный голос запрещён без смены")]
     public async Task CastVote_Should_Reject_Second_Vote_When_Change_Is_Not_Allowed()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(allowVoteChange: false);
@@ -62,7 +62,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(scenario.FirstCandidateId, vote.CandidateId);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: изменение голоса при allowVoteChange")]
     public async Task CastVote_Should_Update_Existing_Vote_When_Change_Is_Allowed()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(allowVoteChange: true);
@@ -85,7 +85,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.NotEqual(firstVote.VoteSalt, updatedVote.VoteSalt);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: отклонение для завершённого голосования")]
     public async Task CastVote_Should_Reject_Vote_When_Voting_Is_Finished()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(
@@ -99,7 +99,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Empty(await GetVotesAsync(scenario.VotingId, scenario.UserId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: отклонение при паузе")]
     public async Task CastVote_Should_Reject_Vote_When_Voting_Is_Paused()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(
@@ -113,7 +113,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Empty(await GetVotesAsync(scenario.VotingId, scenario.UserId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: отклонение вне целевой учебной единицы")]
     public async Task CastVote_Should_Reject_Vote_When_User_Is_Not_In_Target_Education_Unit()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(
@@ -127,7 +127,7 @@ public class CastVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Empty(await GetVotesAsync(scenario.VotingId, scenario.UserId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: отклонение при чужом кандидате")]
     public async Task CastVote_Should_Reject_Vote_When_Candidate_Is_Not_In_Voting()
     {
         var scenario = await SeedSingleChoiceScenarioAsync(allowVoteChange: false);

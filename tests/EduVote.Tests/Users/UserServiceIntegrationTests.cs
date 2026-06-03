@@ -25,7 +25,7 @@ public class UserServiceIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Пользователи: создание студента")]
     public async Task CreateUser_Should_Create_Student_User()
     {
         var response = await PostCreateUserAsync(
@@ -43,16 +43,19 @@ public class UserServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.False(string.IsNullOrWhiteSpace(body.Id));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Пользователи: конфликт при дублировании email")]
     public async Task CreateUser_Should_Return_AlreadyExists_When_Email_Is_Duplicated()
     {
         await PostCreateUserAsync("dup@example.com", "password123", "First");
         var response = await PostCreateUserAsync("dup@example.com", "password456", "Second");
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Пользователь с таким email уже существует", body.Message);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Пользователи: список включает созданных")]
     public async Task GetUsers_Should_Return_Created_Users()
     {
         await PostCreateUserAsync("one@example.com", "password123", "User One");
@@ -69,7 +72,7 @@ public class UserServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains(body.Users, u => u.Email == "two@example.com");
     }
 
-    [Fact]
+    [Fact(DisplayName = "Пользователи: обновление имени и email")]
     public async Task UpdateUser_Should_Update_Name_And_Email()
     {
         var createResponse = await PostCreateUserAsync(
@@ -95,6 +98,57 @@ public class UserServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal("updated@example.com", user.Email);
         Assert.Equal("After Update", user.Name);
         Assert.Equal(Roles.Teacher, user.UserRole.Name);
+    }
+
+    [Fact(DisplayName = "Пользователи: обновление отклоняет пустые обязательные поля")]
+    public async Task UpdateUser_Should_Return_InvalidArgument_When_Required_Fields_Are_Empty()
+    {
+        var createResponse = await PostCreateUserAsync(
+            "empty-update@example.com",
+            "password123",
+            "User");
+        await EnsureSuccessAsync(createResponse);
+
+        var created = await createResponse.Content.ReadFromJsonAsync<UserApiResponse>();
+        Assert.NotNull(created);
+
+        var updateResponse = await _client.PutAsJsonAsync($"/api/users/{created.Id}", new
+        {
+            id = created.Id,
+            email = "   ",
+            name = "   ",
+            role = Roles.Student
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, updateResponse.StatusCode);
+        var body = await updateResponse.Content.ReadFromJsonAsync<ApiErrorResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Заполните все обязательные поля", body.Message);
+    }
+
+    [Fact(DisplayName = "Пользователи: обновление возвращает конфликт при дублировании email")]
+    public async Task UpdateUser_Should_Return_AlreadyExists_When_Email_Is_Duplicated()
+    {
+        var firstResponse = await PostCreateUserAsync("first@example.com", "password123", "First");
+        var secondResponse = await PostCreateUserAsync("second@example.com", "password123", "Second");
+        await EnsureSuccessAsync(firstResponse);
+        await EnsureSuccessAsync(secondResponse);
+
+        var second = await secondResponse.Content.ReadFromJsonAsync<UserApiResponse>();
+        Assert.NotNull(second);
+
+        var updateResponse = await _client.PutAsJsonAsync($"/api/users/{second.Id}", new
+        {
+            id = second.Id,
+            email = "first@example.com",
+            name = "Second",
+            role = Roles.Student
+        });
+
+        Assert.Equal(HttpStatusCode.Conflict, updateResponse.StatusCode);
+        var body = await updateResponse.Content.ReadFromJsonAsync<ApiErrorResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Пользователь с таким email уже существует", body.Message);
     }
 
     private Task<HttpResponseMessage> PostCreateUserAsync(string email, string password, string name)
@@ -150,4 +204,7 @@ public class UserServiceIntegrationTests(EduVoteApiFactory factory)
 
     private sealed record GetUsersApiResponse(
         [property: JsonPropertyName("users")] List<UserApiResponse> Users);
+
+    private sealed record ApiErrorResponse(
+        [property: JsonPropertyName("message")] string Message);
 }

@@ -20,7 +20,7 @@ public class SeedDemoVotesIntegrationTests(EduVoteApiFactory factory)
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [Fact]
+    [Fact(DisplayName = "Демо-голоса: создаёт голоса без записи VotingResult")]
     public async Task SeedDemoVotes_Should_Create_Votes_Without_Writing_VotingResult()
     {
         var votingId = await SeedActiveSingleChoiceVotingAsync("Принцесса университета demo");

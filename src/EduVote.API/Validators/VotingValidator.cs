@@ -18,7 +18,7 @@ public static class VotingValidator
         {
             throw new RpcException(new Status(
                 StatusCode.InvalidArgument,
-                "end_time must be at least 1 hour greater than start_time."));
+                "Дата окончания должна быть минимум на 1 час позже даты начала."));
         }
         
         if (startDate > endDate)

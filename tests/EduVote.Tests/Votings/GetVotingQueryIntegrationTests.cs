@@ -26,7 +26,7 @@ public class GetVotingQueryIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: получение по id")]
     public async Task GetVoting_Should_Return_Voting_By_Id()
     {
         var votingId = await SeedVotingAsync("Query voting", DbVotingStatus.Active);
@@ -47,7 +47,7 @@ public class GetVotingQueryIntegrationTests(EduVoteApiFactory factory)
         Assert.False(string.IsNullOrWhiteSpace(body.CreatedById));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосование: 404 для несуществующего id")]
     public async Task GetVoting_Should_Return_NotFound_When_Voting_Does_Not_Exist()
     {
         var missingId = Guid.NewGuid();
@@ -57,7 +57,7 @@ public class GetVotingQueryIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Список голосований: возвращает все записи")]
     public async Task GetVotings_Should_Return_All_Votings()
     {
         await SeedVotingAsync("First voting", DbVotingStatus.Draft);
@@ -74,7 +74,7 @@ public class GetVotingQueryIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains(body.Votings, v => v.Title == "Second voting" && v.Status == "PendingApproval");
     }
 
-    [Fact]
+    [Fact(DisplayName = "Список голосований: пустой список при отсутствии данных")]
     public async Task GetVotings_Should_Return_Empty_List_When_No_Votings()
     {
         var response = await _client.GetAsync("/api/votings");

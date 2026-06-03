@@ -24,10 +24,11 @@ public class AnalyticsIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Аналитика: обзор возвращает агрегированные счётчики")]
     public async Task GetOverview_Should_Return_Aggregated_Counters()
     {
-        await SeedFinishedVotingWithResultAsync();
+        var scenario = await SeedFinishedVotingWithResultAsync();
+        AuthorizeAs(scenario.AdminUserId, Roles.Administrator);
 
         var response = await _client.GetAsync("/api/analytics/overview");
 
@@ -40,10 +41,11 @@ public class AnalyticsIntegrationTests(EduVoteApiFactory factory)
         Assert.NotEmpty(body.StatusCounts);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Аналитика: список голосований с пагинацией")]
     public async Task GetVotings_Should_Return_Paginated_Items()
     {
-        await SeedFinishedVotingWithResultAsync();
+        var scenario = await SeedFinishedVotingWithResultAsync();
+        AuthorizeAs(scenario.AdminUserId, Roles.Administrator);
 
         var response = await _client.GetAsync("/api/analytics/votings?page=1&pageSize=10");
 
@@ -57,12 +59,13 @@ public class AnalyticsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(10, body.PageSize);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Аналитика: PDF-отчёт для завершённого голосования")]
     public async Task DownloadVotingReport_Should_Return_Pdf_For_Finished_Voting()
     {
-        var votingId = await SeedFinishedVotingWithResultAsync();
+        var scenario = await SeedFinishedVotingWithResultAsync();
+        AuthorizeAs(scenario.AdminUserId, Roles.Administrator);
 
-        var response = await _client.GetAsync($"/api/analytics/votings/{votingId}/report.pdf");
+        var response = await _client.GetAsync($"/api/analytics/votings/{scenario.VotingId}/report.pdf");
 
         await EnsureSuccessAsync(response);
 
@@ -73,17 +76,26 @@ public class AnalyticsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(0x50, bytes[1]); // P
     }
 
-    [Fact]
+    [Fact(DisplayName = "Аналитика: PDF недоступен, пока отчёт не готов")]
     public async Task DownloadVotingReport_Should_Return_FailedPrecondition_When_Not_Ready()
     {
-        var votingId = await SeedDraftVotingAsync();
+        var scenario = await SeedDraftVotingAsync();
+        AuthorizeAs(scenario.AdminUserId, Roles.Administrator);
 
-        var response = await _client.GetAsync($"/api/analytics/votings/{votingId}/report.pdf");
+        var response = await _client.GetAsync($"/api/analytics/votings/{scenario.VotingId}/report.pdf");
 
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    private async Task<Guid> SeedFinishedVotingWithResultAsync()
+    private void AuthorizeAs(Guid userId, string role)
+    {
+        _client.DefaultRequestHeaders.Remove(TestAuthHandler.UserIdHeader);
+        _client.DefaultRequestHeaders.Remove(TestAuthHandler.RoleHeader);
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.UserIdHeader, userId.ToString());
+        _client.DefaultRequestHeaders.Add(TestAuthHandler.RoleHeader, role);
+    }
+
+    private async Task<AnalyticsScenario> SeedFinishedVotingWithResultAsync()
     {
         var roleId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -140,10 +152,10 @@ public class AnalyticsIntegrationTests(EduVoteApiFactory factory)
             await dbContext.SaveChangesAsync();
         });
 
-        return votingId;
+        return new AnalyticsScenario(votingId, userId);
     }
 
-    private async Task<Guid> SeedDraftVotingAsync()
+    private async Task<AnalyticsScenario> SeedDraftVotingAsync()
     {
         var roleId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -178,8 +190,10 @@ public class AnalyticsIntegrationTests(EduVoteApiFactory factory)
             await dbContext.SaveChangesAsync();
         });
 
-        return votingId;
+        return new AnalyticsScenario(votingId, userId);
     }
+
+    private sealed record AnalyticsScenario(Guid VotingId, Guid AdminUserId);
 
     private static async Task EnsureSuccessAsync(HttpResponseMessage response)
     {

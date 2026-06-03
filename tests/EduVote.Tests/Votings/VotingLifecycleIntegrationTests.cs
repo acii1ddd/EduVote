@@ -24,7 +24,7 @@ public class VotingLifecycleIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Жизненный цикл: запуск переводит Draft в Active")]
     public async Task StartVoting_Should_Move_Draft_Voting_To_Active()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Draft);
@@ -35,7 +35,7 @@ public class VotingLifecycleIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Active, await GetVotingStatusAsync(votingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Жизненный цикл: запуск возобновляет Paused")]
     public async Task StartVoting_Should_Move_Paused_Voting_To_Active()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Paused);
@@ -46,7 +46,7 @@ public class VotingLifecycleIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Active, await GetVotingStatusAsync(votingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Жизненный цикл: пауза переводит Active в Paused")]
     public async Task PauseVoting_Should_Move_Active_Voting_To_Paused()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Active);
@@ -57,7 +57,7 @@ public class VotingLifecycleIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Paused, await GetVotingStatusAsync(votingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Жизненный цикл: пауза недоступна для Draft")]
     public async Task PauseVoting_Should_Reject_Draft_Voting()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Draft);
@@ -68,7 +68,7 @@ public class VotingLifecycleIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Draft, await GetVotingStatusAsync(votingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Жизненный цикл: завершение переводит Active в Finished")]
     public async Task FinishVoting_Should_Move_Active_Voting_To_Finished()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Active, includeExistingResult: true);

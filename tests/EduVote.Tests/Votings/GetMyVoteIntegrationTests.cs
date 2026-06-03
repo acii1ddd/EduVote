@@ -26,7 +26,7 @@ public class GetMyVoteIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Мой голос: детали после single choice")]
     public async Task GetMyVote_Should_Return_Vote_Details_After_SingleChoice_Vote()
     {
         var scenario = await SeedSingleChoiceScenarioAsync();
@@ -54,7 +54,7 @@ public class GetMyVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal("First candidate", body.VoteData.GetProperty("candidate").GetProperty("name").GetString());
     }
 
-    [Fact]
+    [Fact(DisplayName = "Мой голос: 404, если пользователь не голосовал")]
     public async Task GetMyVote_Should_Return_NotFound_When_User_Has_Not_Voted()
     {
         var scenario = await SeedSingleChoiceScenarioAsync();
@@ -65,7 +65,7 @@ public class GetMyVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Мой голос: 401 без авторизации")]
     public async Task GetMyVote_Should_Return_Unauthenticated_Without_Auth_Headers()
     {
         var scenario = await SeedSingleChoiceScenarioAsync();
@@ -75,7 +75,7 @@ public class GetMyVoteIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Мой голос: 404 для несуществующего голосования")]
     public async Task GetMyVote_Should_Return_NotFound_When_Voting_Does_Not_Exist()
     {
         var userId = await SeedUserAsync();

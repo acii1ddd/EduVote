@@ -29,7 +29,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Учебные единицы: возвращает предзаполненную единицу")]
     public async Task GetEducationUnits_Should_Return_Seeded_Unit()
     {
         var response = await _client.GetAsync("/api/education-units");
@@ -46,7 +46,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         Assert.Equal(EducationUnitType.Group.ToString(), unit.Type);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Привязка пользователя: создаёт связь в БД")]
     public async Task AssignUserToEducationUnit_Should_Create_Relation_In_Database()
     {
         var secondUnitId = Guid.NewGuid();
@@ -65,7 +65,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         Assert.True(exists);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Привязка пользователя: удаление снимает связь")]
     public async Task RemoveUserFromEducationUnit_Should_Delete_Relation()
     {
         var response = await _client.DeleteAsync(
@@ -80,7 +80,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         Assert.False(exists);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Привязка пользователя: идемпотентна при повторном назначении")]
     public async Task AssignUserToEducationUnit_Should_Be_Idempotent_When_Relation_Already_Exists()
     {
         var response = await _client.PostAsync(
@@ -90,7 +90,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         await EnsureSuccessAsync(response);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Привязка пользователя: заменяет предыдущую единицу")]
     public async Task AssignUserToEducationUnit_Should_Replace_Previous_Unit()
     {
         var newUnitId = Guid.NewGuid();
@@ -108,7 +108,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         Assert.Equal(newUnitId, units[0]);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Привязка пользователя: оставляет одну единицу при нескольких связях")]
     public async Task AssignUserToEducationUnit_Should_Collapse_Multiple_Units_To_One()
     {
         var secondUnitId = Guid.NewGuid();
@@ -137,7 +137,7 @@ public class UserEducationUnitsServiceIntegrationTests(EduVoteApiFactory factory
         Assert.Equal(_educationUnitId, units[0]);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Привязка пользователя: ошибка при неверном id пользователя")]
     public async Task AssignUserToEducationUnit_Should_Return_InvalidArgument_For_Invalid_User_Id()
     {
         var response = await _client.PostAsync(

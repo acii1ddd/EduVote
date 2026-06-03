@@ -6,7 +6,7 @@ namespace EduVote.Tests;
 
 public class VotingVerificationTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Fact(DisplayName = "Верификация: хеш GUID вычисляется по SHA-256")]
     public void Should_Hash_Guid_With_Sha256()
     {
         // Arrange

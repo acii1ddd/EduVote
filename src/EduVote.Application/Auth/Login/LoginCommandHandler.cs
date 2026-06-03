@@ -28,7 +28,7 @@ public sealed class LoginCommandHandler(
         {
             throw new ApplicationErrorException(
                 ApplicationErrorType.InvalidArgument,
-                "Incorrect credentials");
+                "Неверный email или пароль");
         }
 
         var accessToken = accessTokenGenerator

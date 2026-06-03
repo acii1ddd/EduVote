@@ -27,7 +27,7 @@ public class VotingTargetServiceIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Таргеты: возвращает существующие цели голосования")]
     public async Task GetTargets_Should_Return_Existing_Targets()
     {
         var unitId = Guid.NewGuid();
@@ -44,7 +44,7 @@ public class VotingTargetServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(unitId.ToString(), body.Targets[0].EducationUnitId);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Таргеты: добавление создаёт запись в БД")]
     public async Task AddTarget_Should_Create_Target_In_Database()
     {
         var (votingId, unitId) = await SeedVotingAndEducationUnitAsync();
@@ -62,7 +62,7 @@ public class VotingTargetServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.True(exists);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Таргеты: конфликт при повторном добавлении")]
     public async Task AddTarget_Should_Return_Conflict_When_Target_Already_Exists()
     {
         var unitId = Guid.NewGuid();
@@ -73,7 +73,7 @@ public class VotingTargetServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Таргеты: удаление убирает цель")]
     public async Task DeleteTarget_Should_Remove_Target()
     {
         var unitId = Guid.NewGuid();
@@ -87,7 +87,7 @@ public class VotingTargetServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.False(await TargetExistsAsync(votingId, unitId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Таргеты: 404 для несуществующего голосования")]
     public async Task GetTargets_Should_Return_NotFound_When_Voting_Does_Not_Exist()
     {
         var missingVotingId = Guid.NewGuid();

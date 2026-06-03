@@ -24,7 +24,7 @@ public class ApproveVotingIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Модерация: одобрение переводит из PendingApproval в Draft")]
     public async Task ApproveVoting_Should_Move_PendingApproval_To_Draft()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.PendingApproval);
@@ -35,7 +35,7 @@ public class ApproveVotingIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Draft, await GetVotingStatusAsync(votingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Модерация: отклонение при неверном статусе")]
     public async Task ApproveVoting_Should_Reject_When_Status_Is_Not_PendingApproval()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Draft);

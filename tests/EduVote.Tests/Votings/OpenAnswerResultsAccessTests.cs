@@ -8,34 +8,34 @@ public class OpenAnswerResultsAccessTests
     private static readonly Guid OrganizerId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
     private static readonly Guid OtherUserId = Guid.Parse("11111111-2222-3333-4444-555555555555");
 
-    [Fact]
+    [Fact(DisplayName = "Open answer: администратор всегда видит тексты ответов")]
     public void CanViewAnswerTexts_Administrator_Always_Allowed()
     {
         Assert.True(OpenAnswerResultsAccess.CanViewAnswerTexts(Roles.Administrator, null, OrganizerId));
         Assert.True(OpenAnswerResultsAccess.CanViewAnswerTexts(Roles.Administrator, OtherUserId, OrganizerId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Open answer: преподаватель видит тексты только если он организатор")]
     public void CanViewAnswerTexts_Teacher_Only_When_Organizer()
     {
         Assert.True(OpenAnswerResultsAccess.CanViewAnswerTexts(Roles.Teacher, OrganizerId, OrganizerId));
         Assert.False(OpenAnswerResultsAccess.CanViewAnswerTexts(Roles.Teacher, OtherUserId, OrganizerId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Open answer: студент не видит тексты ответов")]
     public void CanViewAnswerTexts_Student_Never_Allowed()
     {
         Assert.False(OpenAnswerResultsAccess.CanViewAnswerTexts(Roles.Student, OrganizerId, OrganizerId));
         Assert.False(OpenAnswerResultsAccess.CanViewAnswerTexts(Roles.Student, OtherUserId, OrganizerId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Open answer: без роли тексты ответов недоступны")]
     public void CanViewAnswerTexts_Without_Role_Never_Allowed()
     {
         Assert.False(OpenAnswerResultsAccess.CanViewAnswerTexts(null, OrganizerId, OrganizerId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Open answer: маскирование очищает тексты, но сохраняет количество")]
     public void RedactAnswerTexts_Clears_Answers_Keeps_Total()
     {
         const string resultData =

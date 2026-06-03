@@ -24,7 +24,7 @@ public class UpdateDeleteVotingIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Обновление: меняет поля, статус не трогает")]
     public async Task UpdateVoting_Should_Update_Editable_Fields_And_Keep_Status()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Active);
@@ -52,7 +52,7 @@ public class UpdateDeleteVotingIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Active, voting.Status);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Обновление: ошибка, если конец меньше чем через час после начала")]
     public async Task UpdateVoting_Should_Reject_When_EndTime_Is_Less_Than_One_Hour_After_StartTime()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Draft);
@@ -75,7 +75,7 @@ public class UpdateDeleteVotingIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(DbVotingStatus.Draft, voting.Status);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Удаление: голосование удаляется из БД")]
     public async Task DeleteVoting_Should_Remove_Voting()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Draft);

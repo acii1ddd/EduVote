@@ -25,7 +25,7 @@ public class CandidateServiceIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Кандидаты: создание добавляет кандидата в голосование")]
     public async Task CreateCandidate_Should_Add_Candidate_To_Voting()
     {
         var votingId = await SeedVotingAsync();
@@ -50,7 +50,7 @@ public class CandidateServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(1, count);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Кандидаты: список возвращает созданных кандидатов")]
     public async Task GetCandidates_Should_Return_Created_Candidates()
     {
         var votingId = await SeedVotingAsync();
@@ -69,7 +69,7 @@ public class CandidateServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains(body.Candidates, c => c.Name == "Second");
     }
 
-    [Fact]
+    [Fact(DisplayName = "Кандидаты: удаление убирает кандидата")]
     public async Task DeleteCandidate_Should_Remove_Candidate()
     {
         var votingId = await SeedVotingAsync();
@@ -86,7 +86,7 @@ public class CandidateServiceIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(0, await CountCandidatesAsync(votingId));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Кандидаты: 404 при несуществующем голосовании")]
     public async Task CreateCandidate_Should_Return_NotFound_When_Voting_Does_Not_Exist()
     {
         var missingVotingId = Guid.NewGuid();

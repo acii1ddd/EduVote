@@ -23,7 +23,7 @@ public class RoleServiceIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Роли: возвращает все предзаполненные роли")]
     public async Task GetRoles_Should_Return_All_Seeded_Roles()
     {
         var response = await _client.GetAsync("/api/roles");

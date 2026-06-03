@@ -34,7 +34,7 @@ public sealed class CreateUserCommandHandler(
         {
             throw new ApplicationErrorException(
                 ApplicationErrorType.AlreadyExists,
-                "User with this email already exists.");
+                "Пользователь с таким email уже существует");
         }
 
         var roleName = string.IsNullOrWhiteSpace(request.RoleName)

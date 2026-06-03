@@ -26,7 +26,7 @@ public class GetUserVotingsIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосования пользователя: 404 для несуществующего пользователя")]
     public async Task GetVotingsForUser_Should_Return_NotFound_When_User_Does_Not_Exist()
     {
         var missingUserId = Guid.NewGuid();
@@ -36,7 +36,7 @@ public class GetUserVotingsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосования пользователя: публичные и по таргету")]
     public async Task GetVotingsForUser_Should_Return_Public_And_Matching_Targeted_Votings()
     {
         var userUnitId = Guid.NewGuid();
@@ -64,7 +64,7 @@ public class GetUserVotingsIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains(body.Votings, v => v.Id == matchingVotingId.ToString());
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосования пользователя: только публичные без учебной единицы")]
     public async Task GetVotingsForUser_Should_Return_Only_Public_Votings_When_User_Has_No_Education_Units()
     {
         var userId = await SeedUserWithoutEducationUnitsAsync();
@@ -82,7 +82,7 @@ public class GetUserVotingsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal("Public voting", body.Votings[0].Title);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Голосования пользователя: учитывает таргет родительской единицы")]
     public async Task GetVotingsForUser_Should_Include_Voting_Targeted_At_Parent_Unit()
     {
         var parentUnitId = Guid.NewGuid();
@@ -102,7 +102,7 @@ public class GetUserVotingsIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains(body.Votings, v => v.Id == parentTargetVotingId.ToString());
     }
 
-    [Fact]
+    [Fact(DisplayName = "Созданные мной: только голосования текущего пользователя")]
     public async Task GetVotingsCreatedByUser_Should_Return_Only_Votings_Created_By_Current_User()
     {
         var teacherId = await SeedUserWithoutEducationUnitsAsync(Roles.Teacher);
@@ -124,7 +124,7 @@ public class GetUserVotingsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal("Own voting", body.Votings[0].Title);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Созданные мной: 401 без авторизации")]
     public async Task GetVotingsCreatedByUser_Should_Return_Unauthenticated_Without_Auth_Headers()
     {
         var response = await _client.GetAsync("/api/votings/created");

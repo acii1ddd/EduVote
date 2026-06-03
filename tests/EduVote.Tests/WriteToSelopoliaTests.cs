@@ -7,7 +7,9 @@ namespace EduVote.Tests;
 
 public class WriteToSepoliaTests(ITestOutputHelper output)
 {
-    [Fact(Skip = "Live Sepolia integration test. Run manually when external Infura network access is available.")]
+    [Fact(
+        Skip = "Live Sepolia integration test. Run manually when external Infura network access is available.",
+        DisplayName = "Blockchain (Sepolia): запись хеша результата возвращает tx hash")]
     public async Task WriteResultHashAsync_ShouldReturnTxHash()
     {
         // Arrange

@@ -25,7 +25,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Проголосованные: возвращает id голосований после голоса пользователя")]
     public async Task GetVotedVotingIds_Should_Return_Voting_Ids_After_User_Voted()
     {
         var scenario = await SeedSingleChoiceScenarioAsync();
@@ -45,7 +45,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains(scenario.VotingId.ToString(), body.VotingIds);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Проголосованные: пустой список, если пользователь не голосовал")]
     public async Task GetVotedVotingIds_Should_Return_Empty_List_When_User_Has_Not_Voted()
     {
         var userId = await SeedUserAsync();
@@ -60,7 +60,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Empty(body.VotingIds);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Проголосованные: 401 без заголовков авторизации")]
     public async Task GetVotedVotingIds_Should_Return_Unauthenticated_Without_Auth_Headers()
     {
         var response = await _client.GetAsync("/api/votings/voted");
@@ -68,7 +68,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты: возвращает данные для завершённого голосования")]
     public async Task GetResults_Should_Return_Results_For_Finished_Voting()
     {
         var scenario = await SeedFinishedVotingWithResultAsync(includeBlockchain: true);
@@ -90,7 +90,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.True(body.OpenAnswerTextsVisible);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты open answer: студенту тексты ответов скрыты")]
     public async Task GetResults_OpenAnswer_Student_Should_Redact_Answer_Texts()
     {
         var scenario = await SeedFinishedOpenAnswerWithResultAsync();
@@ -110,7 +110,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.DoesNotContain("secret answer", json, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты open answer: организатор-преподаватель видит полные ответы")]
     public async Task GetResults_OpenAnswer_Organizer_Teacher_Should_Return_Full_Answers()
     {
         var scenario = await SeedFinishedOpenAnswerWithResultAsync();
@@ -129,7 +129,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains("secret answer", json, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты open answer: чужому преподавателю тексты скрыты")]
     public async Task GetResults_OpenAnswer_NonOrganizer_Teacher_Should_Redact_Answer_Texts()
     {
         var scenario = await SeedFinishedOpenAnswerWithResultAsync();
@@ -148,7 +148,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.DoesNotContain("secret answer", json, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты open answer: администратор видит полные ответы даже не будучи организатором")]
     public async Task GetResults_OpenAnswer_Administrator_Should_Return_Full_Answers_Even_When_Not_Organizer()
     {
         var scenario = await SeedFinishedOpenAnswerWithResultAsync();
@@ -167,7 +167,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Contains("secret answer", json, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты open answer: 401 без авторизации")]
     public async Task GetResults_OpenAnswer_Should_Return_Unauthenticated_Without_Auth_Headers()
     {
         var scenario = await SeedFinishedOpenAnswerWithResultAsync();
@@ -177,7 +177,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты: ошибка, если голосование ещё не завершено")]
     public async Task GetResults_Should_Return_FailedPrecondition_When_Voting_Is_Not_Finished()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Active);
@@ -187,7 +187,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты: недоступны, пока итог ещё не посчитан")]
     public async Task GetResults_Should_Return_Unavailable_When_Result_Is_Not_Calculated_Yet()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Finished);
@@ -197,7 +197,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Результаты: 404 для несуществующего голосования")]
     public async Task GetResults_Should_Return_NotFound_When_Voting_Does_Not_Exist()
     {
         var missingId = Guid.NewGuid();
@@ -207,7 +207,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Верификация: возвращает хеши голосов для завершённого голосования")]
     public async Task GetVerificationData_Should_Return_Vote_Hashes_For_Finished_Voting()
     {
         var scenario = await SeedFinishedVotingWithResultAsync(includeVotes: true);
@@ -228,7 +228,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal("vote-hash-1", body.VoteHashes[0]);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Верификация: ошибка, если голосование не завершено")]
     public async Task GetVerificationData_Should_Return_FailedPrecondition_When_Voting_Is_Not_Finished()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Active);
@@ -238,7 +238,7 @@ public class GetVotingResultsIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Верификация: недоступна, пока итог не посчитан")]
     public async Task GetVerificationData_Should_Return_Unavailable_When_Result_Is_Not_Calculated_Yet()
     {
         var votingId = await SeedVotingAsync(DbVotingStatus.Finished);

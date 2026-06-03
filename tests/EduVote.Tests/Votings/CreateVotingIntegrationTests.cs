@@ -24,7 +24,7 @@ public class CreateVotingIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Создание: администратор получает черновик")]
     public async Task CreateVoting_Should_Create_Draft_Voting_For_Administrator()
     {
         var adminId = await SeedUserAsync(Roles.Administrator);
@@ -41,7 +41,7 @@ public class CreateVotingIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(adminId, voting.CreatedById);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Создание: преподаватель получает статус на модерации")]
     public async Task CreateVoting_Should_Create_PendingApproval_Voting_For_Teacher()
     {
         var teacherId = await SeedUserAsync(Roles.Teacher);
@@ -57,7 +57,7 @@ public class CreateVotingIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(teacherId, voting.CreatedById);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Создание: ошибка при интервале меньше часа")]
     public async Task CreateVoting_Should_Reject_When_EndTime_Is_Less_Than_One_Hour_After_StartTime()
     {
         var adminId = await SeedUserAsync(Roles.Administrator);

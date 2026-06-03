@@ -12,7 +12,7 @@ public static class CreateVotingValidator
         {
             throw new ApplicationErrorException(
                 ApplicationErrorType.InvalidArgument,
-                "end_time must be at least 1 hour greater than start_time.");
+                "Дата окончания должна быть минимум на 1 час позже даты начала.");
         }
 
         if (startTime > endTime)

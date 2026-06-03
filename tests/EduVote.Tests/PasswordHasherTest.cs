@@ -6,7 +6,7 @@ namespace EduVote.Tests;
 
 public class PasswordHasherTest(ITestOutputHelper output)
 {
-    [Fact]
+    [Fact(DisplayName = "Хеширование пароля: корректно хеширует и проверяет пароль")]
     public void Should_Hash_Password_123()
     {
         // Arrange

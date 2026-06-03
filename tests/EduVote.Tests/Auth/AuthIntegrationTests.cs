@@ -25,7 +25,7 @@ public class AuthIntegrationTests(EduVoteApiFactory factory)
         return Task.CompletedTask;
     }
 
-    [Fact]
+    [Fact(DisplayName = "Регистрация: создаёт пользователя с ролью Student")]
     public async Task Register_Should_Create_Student_User()
     {
         var response = await PostRegisterAsync("newuser@example.com", "password123", "New User");
@@ -41,7 +41,7 @@ public class AuthIntegrationTests(EduVoteApiFactory factory)
         Assert.Equal(Roles.Student, user.UserRole.Name);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Регистрация: возвращает конфликт, если email уже занят")]
     public async Task Register_Should_Return_Conflict_When_Email_Already_Exists()
     {
         await PostRegisterAsync("dup@example.com", "password123", "First User");
@@ -49,9 +49,12 @@ public class AuthIntegrationTests(EduVoteApiFactory factory)
         var response = await PostRegisterAsync("dup@example.com", "password456", "Second User");
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Пользователь с таким email уже существует", body.Message);
     }
 
-    [Fact]
+    [Fact(DisplayName = "Вход: возвращает токен при корректных учётных данных")]
     public async Task Login_Should_Return_Token_For_Valid_Credentials()
     {
         await PostRegisterAsync("login@example.com", "password123", "Login User");
@@ -67,7 +70,7 @@ public class AuthIntegrationTests(EduVoteApiFactory factory)
         Assert.False(string.IsNullOrWhiteSpace(body.AccessToken));
     }
 
-    [Fact]
+    [Fact(DisplayName = "Вход: возвращает ошибку при неверном пароле")]
     public async Task Login_Should_Return_BadRequest_For_Invalid_Password()
     {
         await PostRegisterAsync("wrongpass@example.com", "password123", "User");
@@ -119,6 +122,9 @@ public class AuthIntegrationTests(EduVoteApiFactory factory)
 
     private sealed record RegisterApiResponse(
         [property: JsonPropertyName("userId")] string UserId);
+
+    private sealed record ApiErrorResponse(
+        [property: JsonPropertyName("message")] string Message);
 
     private sealed record LoginApiResponse(
         [property: JsonPropertyName("userId")] string UserId,

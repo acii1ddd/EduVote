@@ -28,6 +28,8 @@ export default function AdminPage() {
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<UserResponse | null>(null)
     const [selectedEducationUnitId, setSelectedEducationUnitId] = useState('')
+    const [editError, setEditError] = useState<string | null>(null)
+    const [isSaving, setIsSaving] = useState(false)
 
     // Create modal state
     const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -95,16 +97,27 @@ export default function AdminPage() {
     const openEdit = (user: UserResponse) => {
         setEditingUser(user)
         setSelectedEducationUnitId(user.educationUnitId ?? '')
+        setEditError(null)
         setIsEditOpen(true)
     }
 
-    const saveUser = async () => {
+    const submitEdit = async (e: React.FormEvent) => {
+        e.preventDefault()
         if (!editingUser) return
+
+        setEditError(null)
+
+        if (!editingUser.name.trim() || !editingUser.email.trim()) {
+            setEditError('Заполните все обязательные поля')
+            return
+        }
+
+        setIsSaving(true)
         try {
             await updateUser({
                 id: editingUser.id,
-                name: editingUser.name,
-                email: editingUser.email,
+                name: editingUser.name.trim(),
+                email: editingUser.email.trim(),
                 role: editingUser.role,
             })
             if (selectedEducationUnitId) {
@@ -113,8 +126,11 @@ export default function AdminPage() {
             await loadUsers()
             setIsEditOpen(false)
             setEditingUser(null)
-        } catch (err) {
-            console.error(err)
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+            setEditError(msg ?? 'Не удалось сохранить пользователя')
+        } finally {
+            setIsSaving(false)
         }
     }
 
@@ -310,23 +326,24 @@ export default function AdminPage() {
             {/* ── Edit modal ── */}
             {isEditOpen && editingUser && (
                 <Modal title="Редактировать пользователя" onClose={() => setIsEditOpen(false)}>
-                    <div className="space-y-4">
+                    <form onSubmit={submitEdit} className="space-y-4">
 
-                        <Field label="Имя">
+                        <Field label="Имя *">
                             <input
                                 className={inputClass}
                                 value={editingUser.name}
                                 onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
-                                placeholder="Имя"
+                                placeholder="Иван Иванов"
                             />
                         </Field>
 
-                        <Field label="Email">
+                        <Field label="Email *">
                             <input
+                                type="email"
                                 className={inputClass}
                                 value={editingUser.email}
                                 onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
-                                placeholder="Email"
+                                placeholder="user@example.com"
                             />
                         </Field>
 
@@ -353,22 +370,30 @@ export default function AdminPage() {
                             </select>
                         </Field>
 
+                        {editError && (
+                            <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-3.5 py-2.5 text-sm font-medium text-destructive">
+                                {editError}
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-2 pt-1">
                             <button
+                                type="button"
                                 onClick={() => setIsEditOpen(false)}
                                 className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                             >
                                 Отмена
                             </button>
                             <button
-                                onClick={saveUser}
-                                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90"
+                                type="submit"
+                                disabled={isSaving}
+                                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                Сохранить
+                                {isSaving ? 'Сохраняем...' : 'Сохранить'}
                             </button>
                         </div>
 
-                    </div>
+                    </form>
                 </Modal>
             )}
 
